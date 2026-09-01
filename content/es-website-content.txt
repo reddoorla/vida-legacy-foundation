@@ -1,0 +1,341 @@
+VIDA LEGACY FOUNDATION
+
+Contenido del sitio web en español
+
+Traducción del diseño de Figma · Español latino (EE. UU.)
+
+Archivo de origen: Vida Legacy Foundation.fig — lienzo “Design”, sección 4 (maquetas finales).
+
+Páginas incluidas: navegación, inicio, quiénes somos, donación, ventana de biografía y menú de frecuencia.
+
+Los nombres propios, direcciones de correo, teléfono y domicilio se conservan sin traducir.
+
+Fecha: 29 de agosto de 2026
+
+Navegación principal
+
+Menú desplegable del encabezado, presente en todas las páginas.
+
+Quiénes Somos
+
+Donar
+
+Contáctenos
+
+Conviértase en Donante
+
+Página de inicio
+
+Sección principal (hero)
+
+NUESTRA MISIÓN
+
+Vida Legacy Foundation se dedica a apoyar a las familias del sur de Texas que han sido parte del proceso de donación y trasplante de órganos. A través de la educación, los recursos y el acompañamiento, buscamos brindar apoyo a las familias durante cada etapa de este proceso. Trabajamos para crear conciencia sobre la importancia de la donación de órganos, fortalecer nuestra comunidad y conectar a las familias con los recursos y el apoyo que necesitan.
+
+Acompañando a las familias en cada etapa
+
+ANTETÍTULO
+
+a su lado en cada etapa
+
+PÁRRAFO INTRODUCTORIO
+
+En Vida Legacy Foundation entendemos que el proceso de donación y trasplante de órganos puede traer consigo muchos retos para las familias. Por eso, ofrecemos recursos y apoyo para ayudar a aliviar algunas de esas preocupaciones y permitir que las familias se enfoquen en lo más importante: su bienestar y el de sus seres queridos.
+
+Apoyo económico
+
+Brindamos asistencia económica para ayudar a las familias con algunos de los gastos que pueden surgir durante el proceso de donación, trasplante y recuperación.
+
+Acceso a la educación
+
+Damos las herramientas para tomar mejores decisiones con acceso a nuestros recursos educativos.
+
+Apoyo compasivo
+
+Estamos aquí para escuchar, orientar y conectar a las familias con recursos y una comunidad que comprende lo que están viviendo.
+
+Nuestra relación con TOSA
+
+Organizaciones independientes, unidas por una misma misión
+
+Vida Legacy Foundation es una organización 501(c)(3) independiente, creada por TOSA, con su propio gobierno y su propia misión.
+
+Misiones que se complementan
+
+TOSA coordina el proceso de donación y procuración de órganos, mientras que Vida Legacy Foundation brinda apoyo a las familias a través de recursos, educación y programas comunitarios.
+
+Apoyo para nuestra región
+
+La Fundación trabaja para que los fondos y recursos destinados a nuestros programas beneficien directamente a las familias del centro y sur de Texas.
+
+Atendiendo necesidades
+
+Trabajamos para atender necesidades que pueden surgir después de una donación o trasplante, además de ofrecer recursos a las familias donantes y promover la educación sobre la donación de órganos en nuestra comunidad.
+
+Un círculo completo de cuidado
+
+Juntas, ambas organizaciones acompañan a las familias desde el momento de tomar una decisión sobre la donación de órganos y durante las diferentes etapas de su proceso de sanación.
+
+TEXTO DESTACADO
+
+Juntas, TOSA y Vida Legacy Foundation brindan apoyo continuo a las familias afectadas por la donación de órganos, promoviendo la sanación, la conexión y el apoyo de la comunidad.
+
+BOTÓN
+
+[ quiénes somos ]
+
+Compasión en acción
+
+ANTETÍTULO
+
+Compasión en acción
+
+TITULAR
+
+En Vida Legacy Foundation (VLF) creemos que ninguna familia debe recorrer sola el camino del trasplante.
+
+PÁRRAFO
+
+Su donativo puede brindar esperanza, apoyo y alivio a las familias que más lo necesitan. Únase a nuestra misión.
+
+BOTÓN
+
+[ done ahora ]
+
+En cifras
+
+más de 100,000
+
+Más de 100,000 personas se encuentran actualmente en la lista de espera para recibir un trasplante de órgano, y cada ocho minutos se agrega una persona más.
+
+13 personas
+
+Cada día, 13 personas mueren mientras esperan un órgano que no llegó a tiempo.
+
+30 %
+
+Aunque el 90 % de las personas apoya la donación de órganos, solo el 60 % está registrado como donante. Usted puede ayudar a cerrar esa brecha registrándose en solo unos minutos.
+
+8 vidas
+
+Un solo donante puede salvar hasta ocho vidas.
+
+BOTÓN
+
+[ regístrese como donante ]
+
+Esperanza que sana. Ayuda que perdura.
+
+Titular a dos líneas: “Esperanza que sana.” / “Ayuda que perdura.”
+
+Haga una contribución
+
+ANTETÍTULO
+
+HAGA UNA CONTRIBUCIÓN
+
+TITULAR
+
+Sabemos que este camino puede ser difícil y, en ocasiones, hacer que las familias se sientan solas. Estamos aquí para acompañarlas.
+
+BOTÓN
+
+[ Done ahora ]
+
+Testimonio
+
+«Vida Legacy Foundation hizo que un momento difícil fuera más llevadero.»
+
+— Un familiar agradecido
+
+Pie de página
+
+ENLACES
+
+quiénes somos
+
+donar
+
+contáctenos
+
+CONTACTO
+
+726-234-6910
+
+8632 Fredericksburg Rd. Suite 221
+
+San Antonio, TX 78240
+
+AVISO LEGAL
+
+© 2026 vida legacy foundation.
+
+Todos los derechos reservados.
+
+Página “Quiénes Somos”
+
+Encabezado de la página
+
+ANTETÍTULO
+
+Acerca de nosotros
+
+TITULAR
+
+Quiénes Somos
+
+DECLARACIÓN DE MISIÓN
+
+Nuestra misión es honrar el regalo de la vida a través de la educación, la participación comunitaria y el apoyo a las familias del sur de Texas afectadas por la donación de órganos.
+
+Nuestra historia
+
+Vida  Legacy Foundation (VLF) es una organización sin fines de lucro 501(c)(3) independiente, fundada por Texas Organ Sharing Alliance (TOSA). Anteriormente conocida como TOSA Foundation, VLF funciona como una entidad separada dedicada a apoyar programas de educación, alcance comunitario y asistencia que benefician a las personas y familias afectadas por la donación y el trasplante de órganos.
+
+Texas Organ Sharing Alliance (TOSA) y Vida Legacy Foundation trabajan de la mano, pero cada una cumple un propósito distinto. Fundada por TOSA en 2025, Vida Legacy Foundation es una organización sin fines de lucro 501(c)(3) independiente, creada para extender el impacto de la donación de órganos hacia la comunidad, financiando programas de educación, alcance comunitario y apoyo dirigidos a las familias donantes, las familias receptoras y las comunidades que llaman hogar en el centro y el sur de Texas.
+
+Mientras que TOSA es la Organización de Procuración de Órganos (OPO) designada por el gobierno federal para el centro y el sur de Texas, y coordina los aspectos médicos y logísticos de la donación y el trasplante de órganos, Vida Legacy Foundation es el corazón filantrópico de esa misión y cubre brechas críticas en el apoyo continuo a las familias, la educación comunitaria y el alcance. Los donativos que impulsan esos programas y servicios se dirigen a Vida Legacy Foundation. La antigua TOSA Foundation ahora es Vida Legacy Foundation.
+
+Un equipo que le acompaña
+
+Liderazgo
+
+Nuestro equipo está comprometido con la misión de Vida Legacy Foundation y trabaja cada día para brindar apoyo, orientación y recursos a los donantes de órganos, los receptores y sus familias.N
+
+Brooke Perucki
+
+Directora Ejecutiva
+
+brooke@vidalegacy.org
+
+Vilma Gonzalez
+
+Gerente de Finanzas y Administración
+
+Vilma@vidalegacy.org
+
+Holly Aldridge
+
+Coordinadora de Servicios de Admisión de Programas (medio tiempo)
+
+intake@vidalegacy.org
+
+Junta Directiva
+
+Vida Legacy Foundation cuenta con su propia Junta Directiva y opera como una organización independiente. Esto nos permite asegurar que nuestros recursos y fondos se destinen directamente a apoyar a las familias del centro y sur de Texas, así como a promover la educación y concientización sobre la donación de órganos en nuestra comunidad.
+
+Vince Speeg, MD, PhD
+
+Miembro de la Junta Directiva
+
+Bruce Mitchell
+
+Miembro de la Junta Directiva
+
+Jennifer Milton, MBA, BSN
+
+Miembro de la Junta Directiva
+
+Joe Nespral, MD
+
+Miembro ex officio de la Junta Directiva
+
+Haga una contribución
+
+ANTETÍTULO
+
+HAGA UNA CONTRIBUCIÓN
+
+TITULAR
+
+Sabemos que el proceso de donación y trasplante puede ser difícil para las familias. Con su apoyo, podemos estar a su lado y brindarles los recursos que necesitan.
+
+BOTÓN
+
+[ Done ahora ]
+
+Pie de página: mismo contenido que la página de inicio.
+
+Página de donación
+
+TITULAR
+
+Haga una donación
+
+ANTETÍTULO
+
+ayuda que perdura
+
+PÁRRAFO
+
+Su contribución nos permite dar a las familias acceso a recursos que alivian el estrés económico y les permiten concentrarse en lo que de verdad importa: la salud y el bienestar de su familia. Puede realizar su donativo a través de nuestro formulario en línea o mediante PayPal, según su preferencia.
+
+BOTÓN
+
+[ usar paypal ]
+
+Formulario de donación
+
+Información de contacto
+
+Nombre*
+
+Texto de ejemplo: Nombre  /  Apellido
+
+Correo electrónico*
+
+Texto de ejemplo: correo@ejemplo.com
+
+Dirección
+
+Texto de ejemplo: Dirección línea 1  /  Dirección línea 2  /  Ciudad  /  Estado o provincia  /  Código postal
+
+Teléfono
+
+Texto de ejemplo: 000-000-0000
+
+Cantidad
+
+Texto de ejemplo: $100  /  $50  /  $25  /  Ingrese cantidad
+
+Frecuencia de la donación
+
+Texto de ejemplo: Una sola vez
+
+BOTÓN
+
+[ ingresar información de pago ]
+
+Pie de página: mismo contenido que la página de inicio.
+
+Componentes
+
+Ventana emergente de biografía
+
+Brooke Perucki
+
+Directora Ejecutiva
+
+brooke@vidalegacy.org
+
+El cuerpo de la biografía está en “lorem ipsum” en el archivo de Figma. Falta el texto real en inglés; una vez que se entregue, se traducirá aquí.
+
+Menú: frecuencia de la donación
+
+Una sola vez
+
+Mensual
+
+Trimestral
+
+Anual
+
+Notas de traducción
+
+Se usa el tratamiento formal de “usted” en todo el sitio, apropiado para el público de San Antonio y el sur de Texas.
+
+“Vida Legacy Foundation”, “Texas Organ Sharing Alliance (TOSA)” y “VLF” se conservan en inglés por ser nombres legales de las organizaciones.
+
+Los antetítulos y botones se mantienen en minúsculas cuando el diseño original los presenta así.
+
+Los titulares en español son entre un 15 % y un 25 % más largos que en inglés; puede ser necesario ajustar el tamaño de tipografía o los saltos de línea en Figma.

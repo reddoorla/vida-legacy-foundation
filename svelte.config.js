@@ -95,6 +95,12 @@ const config = {
           "unsafe-inline",
           "https://fonts.googleapis.com",
           "https://use.typekit.net",
+          // p.typekit.net serves the woff2 files (see font-src) AND a second
+          // stylesheet, p.css, which the kit pulls in. Allowing only the font
+          // host is not enough: the browser blocks p.css under style-src and
+          // the faces never register. The smoke suite's console-error check is
+          // what catches this — it is otherwise silent.
+          "https://p.typekit.net",
         ],
         "img-src": ["self", "data:", "https://*.prismic.io"],
         // Prismic hosts non-image media (e.g. .mp4 assets) on
