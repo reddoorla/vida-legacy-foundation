@@ -1,0 +1,14 @@
+name: ci
+on:
+  pull_request:
+  push:
+    branches: [main, staging]
+jobs:
+  ci:
+    permissions:
+      contents: read
+      pull-requests: write
+    uses: reddoorla/.github/.github/workflows/ci.yml@8f9852c4f69f629d1d785036366d74d9358645f9 # v1.4.1
+    with:
+      node-version: "24"
+      netlify-site: "reddoor-wireframer"
