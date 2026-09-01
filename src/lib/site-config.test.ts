@@ -31,6 +31,10 @@ describe("footerColumns", () => {
   });
 
   it("returns undefined when neither supplies columns (fresh site → Footer placeholder)", () => {
-    expect(footerColumns(undefined, loadSiteConfig())).toBeUndefined();
+    // Deliberately a hand-built empty config, NOT loadSiteConfig(): this asserts
+    // the fallback *logic*, and sourcing it from the checked-in JSON made the
+    // test fail the moment this site configured a real footer.
+    const emptyConfig: SiteConfig = { nav: { items: [] }, footer: { socials: [] } };
+    expect(footerColumns(undefined, emptyConfig)).toBeUndefined();
   });
 });
