@@ -109,19 +109,38 @@ What is NOT done, in the order it blocks things:
 
 ## Brand colours — two of them cannot hold text
 
-Measured against the cream ground `#fef5e9` (AA needs 4.5 for body, 3.0 large):
+Token values come from the **Figma variables** on the Design page, not from
+`VLF_Brand-Cheat-Sheet.pdf`. Where the two disagreed the PDF was wrong by one
+value per channel (background `#fef5e9` → `#fdf5e8`, night `#00263f` →
+`#01263f`, sand `#f1e9dd` → `#f2eadd`), which showed up as a visible seam
+where the shipped logo SVG — which bakes the Figma value — met the page.
 
-| token                        | hex       | ratio on cream | use         |
-| ---------------------------- | --------- | -------------- | ----------- |
-| `--color-green`              | `#9cbf5b` | **1.94**       | fill only   |
-| `--color-coral`              | `#de7762` | **2.81**       | fill only   |
-| `--color-secondary` (forest) | `#2c3b1a` | 10.4           | body text   |
-| `--color-accent` (dark red)  | `#652323` | 9.6            | accent text |
-| `--color-primary` (blue)     | `#065184` | 7.9            | text, links |
+Measured against the beige ground `#fdf5e8` (AA needs 4.5 body, 3.0 large):
 
-**White on the green CTA button is 2.10 — a straight AA failure**, and that
-button is the primary "register to become an organ donor" action. If a green
-button is required, night `#00263f` on green is 7.43 and forest is 5.73.
+| token                        | hex       | ratio on beige | use               |
+| ---------------------------- | --------- | -------------- | ----------------- |
+| `--color-green`              | `#9cbf5b` | **1.94**       | fill only         |
+| `--color-coral`              | `#de7762` | **2.80**       | fill only         |
+| `--color-green-mid`          | `#527e01` | **4.47**       | large text only   |
+| `--color-primary` (blue)     | `#065184` | 7.71           | text, links       |
+| `--color-accent` (dark red)  | `#652323` | 10.67          | accent text       |
+| `--color-secondary` (forest) | `#2c3b1a` | 11.10          | body text         |
+| `--color-green-btn`          | `#263b02` | 11.35          | text, button fill |
+| `--color-dark` (night)       | `#01263f` | 14.37          | text              |
+| `--color-green-deep`         | `#172303` | 15.18          | text, dark ground |
+
+**The design's button couple is `#263b02` + `#9cbf5b` — 5.86:1 in both
+directions.** Dark-on-green in the cream sections, green-on-dark in the navy
+ones. All three buttons in the comps were measured; the design contains no
+white-on-green anywhere. Do not introduce it — white on green is 2.10.
+
+> An earlier version of this file claimed white-on-green _was_ the design's
+> primary "register to become an organ donor" button. That was wrong. The
+> comps never specified it.
+
+The genuine edge case is `--color-green-mid` `#527e01` at **4.47** — it misses
+AA body by 0.03 and the design uses it for small text and form placeholders.
+Large text only, or darken it.
 
 `pnpm test:a11y` gates this, so a regression fails CI rather than shipping —
 but the gate only sees rendered routes. Do not assign `--color-green` or
@@ -136,6 +155,11 @@ Wired in `src/app.html`. **Not** the fleet's shared kit `noj4tji`: that one has
 > (300).** The design spec is Pragmatica Extended _Light_, so headings currently
 > render heavier than the comps. Fixing it is an Adobe Fonts kit change, not a
 > code change.
+
+> **Buttons specify a third family that is not in the kit: `Area Normal`
+> Bold 10/700** (a Blaze Type face, not on Adobe Fonts). `--font-button` is
+> pragmatica 700 instead — at 10px uppercase with 1px tracking the family
+> difference is not legible. Revisit only if the brand licenses Area Normal.
 
 Verifying a weight, if you touch this: `document.fonts.check('300 16px
 "pragmatica-extended"')` returns **`true`** even though 300 does not exist — it
