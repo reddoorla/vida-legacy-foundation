@@ -72,28 +72,40 @@ it, in the operator's local notes, not here.
 ## Where the build actually stands
 
 Bootstrapped 2026-09-01. CI green, branch protection on (every change to `main`
-goes through a PR). What is NOT done, in the order it blocks things:
+goes through a PR).
 
-1. **Prismic `vida-legacy` is empty** — zero custom types, zero documents. The
-   `your-prismic-repo-name` sentinel in `slicemachine.config.json` is therefore
-   still in place _on purpose_.
+**The CMS is live as of 2026-09-01.** `slicemachine.config.json` points at the
+real `vida-legacy` repo — the `your-prismic-repo-name` sentinel is **gone**, and
+loud-fail prerendering is armed. A 404 during prerender now fails the build.
+That was verified: `pnpm verify` passes green against the live repo.
 
-   Swapping it before the CMS has content **fails the build**, loudly and by
-   design (`svelte.config.js` `handleHttpError`), because `/` prerenders
-   `at(my.page.uid, "home")`:
+What is in Prismic:
 
-   ```
-   Error: 500 /: 500 /   ← this is the expected failure, not a regression
-   ```
+- `page` custom type (uid, title, slice zone, SEO group) and all 9 shared
+  slices, pushed from Slice Machine.
+- Locales `en-us` (master) and **`es-mx`**. Note the Spanish source copy is
+  labelled _Español latino (EE. UU.)_; `es-mx` is the nearest thing Prismic's
+  picker offers. Baked into URLs — changing it later is a migration.
+- One document: `home` (`apdOUREAADAAAfBa`), published, **empty slice zone**.
+  It is a deliberate stub whose only job was to satisfy the prerender so the
+  sentinel could come out. The home page currently renders as nav + footer +
+  an `<h1>` and nothing else. `/figma-slices` fills the slice zone.
 
-   Order to unblock: push the `page` custom type from Slice Machine (there is
-   no create-custom-type API — the Prismic MCP connector is read-only for
-   types), publish a `home` document, _then_ swap the sentinel.
+Custom types still cannot be created from an agent session — there is no
+create-custom-type API, and the Prismic MCP connector is read-only for types.
+Pushing a new one means `pnpm slicemachine` and a browser. Documents _can_ be
+created over MCP, but only staged into a release; **publishing is a human step
+in the dashboard** — do not call `publish_release`.
 
-2. **Spanish locale is not added.** The repo has `en-us` only. VLF is bilingual
-   and the translated copy is already here (see below), so add the locale
-   before anyone authors content.
-3. Netlify site + `FORMS_INGEST_URL` / `FORMS_INGEST_TOKEN` (docs/NEW-SITE.md).
+What is NOT done, in the order it blocks things:
+
+1. **The site has no real content.** `/figma-slices` is the next real build.
+2. `src/lib/site-config.json` still ships empty — logo-only Nav, placeholder
+   Footer. The IA is derivable from `content/es-website-content.txt`
+   (`ENLACES`, `CONTACTO`, `AVISO LEGAL`).
+3. `DEFAULT_OG_IMAGE` unset — every share is imageless. Needs a 1200×630
+   `static/og-default.png`.
+4. Netlify site + `FORMS_INGEST_URL` / `FORMS_INGEST_TOKEN` (docs/NEW-SITE.md).
 
 ## Brand colours — two of them cannot hold text
 
@@ -152,8 +164,8 @@ each face's `.weight` / `.status` instead.
 | `static/favicon.png`             | the mark at 94% on cream, 512²                                 |
 | `content/es-website-content.txt` | Spanish site copy, 171 paragraphs, keyed to the Figma sections |
 
-The Spanish source is labelled _Español latino (EE. UU.)_ — that is the locale
-to add in Prismic.
+The Spanish source is labelled _Español latino (EE. UU.)_. The locale actually
+added in Prismic is `es-mx` — see the CMS notes above.
 
 The logo came out of Figma via `download_assets`, which returns the lockup plus
 separable sub-assets; the mark is the 2:1 one. The Dropbox logo-package share
