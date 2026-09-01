@@ -81,10 +81,21 @@ const config = {
           "https://player.vimeo.com",
           // Cloudflare Turnstile contact-form widget (enable via PUBLIC_TURNSTILE_SITE_KEY).
           "https://challenges.cloudflare.com",
+          // Little Green Light's JS embed variant of the donation form.
+          "https://secure.lglforms.com",
         ],
         // Google Fonts stylesheet host (paired with fonts.gstatic.com under
         // font-src). Self-hosted fonts need nothing extra.
-        "style-src": ["self", "unsafe-inline", "https://fonts.googleapis.com"],
+        //
+        // use.typekit.net serves the Adobe Fonts stylesheet for Pragmatica
+        // Extended Light / Pragmatica Light — the licensed stand-in for the
+        // comps' Helvetica Neue, which Reddoor has no web license for.
+        "style-src": [
+          "self",
+          "unsafe-inline",
+          "https://fonts.googleapis.com",
+          "https://use.typekit.net",
+        ],
         "img-src": ["self", "data:", "https://*.prismic.io"],
         // Prismic hosts non-image media (e.g. .mp4 assets) on
         // <repo>.cdn.prismic.io — first-party content, same origin family as
@@ -95,9 +106,21 @@ const config = {
           "https://player.vimeo.com",
           // Cloudflare Turnstile renders its challenge in an iframe from this host.
           "https://challenges.cloudflare.com",
+          // Donations run through Little Green Light — an embedded form, never a
+          // hand-built payment flow. LGL sends no X-Frame-Options/CSP of its own,
+          // so it is iframe-able; it also ships a JS embed at the same URL + `.js`
+          // (see script-src) if the iframe proves awkward.
+          "https://secure.lglforms.com",
         ],
         "connect-src": ["self", "https://*.prismic.io"],
-        "font-src": ["self", "data:", "https://fonts.gstatic.com"],
+        // p.typekit.net is where Adobe Fonts serves the actual woff2 files.
+        "font-src": [
+          "self",
+          "data:",
+          "https://fonts.gstatic.com",
+          "https://use.typekit.net",
+          "https://p.typekit.net",
+        ],
         "base-uri": ["self"],
         "form-action": ["self"],
         "frame-ancestors": ["self"],

@@ -11,22 +11,40 @@
   --color-current: currentColor;
   --color-black: black;
   --color-white: white;
-  --color-background: white;
+  --color-background: #fef5e9;
 
-  /* Neutral placeholder palette — replace per project (docs/STARTER.md). Every
-     value is distinct on purpose so a forgotten token is visible, not silent. */
-  --color-light: #e5e7eb;
-  --color-primary: #111827;
-  --color-dark: #1f2937;
-  --color-secondary: #6b7280;
-  --color-accent: #2563eb;
+  /* Vida Legacy Foundation — from VLF_Brand-Cheat-Sheet.pdf.
+     Contrast measured against the #fef5e9 background (WCAG AA needs 4.5:1 for
+     body text, 3:1 for large text). The semantic text roles below are only
+     assigned colors that clear AA:
+       night   #00263f  14.42  text ok
+       forest  #2c3b1a  11.13  text ok
+       red     #652323  10.70  text ok
+       blue    #065184   7.73  text ok
+       coral   #de7762   2.81  FILL ONLY — fails AA as text
+       green   #9cbf5b   1.94  FILL ONLY — fails AA as text
+     Green and coral are brand fills, not text colors. On a green fill, use
+     night (7.43) or forest (5.73); WHITE ON GREEN IS 2.10 AND FAILS. */
+  --color-light: #f1e9dd; /* sand */
+  --color-primary: #065184; /* blue */
+  --color-dark: #00263f; /* night */
+  --color-secondary: #2c3b1a; /* forest — the text-safe mid tone */
+  --color-accent: #652323; /* dark red — text-safe accent */
+
+  /* Brand fills. Never assign these to body text on the cream background. */
+  --color-green: #9cbf5b;
+  --color-coral: #de7762;
 
   /* Type — set per project. Self-host the brand's licensed woff2 files under
      static/fonts (preload the body face in app.html) or load a kit, then
      point these at the loaded family names. Until then the system stack
      applies. `font-heading` / `font-body` utilities come from these tokens. */
-  --font-heading: ui-sans-serif, system-ui, sans-serif;
-  --font-body: ui-sans-serif, system-ui, sans-serif;
+  /* Pragmatica via Adobe Fonts — the licensed stand-in for the comps'
+     Helvetica Neue Extended/Light, which Reddoor has no web license for.
+     The Typekit <link> goes in app.html once the kit id exists; until then the
+     fallback stack renders and nothing breaks. */
+  --font-heading: "pragmatica-extended", ui-sans-serif, system-ui, sans-serif;
+  --font-body: "pragmatica", ui-sans-serif, system-ui, sans-serif;
 
   --transition-in-expo: cubic-bezier(0.95, 0.05, 0.795, 0.035);
   --transition-out-expo: cubic-bezier(0.19, 1, 0.22, 1);

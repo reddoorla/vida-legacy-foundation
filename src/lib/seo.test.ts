@@ -5,26 +5,32 @@ import {
   resolveOgImage,
   organizationJsonLd,
   composeTitle,
+  SITE_NAME,
   OG_IMAGE_WIDTH,
   OG_IMAGE_HEIGHT,
 } from "./seo";
 
 const PRISMIC = "https://images.prismic.io/acme/abc.png?auto=compress";
 
+// Assert against SITE_NAME rather than a literal: `/new-site` step 3b sets it
+// per client, and hard-coding the template's default made these four tests fail
+// on every generated site the moment it was de-branded (caught on the first real
+// run, vida-legacy-foundation, 2026-09-01). The behaviour under test is
+// composeTitle's, not the brand string's.
 describe("composeTitle", () => {
   it("appends the site name for brand recall", () => {
-    expect(composeTitle("Contact")).toBe("Contact | Reddoor");
+    expect(composeTitle("Contact")).toBe(`Contact | ${SITE_NAME}`);
   });
 
   it("returns the bare site name for the home page (no page title)", () => {
-    expect(composeTitle(undefined)).toBe("Reddoor");
-    expect(composeTitle("")).toBe("Reddoor");
-    expect(composeTitle("   ")).toBe("Reddoor");
+    expect(composeTitle(undefined)).toBe(SITE_NAME);
+    expect(composeTitle("")).toBe(SITE_NAME);
+    expect(composeTitle("   ")).toBe(SITE_NAME);
   });
 
   it("does not double the brand when the title already contains it", () => {
-    expect(composeTitle("Reddoor")).toBe("Reddoor");
-    expect(composeTitle("Reddoor Studio — Work")).toBe("Reddoor Studio — Work");
+    expect(composeTitle(SITE_NAME)).toBe(SITE_NAME);
+    expect(composeTitle(`${SITE_NAME} Studio — Work`)).toBe(`${SITE_NAME} Studio — Work`);
   });
 });
 
