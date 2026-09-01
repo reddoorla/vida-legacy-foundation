@@ -60,3 +60,126 @@ fleet-maintenance sessions (reddoor-maintenance) also open PRs here, so:
 - **Never hand-roll `scrollTo`** — use `$lib/utils/instantNavScroll`.
 - **Never redraw an asset in CSS** when the real file is downloadable. Ship the
   file.
+
+---
+
+# Vida Legacy Foundation — site-specific
+
+Everything below is VLF, not the template. **This repo is public** — client
+contacts, Figma/Dropbox/Discord links and board notes deliberately live outside
+it, in the operator's local notes, not here.
+
+## Where the build actually stands
+
+Bootstrapped 2026-09-01. CI green, branch protection on (every change to `main`
+goes through a PR).
+
+**The CMS is live as of 2026-09-01.** `slicemachine.config.json` points at the
+real `vida-legacy` repo — the `your-prismic-repo-name` sentinel is **gone**, and
+loud-fail prerendering is armed. A 404 during prerender now fails the build.
+That was verified: `pnpm verify` passes green against the live repo.
+
+What is in Prismic:
+
+- `page` custom type (uid, title, slice zone, SEO group) and all 9 shared
+  slices, pushed from Slice Machine.
+- Locales `en-us` (master) and **`es-mx`**. Note the Spanish source copy is
+  labelled _Español latino (EE. UU.)_; `es-mx` is the nearest thing Prismic's
+  picker offers. Baked into URLs — changing it later is a migration.
+- One document: `home` (`apdOUREAADAAAfBa`), published, **empty slice zone**.
+  It is a deliberate stub whose only job was to satisfy the prerender so the
+  sentinel could come out. The home page currently renders as nav + footer +
+  an `<h1>` and nothing else. `/figma-slices` fills the slice zone.
+
+Custom types still cannot be created from an agent session — there is no
+create-custom-type API, and the Prismic MCP connector is read-only for types.
+Pushing a new one means `pnpm slicemachine` and a browser. Documents _can_ be
+created over MCP, but only staged into a release; **publishing is a human step
+in the dashboard** — do not call `publish_release`.
+
+What is NOT done, in the order it blocks things:
+
+1. **The site has no real content.** `/figma-slices` is the next real build.
+2. `src/lib/site-config.json` still ships empty — logo-only Nav, placeholder
+   Footer. The IA is derivable from `content/es-website-content.txt`
+   (`ENLACES`, `CONTACTO`, `AVISO LEGAL`).
+3. `DEFAULT_OG_IMAGE` unset — every share is imageless. Needs a 1200×630
+   `static/og-default.png`.
+4. Netlify site + `FORMS_INGEST_URL` / `FORMS_INGEST_TOKEN` (docs/NEW-SITE.md).
+
+## Brand colours — two of them cannot hold text
+
+Measured against the cream ground `#fef5e9` (AA needs 4.5 for body, 3.0 large):
+
+| token                        | hex       | ratio on cream | use         |
+| ---------------------------- | --------- | -------------- | ----------- |
+| `--color-green`              | `#9cbf5b` | **1.94**       | fill only   |
+| `--color-coral`              | `#de7762` | **2.81**       | fill only   |
+| `--color-secondary` (forest) | `#2c3b1a` | 10.4           | body text   |
+| `--color-accent` (dark red)  | `#652323` | 9.6            | accent text |
+| `--color-primary` (blue)     | `#065184` | 7.9            | text, links |
+
+**White on the green CTA button is 2.10 — a straight AA failure**, and that
+button is the primary "register to become an organ donor" action. If a green
+button is required, night `#00263f` on green is 7.43 and forest is 5.73.
+
+`pnpm test:a11y` gates this, so a regression fails CI rather than shipping —
+but the gate only sees rendered routes. Do not assign `--color-green` or
+`--color-coral` to text in a slice and assume review will catch it.
+
+## Fonts — kit `alh8out`, and a weight that does not exist
+
+Wired in `src/app.html`. **Not** the fleet's shared kit `noj4tji`: that one has
+`pragmatica` but no `pragmatica-extended`, which `--font-heading` needs.
+
+> **`pragmatica-extended` ships only weights 400 and 700. There is no Light
+> (300).** The design spec is Pragmatica Extended _Light_, so headings currently
+> render heavier than the comps. Fixing it is an Adobe Fonts kit change, not a
+> code change.
+
+Verifying a weight, if you touch this: `document.fonts.check('300 16px
+"pragmatica-extended"')` returns **`true`** even though 300 does not exist — it
+matches at family level after fallback. Iterate `[...document.fonts]` and read
+each face's `.weight` / `.status` instead.
+
+## Two CSP traps, both silent
+
+1. **`p.typekit.net` belongs in `style-src`, not just `font-src`.** It serves a
+   second stylesheet (`p.css`) as well as the woff2 files. With only `font-src`
+   the browser blocks `p.css` and no face ever registers. The smoke suite's
+   console-error assertion is the only thing that surfaces this — keep it.
+2. **No inline event handlers.** The fleet's usual font trick —
+   `media="print"` plus `onload="this.media='all'"` — is an inline handler, and
+   this site's CSP grants `script-src` nonces _without_ `'unsafe-inline'`. A
+   nonce never authorises an inline handler, so the swap is blocked, `media`
+   stays `"print"`, and fonts are fetched but never applied with no error on the
+   happy path. The plain `<link rel="stylesheet">` here is deliberate.
+
+## Assets and copy already in the repo
+
+| path                             | what                                                           |
+| -------------------------------- | -------------------------------------------------------------- |
+| `static/logo-mark.svg`           | the mark alone (blue swoosh, green swoosh, heart)              |
+| `static/logo-lockup.svg`         | full horizontal lockup, mark + wordmark                        |
+| `static/favicon.png`             | the mark at 94% on cream, 512²                                 |
+| `content/es-website-content.txt` | Spanish site copy, 171 paragraphs, keyed to the Figma sections |
+
+The Spanish source is labelled _Español latino (EE. UU.)_. The locale actually
+added in Prismic is `es-mx` — see the CMS notes above.
+
+The logo came out of Figma via `download_assets`, which returns the lockup plus
+separable sub-assets; the mark is the 2:1 one. The Dropbox logo-package share
+link is **not** usable programmatically — it renders its file listing
+client-side, so there is nothing to fetch server-side.
+
+The favicon's ceiling, so nobody re-litigates it: the mark is 2:1, so it can
+never fill more than half a square tile's height. 94% inset was chosen over 84%
+(too small at 32px); a cream tile was chosen over transparent, which nearly
+disappears on a dark tab bar. 16px stays marginal regardless of inset.
+
+## Still template defaults
+
+`DEFAULT_OG_IMAGE` is intentionally unset — shipping the starter's card would
+leak Reddoor branding onto a client site. Needs a 1200×630 `og-default.png`.
+`src/lib/site-config.json` still ships empty (logo-only Nav, placeholder
+Footer).
