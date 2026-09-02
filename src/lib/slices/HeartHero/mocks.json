@@ -5,23 +5,26 @@
     "primary": {
       "image": {
         "__TYPE__": "ImageContent",
-        "url": "https://images.unsplash.com/photo-1576091160550-2173dba999ef",
+        "url": "/dev/placeholder-hero.webp",
         "origin": {
           "id": "main",
-          "url": "https://images.unsplash.com/photo-1576091160550-2173dba999ef",
-          "width": 1600,
-          "height": 1067
+          "url": "/dev/placeholder-hero.webp",
+          "width": 1024,
+          "height": 682
         },
-        "width": 1600,
-        "height": 1067,
+        "width": 1024,
+        "height": 682,
         "edit": {
           "background": "transparent",
           "zoom": 1,
-          "crop": { "x": 0, "y": 0 },
+          "crop": {
+            "x": 0,
+            "y": 0
+          },
           "name": "focuspoint"
         },
         "credits": null,
-        "alt": "A patient smiling while talking with a family member in a hospital room",
+        "alt": "A mother and daughter embracing at home",
         "thumbnails": {}
       }
     },

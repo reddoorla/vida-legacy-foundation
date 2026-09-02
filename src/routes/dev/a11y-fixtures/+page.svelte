@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { Content, ImageField } from "@prismicio/client";
+  import { PLACEHOLDER_HERO, PLACEHOLDER_PORTRAIT } from "./placeholders";
   import Accordion from "$lib/components/Accordion.svelte";
   import BrandIcon from "$lib/components/BrandIcon.svelte";
   import Modal from "$lib/components/Modal.svelte";
@@ -34,10 +35,28 @@
   // Inline pixel so media fixtures stay hermetic — the axe run must not
   // depend on external hosts (Prismic, Vimeo).
   const pixel = "data:image/gif;base64,R0lGODlhAQABAAAAACw=";
+
+  // Real placeholder photography, served from static/dev/. Still hermetic (same
+  // origin, no external host) and still allowed by the CSP, whose img-src is
+  // `self data: https://*.prismic.io` — which is why the old unsplash.com mock
+  // URLs rendered as nothing at all.
+  //
+  // These are the comps' own iStock images, watermark included: they are the
+  // crops the design actually assumes, and the watermark is a standing reminder
+  // that licensed imagery is still outstanding.
+  // Slices rendering through <PrismicImage> (MediaText, SectionGrid,
+  // Testimonial) need an ABSOLUTE url — its asImageWidthSrcSet calls
+  // new URL(url), which throws "Invalid URL" on a relative path and 500s the
+  // prerender. Those get data URIs; the rest read from static/dev/.
+  const placeholder = {
+    hero: PLACEHOLDER_HERO,
+    portrait: PLACEHOLDER_PORTRAIT,
+    wide: "/dev/placeholder-wide.webp",
+  };
   const heroImage = {
-    url: pixel,
-    alt: "Placeholder hero image",
-    dimensions: { width: 1920, height: 1080 },
+    url: placeholder.hero,
+    alt: "A mother and daughter embracing at home",
+    dimensions: { width: 800, height: 533 },
   } as unknown as ImageField;
   const runImport = { img: { src: pixel, w: 1920, h: 1080 }, sources: {} };
 
@@ -70,7 +89,7 @@
     },
   ] as unknown as RichTextField;
 
-  // Prismic slice fixtures. Images use the inline pixel (hermetic — no
+  // Prismic slice fixtures. Images use static/dev placeholders (hermetic — no
   // external hosts). Headings are h2 (slice sections) / h3 (items) so the page
   // outline stays valid beneath the page <h1>.
   const heartHeroFixture = {
@@ -164,9 +183,9 @@
       name: "Dana Whitfield",
       role: "Director of Operations, Northgate",
       avatar: {
-        url: pixel,
+        url: placeholder.portrait,
         alt: null,
-        dimensions: { width: 400, height: 400 },
+        dimensions: { width: 320, height: 427 },
       },
     },
     items: [],
@@ -200,197 +219,209 @@
   };
 </script>
 
-<main class="max-w-3xl mx-auto px-8 py-16 space-y-12">
-  <header class="space-y-2">
-    <h1 class="text-3xl font-bold">Accessibility fixtures</h1>
-    <p class="text-secondary">
-      Used by the Playwright + axe-core CI gate. Every primitive on this page is expected to pass
-      WCAG 2.2 AA.
-    </p>
-  </header>
+<!-- NOT a <main>: src/routes/+layout.svelte already renders one, and nesting a
+     second is a duplicate-landmark violation. It also capped every full-bleed
+     slice below to max-w-3xl, so nothing laid out the way it actually ships. -->
+<div class="space-y-12 py-16">
+  <!-- Narrow column: the component primitives only. -->
+  <div class="mx-auto max-w-3xl space-y-12 px-8">
+    <header class="space-y-2">
+      <h1 class="text-3xl font-bold">Accessibility fixtures</h1>
+      <p class="text-secondary">
+        Used by the Playwright + axe-core CI gate. Every primitive on this page is expected to pass
+        WCAG 2.2 AA.
+      </p>
+    </header>
 
-  <section aria-labelledby="focus-trap-heading" class="space-y-4">
-    <h2 id="focus-trap-heading" class="text-xl font-semibold">Focus trap</h2>
-    <button
-      type="button"
-      onclick={() => (trapDemoOpen = true)}
-      class="px-4 py-2 border-2 border-primary rounded bump"
-    >
-      Open focus-trap demo
-    </button>
-    {#if trapDemoOpen}
-      <!-- In-flow stand-in for a custom (non-<dialog>) overlay, like Nav's
+    <section aria-labelledby="focus-trap-heading" class="space-y-4">
+      <h2 id="focus-trap-heading" class="text-xl font-semibold">Focus trap</h2>
+      <button
+        type="button"
+        onclick={() => (trapDemoOpen = true)}
+        class="px-4 py-2 border-2 border-primary rounded bump"
+      >
+        Open focus-trap demo
+      </button>
+      {#if trapDemoOpen}
+        <!-- In-flow stand-in for a custom (non-<dialog>) overlay, like Nav's
            mobile menu: exercises use:trapFocus + dialog semantics under axe
            without stacking a second fixed navbar and duplicate landmarks on
            top of the app Nav the root layout already mounts. -->
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-label="Focus trap demo"
-        class="border-2 border-primary rounded p-6 space-y-4"
-        use:trapFocus={{ onEscape: () => (trapDemoOpen = false) }}
-      >
-        <p>Tab and Shift+Tab cycle within this region; Escape closes it.</p>
-        <a href="#accordion-heading" class="block underline">Accordion</a>
-        <a href="#form-heading" class="block underline">Form</a>
-        <button
-          type="button"
-          onclick={() => (trapDemoOpen = false)}
-          class="px-4 py-2 border-2 border-primary rounded bump"
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label="Focus trap demo"
+          class="border-2 border-primary rounded p-6 space-y-4"
+          use:trapFocus={{ onEscape: () => (trapDemoOpen = false) }}
         >
-          Close demo
-        </button>
-      </div>
-    {/if}
-  </section>
-
-  <section aria-labelledby="rich-text-heading" class="space-y-4">
-    <h2 id="rich-text-heading" class="text-xl font-semibold">Rich text heading levels</h2>
-    <RichTextBody field={richTextField} />
-  </section>
-
-  <section aria-labelledby="accordion-heading" class="space-y-4">
-    <h2 id="accordion-heading" class="text-xl font-semibold">Accordion</h2>
-    <Accordion {items} />
-  </section>
-
-  <section aria-labelledby="brand-icons-heading" class="space-y-4">
-    <h2 id="brand-icons-heading" class="text-xl font-semibold">Brand icons</h2>
-    <!-- BrandIcon is decorative (aria-hidden), so the accessible name must live
-         on the wrapping link — exactly how sites are expected to use it. -->
-    <ul class="flex flex-row gap-4">
-      {#each ["facebook", "x", "reddit", "instagram", "linkedin"] as platform (platform)}
-        <li>
-          <a
-            href="https://example.com/{platform}"
-            aria-label="Reddoor on {platform}"
-            class="block h-6 w-6 hover:opacity-75 transition-opacity"
+          <p>Tab and Shift+Tab cycle within this region; Escape closes it.</p>
+          <a href="#accordion-heading" class="block underline">Accordion</a>
+          <a href="#form-heading" class="block underline">Form</a>
+          <button
+            type="button"
+            onclick={() => (trapDemoOpen = false)}
+            class="px-4 py-2 border-2 border-primary rounded bump"
           >
-            <BrandIcon {platform} />
-          </a>
-        </li>
-      {/each}
-    </ul>
-  </section>
+            Close demo
+          </button>
+        </div>
+      {/if}
+    </section>
 
-  <section aria-labelledby="modal-heading" class="space-y-4">
-    <h2 id="modal-heading" class="text-xl font-semibold">Modal</h2>
-    <button
-      type="button"
-      onclick={() => (modalOpen = true)}
-      class="px-4 py-2 border-2 border-primary rounded bump"
-    >
-      Open modal
-    </button>
-    <Modal bind:open={modalOpen}>
-      <h3 class="text-lg font-semibold mb-2">Dialog title</h3>
-      <p>Native dialog element with backdrop, ESC-to-close, and focus trap.</p>
-    </Modal>
-  </section>
+    <section aria-labelledby="rich-text-heading" class="space-y-4">
+      <h2 id="rich-text-heading" class="text-xl font-semibold">Rich text heading levels</h2>
+      <RichTextBody field={richTextField} />
+    </section>
 
-  <section aria-labelledby="form-heading" class="space-y-4">
-    <h2 id="form-heading" class="text-xl font-semibold">Form</h2>
-    <Form method="POST" action="?/contact" class="space-y-4" errors={{}}>
-      <Field
-        name="email"
-        label="Email"
-        type="email"
-        description="We use this only to reply."
-        required
-        bind:value={email}
-      />
-      <Field name="message" label="Message" type="textarea" required bind:value={message} />
-      <button type="submit" class="px-4 py-2 bg-primary text-white rounded bump"> Send </button>
-    </Form>
-  </section>
+    <section aria-labelledby="accordion-heading" class="space-y-4">
+      <h2 id="accordion-heading" class="text-xl font-semibold">Accordion</h2>
+      <Accordion {items} />
+    </section>
 
-  <section aria-labelledby="form-errors-heading" class="space-y-4">
-    <h2 id="form-errors-heading" class="text-xl font-semibold">Form with errors</h2>
-    <Form
-      method="POST"
-      class="space-y-4"
-      errors={{
-        email: "Email is required.",
-        message: "Message must be at least 10 characters.",
-      }}
-    >
-      <Field name="email" label="Email" type="email" required error="Email is required." />
-      <Field
-        name="message"
-        label="Message"
-        type="textarea"
-        required
-        error="Message must be at least 10 characters."
-      />
-      <button type="submit" class="px-4 py-2 bg-primary text-white rounded bump"> Send </button>
-    </Form>
-  </section>
+    <section aria-labelledby="brand-icons-heading" class="space-y-4">
+      <h2 id="brand-icons-heading" class="text-xl font-semibold">Brand icons</h2>
+      <!-- BrandIcon is decorative (aria-hidden), so the accessible name must live
+         on the wrapping link — exactly how sites are expected to use it. -->
+      <ul class="flex flex-row gap-4">
+        {#each ["facebook", "x", "reddit", "instagram", "linkedin"] as platform (platform)}
+          <li>
+            <a
+              href="https://example.com/{platform}"
+              aria-label="Reddoor on {platform}"
+              class="block h-6 w-6 hover:opacity-75 transition-opacity"
+            >
+              <BrandIcon {platform} />
+            </a>
+          </li>
+        {/each}
+      </ul>
+    </section>
 
-  <section aria-labelledby="hero-image-heading" class="space-y-4">
-    <h2 id="hero-image-heading" class="text-xl font-semibold">Hero background image</h2>
-    <div class="relative h-40 overflow-hidden">
-      <HeroBackgroundImage image={heroImage} altFallback="Placeholder hero" />
-    </div>
-  </section>
+    <section aria-labelledby="modal-heading" class="space-y-4">
+      <h2 id="modal-heading" class="text-xl font-semibold">Modal</h2>
+      <button
+        type="button"
+        onclick={() => (modalOpen = true)}
+        class="px-4 py-2 border-2 border-primary rounded bump"
+      >
+        Open modal
+      </button>
+      <Modal bind:open={modalOpen}>
+        <h3 class="text-lg font-semibold mb-2">Dialog title</h3>
+        <p>Native dialog element with backdrop, ESC-to-close, and focus trap.</p>
+      </Modal>
+    </section>
 
-  <section aria-labelledby="img-heading" class="space-y-4">
-    <h2 id="img-heading" class="text-xl font-semibold">Progressive image</h2>
-    <Img src={runImport} alt="Placeholder progressive image" />
-  </section>
+    <section aria-labelledby="form-heading" class="space-y-4">
+      <h2 id="form-heading" class="text-xl font-semibold">Form</h2>
+      <Form method="POST" action="?/contact" class="space-y-4" errors={{}}>
+        <Field
+          name="email"
+          label="Email"
+          type="email"
+          description="We use this only to reply."
+          required
+          bind:value={email}
+        />
+        <Field name="message" label="Message" type="textarea" required bind:value={message} />
+        <button type="submit" class="px-4 py-2 bg-primary text-white rounded bump"> Send </button>
+      </Form>
+    </section>
 
-  <section aria-labelledby="vimeo-banner-heading" class="space-y-4">
-    <h2 id="vimeo-banner-heading" class="text-xl font-semibold">Vimeo banner</h2>
-    <!-- No real video plays in CI: the iframe mounts only after genuine input,
+    <section aria-labelledby="form-errors-heading" class="space-y-4">
+      <h2 id="form-errors-heading" class="text-xl font-semibold">Form with errors</h2>
+      <Form
+        method="POST"
+        class="space-y-4"
+        errors={{
+          email: "Email is required.",
+          message: "Message must be at least 10 characters.",
+        }}
+      >
+        <Field name="email" label="Email" type="email" required error="Email is required." />
+        <Field
+          name="message"
+          label="Message"
+          type="textarea"
+          required
+          error="Message must be at least 10 characters."
+        />
+        <button type="submit" class="px-4 py-2 bg-primary text-white rounded bump"> Send </button>
+      </Form>
+    </section>
+
+    <section aria-labelledby="hero-image-heading" class="space-y-4">
+      <h2 id="hero-image-heading" class="text-xl font-semibold">Hero background image</h2>
+      <div class="relative h-40 overflow-hidden">
+        <HeroBackgroundImage image={heroImage} altFallback="Placeholder hero" />
+      </div>
+    </section>
+
+    <section aria-labelledby="img-heading" class="space-y-4">
+      <h2 id="img-heading" class="text-xl font-semibold">Progressive image</h2>
+      <Img src={runImport} alt="Placeholder progressive image" />
+    </section>
+
+    <section aria-labelledby="vimeo-banner-heading" class="space-y-4">
+      <h2 id="vimeo-banner-heading" class="text-xl font-semibold">Vimeo banner</h2>
+      <!-- No real video plays in CI: the iframe mounts only after genuine input,
          so axe sees the poster-only state. -->
-    <VimeoBanner vimeoId="1" poster={runImport} alt="Placeholder banner reel" />
-  </section>
+      <VimeoBanner vimeoId="1" poster={runImport} alt="Placeholder banner reel" />
+    </section>
 
-  <section aria-labelledby="screen-width-media-heading" class="space-y-4">
-    <h2 id="screen-width-media-heading" class="text-xl font-semibold">Screen-width media</h2>
-    <!-- Poster-only (no vimeoId) so the fixture makes no external requests:
+    <section aria-labelledby="screen-width-media-heading" class="space-y-4">
+      <h2 id="screen-width-media-heading" class="text-xl font-semibold">Screen-width media</h2>
+      <!-- Poster-only (no vimeoId) so the fixture makes no external requests:
          the video iframe needs a live player.vimeo.com src, so its a11y
          attributes (tabindex="-1", aria-hidden) are asserted in
          ScreenWidthMedia.test.ts instead. -->
-    <ScreenWidthMedia src={pixel} altText="Placeholder background" percentHeight={30} />
-  </section>
+      <ScreenWidthMedia
+        src={placeholder.wide}
+        altText="Placeholder background"
+        percentHeight={30}
+      />
+    </section>
 
-  <section aria-labelledby="slider-heading" class="space-y-4">
-    <h2 id="slider-heading" class="text-xl font-semibold">Slider</h2>
-    <Slider itemCount={3} label="Example slides">
-      {#snippet children({ index }: { index: number })}
-        <div class="border-2 border-primary rounded p-6">
-          <p>Slide body {index + 1}</p>
-        </div>
-      {/snippet}
-    </Slider>
-  </section>
+    <section aria-labelledby="slider-heading" class="space-y-4">
+      <h2 id="slider-heading" class="text-xl font-semibold">Slider</h2>
+      <Slider itemCount={3} label="Example slides">
+        {#snippet children({ index }: { index: number })}
+          <div class="border-2 border-primary rounded p-6">
+            <p>Slide body {index + 1}</p>
+          </div>
+        {/snippet}
+      </Slider>
+    </section>
 
-  <section aria-labelledby="slider-autoplay-heading" class="space-y-4">
-    <h2 id="slider-autoplay-heading" class="text-xl font-semibold">Slider (autoplay)</h2>
-    <!-- Rotation is live during the axe run so the pause/play control and the
+    <section aria-labelledby="slider-autoplay-heading" class="space-y-4">
+      <h2 id="slider-autoplay-heading" class="text-xl font-semibold">Slider (autoplay)</h2>
+      <!-- Rotation is live during the axe run so the pause/play control and the
          muted live region are what get audited — the moving state is the one
          users hit. -->
-    <Slider itemCount={3} label="Autoplaying slides" autoplay={5000}>
-      {#snippet children({ index }: { index: number })}
-        <div class="border-2 border-primary rounded p-6">
-          <p>Autoplay slide body {index + 1}</p>
-        </div>
-      {/snippet}
-    </Slider>
-  </section>
+      <Slider itemCount={3} label="Autoplaying slides" autoplay={5000}>
+        {#snippet children({ index }: { index: number })}
+          <div class="border-2 border-primary rounded p-6">
+            <p>Autoplay slide body {index + 1}</p>
+          </div>
+        {/snippet}
+      </Slider>
+    </section>
 
-  <section aria-labelledby="countup-heading" class="space-y-4">
-    <h2 id="countup-heading" class="text-xl font-semibold">Count up</h2>
-    <!-- The animating digits live in an aria-hidden layer; a visually-hidden
+    <section aria-labelledby="countup-heading" class="space-y-4">
+      <h2 id="countup-heading" class="text-xl font-semibold">Count up</h2>
+      <!-- The animating digits live in an aria-hidden layer; a visually-hidden
          sibling carries the final value for assistive tech, so axe audits the
          two-layer structure. -->
-    <p class="text-3xl font-bold">
-      <CountUp value={1284} suffix="+" /> projects delivered
-    </p>
-  </section>
+      <p class="text-3xl font-bold">
+        <CountUp value={1284} suffix="+" /> projects delivered
+      </p>
+    </section>
+  </div>
 
-  <!-- Prismic slices — each renders its own <section> + heading; axe
-       audits the produced markup (contrast, alt text, heading order). -->
+  <!-- Prismic slices — full-bleed, OUTSIDE the narrow column: these ship
+       edge-to-edge, and a width cap here hides real layout bugs. Each renders
+       its own <section> + heading; axe audits the produced markup (contrast,
+       alt text, heading order). -->
   <HeartHero slice={heartHeroFixture} />
   <Hero slice={heroSliceFixture} />
   <MediaText slice={mediaTextFixture} />
@@ -400,7 +431,7 @@
   <AccordionSlice slice={accordionFixture} />
   <Testimonial slice={testimonialFixture} />
   <CtaBanner slice={ctaBannerFixture} />
-</main>
+</div>
 
 <!-- Renders nothing at rest (overlay only appears mid-navigation, aria-hidden);
      mounted so the axe gate covers its resting state. -->
