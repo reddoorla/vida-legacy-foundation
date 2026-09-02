@@ -38,10 +38,28 @@
   --color-accent: #652323; /* dark red */
   --color-cream: #fffbf4; /* near-white, for text on the dark grounds */
 
+  /* "textured blue" — the raised card ground inside the night-blue bands
+     (Figma 5249:1243). Lighter than --color-dark, so it is the tightest of the
+     dark grounds. Measured on it:
+       #fdf5e8 beige   9.53  text ok
+       #9cbf5b green   4.92  text ok
+     The grain sits over it at 15% mix-blend-difference; the texture's brightest
+     pixel is 254, which lifts the ground to #265575 at worst and takes green to
+     3.80 — still AA for the 36px stat figures (large text), which are the only
+     green on it. Do not put small green text here. */
+  --color-blue-textured: #004370;
+
   /* Greens. Only green-deep and green-btn are safe as body text on beige. */
   --color-green-deep: #172303; /* "textured dark green" ground */
   --color-green-btn: #263b02; /* button fill on dark, button text on green */
   --color-green-mid: #527e01; /* large text only — 4.47 on beige */
+  /* The same green, darkened 2% so it clears AA at body size (4.65 on beige).
+     The delta is 2/3/0 per channel — indistinguishable beside the design value,
+     which is the point: the comps set 10px footer copy in #527e01, and that
+     is the one place the design misses AA outright. Use this for green text
+     BELOW display scale; keep --color-green-mid for the big stuff, where the
+     exact Figma value matters and 4.47 is already compliant. */
+  --color-green-mid-aa: #507b01;
 
   /* Brand fills. Never assign these to body text on the cream background. */
   --color-green: #9cbf5b;

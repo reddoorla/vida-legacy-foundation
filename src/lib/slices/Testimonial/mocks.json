@@ -48,5 +48,79 @@
       }
     },
     "items": []
+  },
+  {
+    "__TYPE__": "SharedSliceContent",
+    "variation": "onCream",
+    "primary": {
+      "quote": {
+        "__TYPE__": "FieldContent",
+        "type": "Text",
+        "value": "The Vida Legacy Foundation made a difficult time manageable."
+      },
+      "name": {
+        "__TYPE__": "FieldContent",
+        "type": "Text",
+        "value": "Grateful Family Member"
+      }
+    },
+    "items": [
+      {
+        "__TYPE__": "GroupItemContent",
+        "value": [
+          [
+            "image",
+            {
+              "__TYPE__": "ImageContent",
+              "url": "/dev/placeholder-wide.webp",
+              "origin": {
+                "id": "main",
+                "url": "/dev/placeholder-wide.webp",
+                "width": 1280,
+                "height": 853
+              },
+              "width": 1280,
+              "height": 853,
+              "edit": {
+                "background": "transparent",
+                "zoom": 1,
+                "crop": { "x": 0, "y": 0 }
+              },
+              "credits": null,
+              "alt": "A patient resting in a hospital bed",
+              "thumbnails": {}
+            }
+          ]
+        ]
+      },
+      {
+        "__TYPE__": "GroupItemContent",
+        "value": [
+          [
+            "image",
+            {
+              "__TYPE__": "ImageContent",
+              "url": "/dev/placeholder-hero.webp",
+              "origin": {
+                "id": "main",
+                "url": "/dev/placeholder-hero.webp",
+                "width": 1280,
+                "height": 853
+              },
+              "width": 1280,
+              "height": 853,
+              "edit": {
+                "background": "transparent",
+                "zoom": 1,
+                "crop": { "x": 0, "y": 0 }
+              },
+              "credits": null,
+              "alt": "A father carrying his son on his shoulders outdoors",
+              "thumbnails": {}
+            }
+          ]
+        ]
+      }
+    ]
   }
 ]

@@ -4,6 +4,7 @@
   import Accordion from "$lib/components/Accordion.svelte";
   import BrandIcon from "$lib/components/BrandIcon.svelte";
   import Modal from "$lib/components/Modal.svelte";
+  import NavMenu from "$lib/components/NavMenu.svelte";
   import Form from "$lib/components/Form.svelte";
   import Field from "$lib/components/Field.svelte";
   import HeroBackgroundImage from "$lib/components/HeroBackgroundImage.svelte";
@@ -17,6 +18,12 @@
   import Hero from "$lib/slices/Hero/index.svelte";
   import MediaText from "$lib/slices/MediaText/index.svelte";
   import SectionGrid from "$lib/slices/SectionGrid/index.svelte";
+  import StatsBand from "$lib/slices/StatsBand/index.svelte";
+  import IconColumns from "$lib/slices/IconColumns/index.svelte";
+  import ImageBand from "$lib/slices/ImageBand/index.svelte";
+  import PageMasthead from "$lib/slices/PageMasthead/index.svelte";
+  import PersonGrid from "$lib/slices/PersonGrid/index.svelte";
+  import StatementPanel from "$lib/slices/StatementPanel/index.svelte";
   import LeadText from "$lib/slices/LeadText/index.svelte";
   import TextColumns from "$lib/slices/TextColumns/index.svelte";
   import Testimonial from "$lib/slices/Testimonial/index.svelte";
@@ -167,6 +174,90 @@
       body: rtx("They needed an identity on a tight timeline to communicate that message."),
     },
   };
+  // VLF TOSA x Vida grid: text-only cards on #172303 plus a closing CTA cell.
+  // The CTA is an EXTERNAL url on purpose — an internal /about here would be
+  // followed by the prerender crawler and 404 the build, since no such Prismic
+  // page exists yet.
+  const sectionGridOnDarkFixture = {
+    slice_type: "section_grid",
+    variation: "onDark",
+    primary: {
+      heading: [],
+      outro: [
+        {
+          type: "paragraph",
+          text: "Together, TOSA and Vida Legacy Foundation provide ongoing support for families impacted by organ donation.",
+          spans: [],
+        },
+      ],
+      cta_label: "Who we are",
+      cta_link: { link_type: "Web", url: "https://example.com/about" },
+    },
+    items: [
+      {
+        item_heading: [{ type: "heading3", text: "Independent but Connected", spans: [] }],
+        item_body: [
+          { type: "paragraph", text: "A separate 501(c)(3) created by TOSA.", spans: [] },
+        ],
+      },
+      {
+        item_heading: [{ type: "heading3", text: "Complementary Missions", spans: [] }],
+        item_body: [
+          {
+            type: "paragraph",
+            text: "TOSA handles organ procurement; VLF supports families.",
+            spans: [],
+          },
+        ],
+      },
+      {
+        item_heading: [{ type: "heading3", text: "Local Impact", spans: [] }],
+        item_body: [
+          {
+            type: "paragraph",
+            text: "Philanthropic support stays in Central and South Texas.",
+            spans: [],
+          },
+        ],
+      },
+    ],
+  } as unknown as Content.SectionGridSlice;
+
+  // VLF "A companion on the journey": sticky intro + icon card + photo. Locks
+  // the decorative-icon markup and the 7.84 / 15.18 pairings on #172303.
+  const iconColumnsFixture = {
+    slice_type: "icon_columns",
+    variation: "default",
+    primary: {
+      eyebrow: "A companion on the journey",
+      body: [
+        {
+          type: "paragraph",
+          text: "Vida Legacy Foundation leads the way in organ donation after-care.",
+          spans: [],
+        },
+      ],
+      image: heroImage,
+    },
+    items: [
+      {
+        icon: { url: "/icons/relief.svg", alt: "", dimensions: { width: 81, height: 82 } },
+        title: "Grants for recovery",
+        description: "Families find relief with our grants making recovery stress-free.",
+      },
+      {
+        icon: { url: "/icons/brain.svg", alt: "", dimensions: { width: 133, height: 133 } },
+        title: "Access to education",
+        description: "We equip families to make better choices.",
+      },
+      {
+        icon: { url: "/icons/community.svg", alt: "", dimensions: { width: 100, height: 75 } },
+        title: "Compassionate support",
+        description: "We provide support through community and compassion.",
+      },
+    ],
+  } as unknown as Content.IconColumnsSlice;
+
   // The VLF mission statement: onDark ground with a `highlight` label on the
   // opening phrase. Locks the label styling and the 11.35:1 / 5.86:1 pairings
   // under the axe gate.
@@ -232,6 +323,210 @@
     },
     items: [],
   } as unknown as Content.CtaBannerSlice;
+  // VLF "Compassion in Action": the night-blue CTA band. Locks the eyebrow
+  // staying OUT of the outline (one h2 per section) and the #263b02/#9cbf5b
+  // button couple under the axe gate — never white-on-green.
+  const ctaBannerOnDarkFixture = {
+    slice_type: "cta_banner",
+    variation: "onDark",
+    primary: {
+      eyebrow: "Compassion in Action",
+      heading: [
+        {
+          type: "heading2",
+          text: "Vida Legacy Foundation believes no family should walk the transplant journey alone.",
+          spans: [],
+        },
+      ],
+      body: [
+        {
+          type: "paragraph",
+          text: "Your financial gift will bring hope, healing, and relief to families in need.",
+          spans: [],
+        },
+      ],
+      buttonLabel: "Donate now",
+      buttonLink: { link_type: "Web", url: "https://example.com/donate" },
+    },
+    items: [],
+  } as unknown as Content.CtaBannerSlice;
+
+  // VLF "By the numbers". The contrast-sensitive one: #9cbf5b figures sit at
+  // 4.92:1 on #004370, dropping to 3.80 under the brightest grain pixel — AA
+  // for large text only, which is why nothing small here is green.
+  const statsBandFixture = {
+    slice_type: "stats_band",
+    variation: "default",
+    primary: {
+      eyebrow: "By the numbers",
+      cta_label: "Register to be an organ donor",
+      // External on purpose: an internal path here would be followed by the
+      // prerender crawler and 404 the build.
+      cta_link: { link_type: "Web", url: "https://example.com/register" },
+    },
+    items: [
+      {
+        value: 100000,
+        suffix: "+",
+        description: "More than 100,000 people are on the waiting list right now.",
+      },
+      { value: 13, suffix: "people", description: "Thirteen people die every day waiting." },
+      { value: 30, suffix: "%", description: "A 30% gap you can close in seconds." },
+      { value: 8, suffix: "lives", description: "One donor can save up to eight lives." },
+    ],
+  } as unknown as Content.StatsBandSlice;
+
+  // The VLF homepage tagline: the copy IS the h2, and the `highlight` label
+  // both colours the second phrase and breaks the line.
+  const leadTextStatementFixture: ComponentProps<typeof LeadText>["slice"] = {
+    slice_type: "lead_text",
+    variation: "statement",
+    primary: {
+      body: [
+        {
+          type: "heading2",
+          text: "Hope that heals. Help that Lasts.",
+          spans: [{ type: "label", start: 17, end: 33, data: { label: "highlight" } }],
+        },
+      ],
+    } as never,
+  };
+  // VLF "Make a contribution": the cream closing panel. Locks the inverted
+  // button couple (#9cbf5b fill + #263b02 text, 5.86:1) and the #527e01
+  // highlight, which is 4.47:1 on cream — safe ONLY at this display scale.
+  const ctaBannerOnCreamFixture = {
+    slice_type: "cta_banner",
+    variation: "onCream",
+    primary: {
+      eyebrow: "Make a contribution",
+      heading: [
+        {
+          type: "heading2",
+          text: "We understand this journey can make families feel alone. We're there to help.",
+          spans: [{ type: "label", start: 57, end: 77, data: { label: "highlight" } }],
+        },
+      ],
+      buttonLabel: "Donate now",
+      buttonLink: { link_type: "Web", url: "https://example.com/donate" },
+    },
+    items: [],
+  } as unknown as Content.CtaBannerSlice;
+
+  // The closing quote + photo row. Data URIs, not static/dev paths: this
+  // renders through <PrismicImage>, whose asImageWidthSrcSet calls new URL()
+  // and throws "Invalid URL" on a relative path, 500ing the prerender.
+  const testimonialOnCreamFixture = {
+    slice_type: "testimonial",
+    variation: "onCream",
+    primary: {
+      quote: "The Vida Legacy Foundation made a difficult time manageable.",
+      name: "Grateful Family Member",
+    },
+    items: [
+      {
+        image: {
+          url: placeholder.hero,
+          alt: "A patient resting in a hospital bed",
+          dimensions: { width: 800, height: 533 },
+        },
+      },
+      {
+        image: {
+          url: placeholder.portrait,
+          alt: "A father carrying his son on his shoulders",
+          dimensions: { width: 320, height: 427 },
+        },
+      },
+    ],
+  } as unknown as Content.TestimonialSlice;
+
+  // The full-bleed photo bands that break up the homepage. No copy sits over
+  // them, so there is no scrim and no contrast rule to honour — but the alt
+  // text still gets audited, which is why the fixture carries a real one.
+  const imageBandFixture = {
+    slice_type: "image_band",
+    variation: "default",
+    primary: { image: heroImage },
+    items: [],
+  } as unknown as Content.ImageBandSlice;
+
+  // Who We Are mission band. The statement uses --color-green-mid-aa rather
+  // than the comp's #527e01: the type clamps to 20px on a phone, which is body
+  // size, where 4.47:1 fails — and the axe gate only runs one viewport.
+  const statementPanelFixture = {
+    slice_type: "statement_panel",
+    variation: "default",
+    primary: {
+      statement: [
+        {
+          type: "heading2",
+          text: "Our mission is to honor the gift of life through education, outreach, and support for families in our South Texas community.",
+          spans: [],
+        },
+      ],
+      body: [
+        {
+          type: "paragraph",
+          text: "Vida Legacy Foundation is an independent 501(c)(3) nonprofit organization founded by Texas Organ Sharing Alliance.",
+          spans: [],
+        },
+      ],
+    },
+    items: [],
+  } as unknown as Content.StatementPanelSlice;
+
+  // Two PersonGrid fixtures on purpose: the heading levels SHIFT with the
+  // display heading (h2/h3/h4 with it, h2/h3 without), and rendering both is
+  // what lets axe's heading-order rule audit the promotion. Only the first
+  // person carries a bio, which is what draws the "+" trigger.
+  const person = (name: string, role: string, withBio: boolean) => ({
+    headshot: { url: placeholder.portrait, alt: name, dimensions: { width: 592, height: 592 } },
+    name,
+    role,
+    email: `${name.split(" ")[0].toLowerCase()}@example.org`,
+    bio: withBio ? [{ type: "paragraph", text: `${name} has served since 2019.`, spans: [] }] : [],
+  });
+  const personGridFixture = {
+    slice_type: "person_grid",
+    variation: "default",
+    primary: {
+      heading: [
+        {
+          type: "heading2",
+          text: "A Team That Cares",
+          spans: [{ type: "label", start: 12, end: 17, data: { label: "highlight" } }],
+        },
+      ],
+      label: "Leadership",
+      intro: [{ type: "paragraph", text: "Our staff is dedicated to the mission.", spans: [] }],
+    },
+    items: [
+      person("Brooke Perucki", "Executive Director", true),
+      person("Vilma Gonzalez", "Finance & Administration Manager", false),
+    ],
+  } as unknown as Content.PersonGridSlice;
+  const personGridNoHeadingFixture = {
+    ...personGridFixture,
+    primary: {
+      ...personGridFixture.primary,
+      heading: [],
+      label: "Board of Directors",
+    },
+  } as unknown as Content.PersonGridSlice;
+
+  // Who We Are masthead. Its title is an h1 — the ONLY slice that renders one,
+  // since the [uid] route renders nothing but the slice zone. The fixture is
+  // deliberately title-LESS: this page already has its own h1, and a second
+  // would be a page-has-heading-one violation of the fixtures page, not of the
+  // slice. The h1 is asserted in the unit test; what axe audits here is the
+  // photo-only form the comp actually ships.
+  const pageMastheadFixture = {
+    slice_type: "page_masthead",
+    variation: "default",
+    primary: { image: heroImage, eyebrow: "About us", title: "" },
+    items: [],
+  } as unknown as Content.PageMastheadSlice;
+
   const accordionFixture: ComponentProps<typeof AccordionSlice>["slice"] = {
     slice_type: "accordion",
     variation: "default",
@@ -295,6 +590,27 @@
           </button>
         </div>
       {/if}
+    </section>
+
+    <section aria-labelledby="nav-menu-heading" class="space-y-4">
+      <h2 id="nav-menu-heading" class="text-xl font-semibold">Navigation menu</h2>
+      <!-- The site menu is not in the DOM until opened, so the root layout's
+           Nav never shows it to axe. Rendered in-flow here (inline: absolute
+           inside this box, no focus trap) so the cream and green labels on the
+           textured dark green are audited. Its entries mirror site-config,
+           including the href-less one that renders as text. -->
+      <div class="relative h-[520px] overflow-hidden">
+        <NavMenu
+          inline
+          onClose={() => {}}
+          entries={[
+            { label: "Who We Are", href: "" },
+            { label: "Donate", href: "https://example.org/donate" },
+            { label: "Contact Us", href: "#nav-menu-heading" },
+            { label: "Become a Donor", href: "https://example.org/register" },
+          ]}
+        />
+      </div>
     </section>
 
     <section aria-labelledby="rich-text-heading" class="space-y-4">
@@ -457,10 +773,22 @@
   <SectionGrid slice={sectionGridFixture} />
   <LeadText slice={leadTextFixture} />
   <LeadText slice={leadTextOnDarkFixture} />
+  <IconColumns slice={iconColumnsFixture} />
+  <SectionGrid slice={sectionGridOnDarkFixture} />
   <TextColumns slice={textColumnsFixture} />
   <AccordionSlice slice={accordionFixture} />
   <Testimonial slice={testimonialFixture} />
   <CtaBanner slice={ctaBannerFixture} />
+  <CtaBanner slice={ctaBannerOnDarkFixture} />
+  <StatsBand slice={statsBandFixture} />
+  <LeadText slice={leadTextStatementFixture} />
+  <CtaBanner slice={ctaBannerOnCreamFixture} />
+  <Testimonial slice={testimonialOnCreamFixture} />
+  <ImageBand slice={imageBandFixture} />
+  <PageMasthead slice={pageMastheadFixture} />
+  <StatementPanel slice={statementPanelFixture} />
+  <PersonGrid slice={personGridFixture} />
+  <PersonGrid slice={personGridNoHeadingFixture} />
 </div>
 
 <!-- Renders nothing at rest (overlay only appears mid-navigation, aria-hidden);

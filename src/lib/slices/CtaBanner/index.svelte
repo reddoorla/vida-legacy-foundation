@@ -12,8 +12,32 @@
   type Props = { slice: Content.CtaBannerSlice };
   let { slice }: Props = $props();
 
-  const background = $derived(slice.primary.background ?? "light");
-  const onDark = $derived(background === "dark");
+  // onDark is the VLF "Compassion in Action" band (Figma 5249:1232): the same
+  // one-headline-one-link idea as the default, but on the night-blue ground
+  // with an eyebrow and a supporting paragraph. It is an EXPLICIT branch: its
+  // primary has no `background` select — the variation IS the ground.
+  let navy = $derived(slice.variation === "onDark");
+  // slice.primary is a union across variations, so eyebrow/body are not
+  // reachable without narrowing. Narrow once here rather than at each use site.
+  let dark = $derived(
+    slice.variation === "onDark" ? (slice.primary as Content.CtaBannerSliceOnDarkPrimary) : null,
+  );
+
+  // onCream is the page's closing panel (Figma 5249:1286): the same
+  // eyebrow/statement/button parts as onDark, but at display scale on the
+  // cream ground, and it draws the 80px rounded top that lifts the whole
+  // closing region (this + the testimonial row + the footer) off the dark
+  // band above it. Only this slice paints that corner — the sections beneath
+  // it are flat cream and stack into the same panel.
+  let cream = $derived(slice.variation === "onCream");
+  let light = $derived(
+    slice.variation === "onCream" ? (slice.primary as Content.CtaBannerSliceOnCreamPrimary) : null,
+  );
+  // `background` belongs to the default variation only.
+  const background = $derived(
+    ("background" in slice.primary ? slice.primary.background : null) ?? "light",
+  );
+  const onDarkGround = $derived(background === "dark");
 
   // Full literal class strings so the Tailwind scanner keeps them. The palette
   // is the starter's placeholder theme (app.css `@theme`) — swap the tokens
@@ -35,30 +59,153 @@
   // them) wearing the shared button skin. Never a <button> inside a link —
   // that is axe's `nested-interactive` violation.
   const buttonClass = $derived(
-    `${buttonBaseClasses} ${onDark ? buttonSkinInverseClasses : buttonSkinClasses} shrink-0`,
+    `${buttonBaseClasses} ${onDarkGround ? buttonSkinInverseClasses : buttonSkinClasses} shrink-0`,
   );
 </script>
 
-<!-- A closing call-to-action band: one headline, one link. Deliberately
+{#if navy && dark}
+  <!--
+    Figma 5249:1232. A left-aligned block centred in the 1440 frame on #01263f.
+    Contrast measured on that ground:
+      #9cbf5b eyebrow    7.42:1
+      #fdf5e8 copy      14.37:1
+      button #263b02 + #9cbf5b — the design's couple, 5.86:1
+
+    Vertical rhythm: the comp runs pt-80 / gap-60 / pb-60 across this band AND
+    the stats card below it, which ships as its own slice so an author can drop
+    either one alone. The 60px gap is therefore split 30/30 across the facing
+    edges — this pays pb-[30px], StatsBand pays pt-[30px].
+  -->
+  <ContentBand
+    sliceType={slice.slice_type}
+    variation={slice.variation}
+    sectionClass="bg-dark"
+    contentClass="flex max-w-[1440px] flex-col items-center px-6 pt-16 pb-[30px] md:px-20 md:pt-20"
+  >
+    <div class="flex w-full max-w-[680px] flex-col items-start gap-5">
+      {#if dark.eyebrow}
+        <!-- A label, NOT the section heading: unlike LeadText/IconColumns this
+             variation carries a real heading sentence below, and promoting the
+             eyebrow too would put two h2s in one section. -->
+        <p class="text-green font-heading text-xs tracking-[1.5px] uppercase">
+          {dark.eyebrow}
+        </p>
+      {/if}
+      {#if isFilled.richText(slice.primary.heading)}
+        <div
+          class="cta-statement text-background font-heading text-[clamp(1.25rem,1.67vw,1.5rem)] leading-[1.45]"
+        >
+          <RichTextBody field={slice.primary.heading} />
+        </div>
+      {/if}
+      {#if isFilled.richText(dark.body)}
+        <div class="richtext-block text-background max-w-[578px] text-base leading-6">
+          <RichTextBody field={dark.body} />
+        </div>
+      {/if}
+      {#if hasButton}
+        <PrismicLink
+          field={slice.primary.buttonLink}
+          class="bg-green-btn text-green font-button inline-flex h-10 w-fit items-center justify-center rounded-full px-3.75 text-[10px] tracking-[1px] uppercase"
+        >
+          {slice.primary.buttonLabel}
+        </PrismicLink>
+      {/if}
+    </div>
+  </ContentBand>
+{:else if cream && light}
+  <!--
+    Figma 5249:1286. The cream panel rounds off the dark band above it, so the
+    <section> stays dark and the CONTENT box carries the ground and the corner.
+
+    Contrast on #fdf5e8, measured:
+      #263b02 eyebrow + statement  11.35:1
+      #527e01 highlight             4.47:1 — LARGE TEXT ONLY (it misses AA body
+        by 0.03), which is why the highlight is scoped to this display-scale
+        heading and nowhere else on cream.
+      button #9cbf5b + #263b02 — the design's couple inverted, still 5.86:1
+
+    Pays pb-10 (40px): the comp's 80px gap to the testimonial row below is
+    split 40/40, since the two ship as separate slices.
+  -->
+  <ContentBand
+    sliceType={slice.slice_type}
+    variation={slice.variation}
+    sectionClass="bg-dark"
+    contentClass="bg-background max-w-[1440px] rounded-t-[40px] px-6 pt-16 pb-10 md:rounded-t-[80px] md:px-20 md:pt-25"
+  >
+    <div class="flex flex-col items-start gap-10 md:ml-auto md:w-[74.6%]">
+      {#if light.eyebrow}
+        <!-- A label, not the section heading — same call as onDark: the
+             statement below is the real h2. -->
+        <p class="text-green-btn font-heading text-xs tracking-[1.5px] uppercase">
+          {light.eyebrow}
+        </p>
+      {/if}
+      {#if isFilled.richText(slice.primary.heading)}
+        <div class="cta-display text-green-btn font-heading leading-[1.35]">
+          <RichTextBody field={slice.primary.heading} />
+        </div>
+      {/if}
+      {#if hasButton}
+        <PrismicLink
+          field={slice.primary.buttonLink}
+          class="bg-green text-green-btn font-button inline-flex h-10 w-fit items-center justify-center rounded-full px-3.75 text-[10px] tracking-[1px] uppercase"
+        >
+          {slice.primary.buttonLabel}
+        </PrismicLink>
+      {/if}
+    </div>
+  </ContentBand>
+{:else}
+  <!-- A closing call-to-action band: one headline, one link. Deliberately
      unstyled beyond the theme tokens — the heading's size comes from the
      project's own h2 rule (app.css leaves the type scale blank), and
      RichTextBody keeps the announced level gap-free without touching the tag,
      so the visual never drifts from the outline. -->
-<ContentBand
-  sliceType={slice.slice_type}
-  variation={slice.variation}
-  sectionClass={groundClass}
-  contentClass="flex max-w-5xl flex-col items-start gap-8 px-6 py-16 md:flex-row md:items-center md:justify-between"
->
-  {#if isFilled.richText(slice.primary.heading)}
-    <div class="max-w-2xl">
-      <RichTextBody field={slice.primary.heading} />
-    </div>
-  {/if}
+  <ContentBand
+    sliceType={slice.slice_type}
+    variation={slice.variation}
+    sectionClass={groundClass}
+    contentClass="flex max-w-5xl flex-col items-start gap-8 px-6 py-16 md:flex-row md:items-center md:justify-between"
+  >
+    {#if isFilled.richText(slice.primary.heading)}
+      <div class="max-w-2xl">
+        <RichTextBody field={slice.primary.heading} />
+      </div>
+    {/if}
 
-  {#if hasButton}
-    <PrismicLink field={slice.primary.buttonLink} class={buttonClass}>
-      {slice.primary.buttonLabel}
-    </PrismicLink>
-  {/if}
-</ContentBand>
+    {#if hasButton}
+      <PrismicLink field={slice.primary.buttonLink} class={buttonClass}>
+        {slice.primary.buttonLabel}
+      </PrismicLink>
+    {/if}
+  </ContentBand>
+{/if}
+
+<style>
+  /* The statement is a real h2/h3 for document structure, but the comp sets it
+     at the H3 body scale rather than the page's heading scale — so the
+     typographic scale is overridden here rather than the element downgraded. */
+  .cta-statement :global(h2),
+  .cta-statement :global(h3) {
+    font-size: inherit;
+    line-height: inherit;
+    letter-spacing: inherit;
+    font-weight: 400;
+  }
+
+  /* onCream sets the same statement at page-display scale instead. */
+  .cta-display :global(h2) {
+    font-size: clamp(2rem, 4.17vw, 3.75rem);
+    line-height: inherit;
+    letter-spacing: 0;
+    font-weight: 300;
+  }
+
+  /* #527e01 on cream is 4.47:1 — large text only. It is safe HERE because this
+     heading is display scale and nothing else on the cream ground uses it. */
+  .cta-display :global(.highlight) {
+    color: var(--color-green-mid);
+  }
+</style>

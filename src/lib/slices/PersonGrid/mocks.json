@@ -1,0 +1,179 @@
+[
+  {
+    "__TYPE__": "SharedSliceContent",
+    "variation": "default",
+    "primary": {
+      "heading": {
+        "__TYPE__": "StructuredTextContent",
+        "value": [
+          {
+            "type": "heading2",
+            "content": {
+              "text": "A Team That Cares",
+              "spans": [
+                {
+                  "type": "label",
+                  "start": 12,
+                  "end": 17,
+                  "data": { "label": "highlight" }
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "label": {
+        "__TYPE__": "FieldContent",
+        "type": "Text",
+        "value": "Leadership"
+      },
+      "intro": {
+        "__TYPE__": "StructuredTextContent",
+        "value": [
+          {
+            "type": "paragraph",
+            "content": {
+              "text": "Our staff is dedicated to the mission of Vida Legacy Foundation, focusing their time, energy and experience into providing support for organ donors, recipients and their families.",
+              "spans": []
+            }
+          }
+        ]
+      }
+    },
+    "items": [
+      {
+        "__TYPE__": "GroupItemContent",
+        "value": [
+          [
+            "headshot",
+            {
+              "__TYPE__": "ImageContent",
+              "url": "/dev/placeholder-portrait.webp",
+              "origin": {
+                "id": "main",
+                "url": "/dev/placeholder-portrait.webp",
+                "width": 592,
+                "height": 592
+              },
+              "width": 592,
+              "height": 592,
+              "edit": {
+                "background": "transparent",
+                "zoom": 1,
+                "crop": { "x": 0, "y": 0 }
+              },
+              "credits": null,
+              "alt": "Brooke Perucki",
+              "thumbnails": {}
+            }
+          ],
+          ["name", { "__TYPE__": "FieldContent", "type": "Text", "value": "Brooke Perucki" }],
+          ["role", { "__TYPE__": "FieldContent", "type": "Text", "value": "Executive Director" }],
+          [
+            "email",
+            { "__TYPE__": "FieldContent", "type": "Text", "value": "brooke@vidalegacy.org" }
+          ],
+          [
+            "bio",
+            {
+              "__TYPE__": "StructuredTextContent",
+              "value": [
+                {
+                  "type": "paragraph",
+                  "content": {
+                    "text": "Bio copy for the pop-up. Replace with the real biography — this placeholder exists so the trigger and dialog are exercised in the simulator.",
+                    "spans": []
+                  }
+                }
+              ]
+            }
+          ]
+        ]
+      },
+      {
+        "__TYPE__": "GroupItemContent",
+        "value": [
+          [
+            "headshot",
+            {
+              "__TYPE__": "ImageContent",
+              "url": "/dev/placeholder-portrait.webp",
+              "origin": {
+                "id": "main",
+                "url": "/dev/placeholder-portrait.webp",
+                "width": 592,
+                "height": 592
+              },
+              "width": 592,
+              "height": 592,
+              "edit": {
+                "background": "transparent",
+                "zoom": 1,
+                "crop": { "x": 0, "y": 0 }
+              },
+              "credits": null,
+              "alt": "Vilma Gonzalez",
+              "thumbnails": {}
+            }
+          ],
+          ["name", { "__TYPE__": "FieldContent", "type": "Text", "value": "Vilma Gonzalez" }],
+          [
+            "role",
+            {
+              "__TYPE__": "FieldContent",
+              "type": "Text",
+              "value": "Finance & Administration Manager"
+            }
+          ],
+          [
+            "email",
+            { "__TYPE__": "FieldContent", "type": "Text", "value": "vilma@vidalegacy.org" }
+          ],
+          ["bio", { "__TYPE__": "StructuredTextContent", "value": [] }]
+        ]
+      },
+      {
+        "__TYPE__": "GroupItemContent",
+        "value": [
+          [
+            "headshot",
+            {
+              "__TYPE__": "ImageContent",
+              "url": "/dev/placeholder-portrait.webp",
+              "origin": {
+                "id": "main",
+                "url": "/dev/placeholder-portrait.webp",
+                "width": 592,
+                "height": 592
+              },
+              "width": 592,
+              "height": 592,
+              "edit": {
+                "background": "transparent",
+                "zoom": 1,
+                "crop": { "x": 0, "y": 0 }
+              },
+              "credits": null,
+              "alt": "Holly Aldridge",
+              "thumbnails": {}
+            }
+          ],
+          ["name", { "__TYPE__": "FieldContent", "type": "Text", "value": "Holly Aldridge" }],
+          [
+            "role",
+            {
+              "__TYPE__": "FieldContent",
+              "type": "Text",
+              "value": "Program Intake Services Coordinator (PT)"
+            }
+          ],
+          [
+            "email",
+            { "__TYPE__": "FieldContent", "type": "Text", "value": "intake@vidalegacy.org" }
+          ],
+          ["bio", { "__TYPE__": "StructuredTextContent", "value": [] }]
+        ]
+      }
+    ]
+  }
+]

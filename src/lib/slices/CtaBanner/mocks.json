@@ -34,5 +34,97 @@
       }
     },
     "items": []
+  },
+  {
+    "__TYPE__": "SharedSliceContent",
+    "variation": "onDark",
+    "primary": {
+      "eyebrow": {
+        "__TYPE__": "FieldContent",
+        "type": "Text",
+        "value": "Compassion in Action"
+      },
+      "heading": {
+        "__TYPE__": "StructuredTextContent",
+        "value": [
+          {
+            "type": "heading2",
+            "content": {
+              "text": "Vida Legacy Foundation (VLF) believes no family should walk the transplant journey alone."
+            }
+          }
+        ]
+      },
+      "body": {
+        "__TYPE__": "StructuredTextContent",
+        "value": [
+          {
+            "type": "paragraph",
+            "content": {
+              "text": "Your financial gift will bring hope, healing, and relief to families in need. Partner with us today.",
+              "spans": []
+            }
+          }
+        ]
+      },
+      "buttonLabel": {
+        "__TYPE__": "FieldContent",
+        "type": "Text",
+        "value": "Donate now"
+      },
+      "buttonLink": {
+        "key": "3a1f9c04-6b2e-4c81-9f37-2d0a5e8b1477",
+        "__TYPE__": "LinkContent",
+        "value": {
+          "__TYPE__": "ExternalLink",
+          "url": "https://secure.lglforms.com/form_engine/s/1DAy4mOf7OlVR4Ke-4h2gA"
+        }
+      }
+    },
+    "items": []
+  },
+  {
+    "__TYPE__": "SharedSliceContent",
+    "variation": "onCream",
+    "primary": {
+      "eyebrow": {
+        "__TYPE__": "FieldContent",
+        "type": "Text",
+        "value": "Make a contribution"
+      },
+      "heading": {
+        "__TYPE__": "StructuredTextContent",
+        "value": [
+          {
+            "type": "heading2",
+            "content": {
+              "text": "We understand this journey can make families feel alone. We're there to help.",
+              "spans": [
+                {
+                  "type": "label",
+                  "start": 57,
+                  "end": 77,
+                  "data": { "label": "highlight" }
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "buttonLabel": {
+        "__TYPE__": "FieldContent",
+        "type": "Text",
+        "value": "Donate now"
+      },
+      "buttonLink": {
+        "key": "8b4e6d21-9f03-4a7c-85e1-c260374fab99",
+        "__TYPE__": "LinkContent",
+        "value": {
+          "__TYPE__": "ExternalLink",
+          "url": "https://secure.lglforms.com/form_engine/s/1DAy4mOf7OlVR4Ke-4h2gA"
+        }
+      }
+    },
+    "items": []
   }
 ]

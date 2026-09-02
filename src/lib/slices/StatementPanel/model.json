@@ -1,0 +1,36 @@
+{
+  "id": "statement_panel",
+  "type": "SharedSlice",
+  "name": "StatementPanel",
+  "description": "A short statement beside a textured panel of body copy",
+  "variations": [
+    {
+      "id": "default",
+      "name": "Default",
+      "docURL": "...",
+      "version": "initial",
+      "description": "A mission-scale statement on the left, with the long-form explanation in a textured card beside it",
+      "imageUrl": "",
+      "primary": {
+        "statement": {
+          "type": "StructuredText",
+          "config": {
+            "label": "statement",
+            "placeholder": "e.g. Our mission is to honor the gift of life…",
+            "allowTargetBlank": true,
+            "single": "heading2"
+          }
+        },
+        "body": {
+          "type": "StructuredText",
+          "config": {
+            "label": "body",
+            "allowTargetBlank": true,
+            "multi": "paragraph,strong,em,hyperlink,list-item"
+          }
+        }
+      },
+      "items": {}
+    }
+  ]
+}

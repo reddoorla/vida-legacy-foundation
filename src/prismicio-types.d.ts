@@ -67,6 +67,12 @@ type ContentRelationshipFieldWithData<
 }[Exclude<TCustomType[number], string>["id"]];
 
 type PageDocumentDataSlicesSlice =
+  | PageMastheadSlice
+  | StatementPanelSlice
+  | PersonGridSlice
+  | ImageBandSlice
+  | StatsBandSlice
+  | IconColumnsSlice
   | LeadTextSlice
   | TextColumnsSlice
   | AccordionSlice
@@ -299,7 +305,148 @@ export type CtaBannerSliceDefault = prismic.SharedSliceVariation<
 /**
  * Slice variation for *CtaBanner*
  */
-type CtaBannerSliceVariation = CtaBannerSliceDefault;
+/**
+ * Primary content in *CtaBanner -> On Dark*
+ */
+export interface CtaBannerSliceOnDarkPrimary {
+  /**
+   * eyebrow field in *CtaBanner -> On Dark*
+   *
+   * - **Field Type**: Text
+   * - **Placeholder**: e.g. Compassion in Action
+   * - **API ID Path**: cta_banner.onDark.primary.eyebrow
+   * - **Documentation**: https://prismic.io/docs/fields/text
+   */
+  eyebrow: prismic.KeyTextField;
+
+  /**
+   * heading field in *CtaBanner -> On Dark*
+   *
+   * - **Field Type**: Rich Text
+   * - **Placeholder**: e.g. No family should walk the transplant journey alone.
+   * - **API ID Path**: cta_banner.onDark.primary.heading
+   * - **Documentation**: https://prismic.io/docs/fields/rich-text
+   */
+  heading: prismic.RichTextField;
+
+  /**
+   * body field in *CtaBanner -> On Dark*
+   *
+   * - **Field Type**: Rich Text
+   * - **Placeholder**: *None*
+   * - **API ID Path**: cta_banner.onDark.primary.body
+   * - **Documentation**: https://prismic.io/docs/fields/rich-text
+   */
+  body: prismic.RichTextField;
+
+  /**
+   * buttonLabel field in *CtaBanner -> On Dark*
+   *
+   * - **Field Type**: Text
+   * - **Placeholder**: e.g. Donate now
+   * - **API ID Path**: cta_banner.onDark.primary.buttonLabel
+   * - **Documentation**: https://prismic.io/docs/fields/text
+   */
+  buttonLabel: prismic.KeyTextField;
+
+  /**
+   * buttonLink field in *CtaBanner -> On Dark*
+   *
+   * - **Field Type**: Link
+   * - **Placeholder**: *None*
+   * - **API ID Path**: cta_banner.onDark.primary.buttonLink
+   * - **Documentation**: https://prismic.io/docs/fields/link
+   */
+  buttonLink: prismic.LinkField<
+    string,
+    string,
+    unknown,
+    prismic.FieldState,
+    never
+  >;
+}
+
+/**
+ * On Dark variation for CtaBanner Slice
+ *
+ * - **API ID**: `onDark`
+ * - **Description**: An eyebrow, a statement and one button on the night-blue ground
+ * - **Documentation**: https://prismic.io/docs/slices
+ */
+export type CtaBannerSliceOnDark = prismic.SharedSliceVariation<
+  "onDark",
+  Simplify<CtaBannerSliceOnDarkPrimary>,
+  never
+>;
+
+/**
+ * Primary content in *CtaBanner -> On Cream*
+ */
+export interface CtaBannerSliceOnCreamPrimary {
+  /**
+   * eyebrow field in *CtaBanner -> On Cream*
+   *
+   * - **Field Type**: Text
+   * - **Placeholder**: e.g. Make a contribution
+   * - **API ID Path**: cta_banner.onCream.primary.eyebrow
+   * - **Documentation**: https://prismic.io/docs/fields/text
+   */
+  eyebrow: prismic.KeyTextField;
+
+  /**
+   * heading field in *CtaBanner -> On Cream*
+   *
+   * - **Field Type**: Rich Text
+   * - **Placeholder**: e.g. We understand this journey can make families feel alone. We're there to help.
+   * - **API ID Path**: cta_banner.onCream.primary.heading
+   * - **Documentation**: https://prismic.io/docs/fields/rich-text
+   */
+  heading: prismic.RichTextField;
+
+  /**
+   * buttonLabel field in *CtaBanner -> On Cream*
+   *
+   * - **Field Type**: Text
+   * - **Placeholder**: e.g. Donate now
+   * - **API ID Path**: cta_banner.onCream.primary.buttonLabel
+   * - **Documentation**: https://prismic.io/docs/fields/text
+   */
+  buttonLabel: prismic.KeyTextField;
+
+  /**
+   * buttonLink field in *CtaBanner -> On Cream*
+   *
+   * - **Field Type**: Link
+   * - **Placeholder**: *None*
+   * - **API ID Path**: cta_banner.onCream.primary.buttonLink
+   * - **Documentation**: https://prismic.io/docs/fields/link
+   */
+  buttonLink: prismic.LinkField<
+    string,
+    string,
+    unknown,
+    prismic.FieldState,
+    never
+  >;
+}
+
+/**
+ * On Cream variation for CtaBanner Slice
+ *
+ * - **API ID**: `onCream`
+ * - **Description**: The page's closing panel: a display-scale statement and one button on cream, rounded off the dark ground above it
+ * - **Documentation**: https://prismic.io/docs/slices
+ */
+export type CtaBannerSliceOnCream = prismic.SharedSliceVariation<
+  "onCream",
+  Simplify<CtaBannerSliceOnCreamPrimary>,
+  never
+>;
+
+type CtaBannerSliceVariation =
+  | CtaBannerSliceDefault
+  | CtaBannerSliceOnDark
+  | CtaBannerSliceOnCream;
 
 /**
  * CtaBanner Shared Slice
@@ -489,6 +636,104 @@ type HeroSliceVariation = HeroSliceDefault;
 export type HeroSlice = prismic.SharedSlice<"hero", HeroSliceVariation>;
 
 /**
+ * Primary content in *IconColumns → Default → Primary*
+ */
+export interface IconColumnsSliceDefaultPrimary {
+  /** eyebrow field — icon_columns.default.primary.eyebrow */
+  eyebrow: prismic.KeyTextField;
+
+  /** body field — icon_columns.default.primary.body */
+  body: prismic.RichTextField;
+
+  /** image field — icon_columns.default.primary.image */
+  image: prismic.ImageField<never>;
+}
+
+/**
+ * Primary content in *IconColumns → Default → Items*
+ */
+export interface IconColumnsSliceDefaultItem {
+  /** icon field — icon_columns.default.items[].icon */
+  icon: prismic.ImageField<never>;
+
+  /** title field — icon_columns.default.items[].title */
+  title: prismic.KeyTextField;
+
+  /** description field — icon_columns.default.items[].description */
+  description: prismic.KeyTextField;
+}
+
+/**
+ * Default variation for IconColumns Slice
+ *
+ * - **API ID**: `default`
+ * - **Documentation**: https://prismic.io/docs/slices
+ */
+export type IconColumnsSliceDefault = prismic.SharedSliceVariation<
+  "default",
+  Simplify<IconColumnsSliceDefaultPrimary>,
+  Simplify<IconColumnsSliceDefaultItem>
+>;
+
+/**
+ * Slice variation for *IconColumns*
+ */
+type IconColumnsSliceVariation = IconColumnsSliceDefault;
+
+/**
+ * IconColumns Shared Slice
+ *
+ * - **API ID**: `icon_columns`
+ * - **Documentation**: https://prismic.io/docs/slices
+ */
+export type IconColumnsSlice = prismic.SharedSlice<"icon_columns", IconColumnsSliceVariation>;
+
+/**
+ * Primary content in *ImageBand → Default → Primary*
+ */
+export interface ImageBandSliceDefaultPrimary {
+  /**
+   * image field in *ImageBand → Default → Primary*
+   *
+   * - **Field Type**: Image
+   * - **Placeholder**: *None*
+   * - **API ID Path**: image_band.default.primary.image
+   * - **Documentation**: https://prismic.io/docs/fields/image
+   */
+  image: prismic.ImageField<never>;
+}
+
+/**
+ * Default variation for ImageBand Slice
+ *
+ * - **API ID**: `default`
+ * - **Description**: One photograph spanning the viewport, used to break up the page between content bands
+ * - **Documentation**: https://prismic.io/docs/slices
+ */
+export type ImageBandSliceDefault = prismic.SharedSliceVariation<
+  "default",
+  Simplify<ImageBandSliceDefaultPrimary>,
+  never
+>;
+
+/**
+ * Slice variation for *ImageBand*
+ */
+type ImageBandSliceVariation = ImageBandSliceDefault;
+
+/**
+ * ImageBand Shared Slice
+ *
+ * - **API ID**: `image_band`
+ * - **Description**: A full-bleed photograph, edge to edge, with no copy over it
+ * - **Documentation**: https://prismic.io/docs/slices
+ */
+export type ImageBandSlice = prismic.SharedSlice<
+  "image_band",
+  ImageBandSliceVariation
+>;
+
+/**
  * Primary content in *LeadText → Default → Primary*
  */
 export interface LeadTextSliceDefaultPrimary {
@@ -567,7 +812,38 @@ export type LeadTextSliceOnDark = prismic.SharedSliceVariation<
   never
 >;
 
-type LeadTextSliceVariation = LeadTextSliceDefault | LeadTextSliceOnDark;
+/**
+ * Primary content in *LeadText -> Statement*
+ */
+export interface LeadTextSliceStatementPrimary {
+  /**
+   * body field in *LeadText -> Statement*
+   *
+   * - **Field Type**: Rich Text
+   * - **Placeholder**: e.g. Hope that heals. Help that Lasts.
+   * - **API ID Path**: lead_text.statement.primary.body
+   * - **Documentation**: https://prismic.io/docs/fields/rich-text
+   */
+  body: prismic.RichTextField;
+}
+
+/**
+ * Statement variation for LeadText Slice
+ *
+ * - **API ID**: `statement`
+ * - **Description**: A page-scale statement on the night-blue ground; a highlighted phrase starts its own line
+ * - **Documentation**: https://prismic.io/docs/slices
+ */
+export type LeadTextSliceStatement = prismic.SharedSliceVariation<
+  "statement",
+  Simplify<LeadTextSliceStatementPrimary>,
+  never
+>;
+
+type LeadTextSliceVariation =
+  | LeadTextSliceDefault
+  | LeadTextSliceOnDark
+  | LeadTextSliceStatement;
 
 /**
  * LeadText Shared Slice
@@ -693,6 +969,191 @@ type MediaTextSliceVariation =
 export type MediaTextSlice = prismic.SharedSlice<
   "media_text",
   MediaTextSliceVariation
+>;
+
+/**
+ * Primary content in *PageMasthead → Default → Primary*
+ */
+export interface PageMastheadSliceDefaultPrimary {
+  /**
+   * image field in *PageMasthead → Default → Primary*
+   *
+   * - **Field Type**: Image
+   * - **Placeholder**: *None*
+   * - **API ID Path**: page_masthead.default.primary.image
+   * - **Documentation**: https://prismic.io/docs/fields/image
+   */
+  image: prismic.ImageField<never>;
+
+  /**
+   * eyebrow field in *PageMasthead → Default → Primary*
+   *
+   * - **Field Type**: Text
+   * - **Placeholder**: e.g. About us
+   * - **API ID Path**: page_masthead.default.primary.eyebrow
+   * - **Documentation**: https://prismic.io/docs/fields/text
+   */
+  eyebrow: prismic.KeyTextField;
+
+  /**
+   * title field in *PageMasthead → Default → Primary*
+   *
+   * - **Field Type**: Text
+   * - **Placeholder**: e.g. Who We Are — renders as the page's h1
+   * - **API ID Path**: page_masthead.default.primary.title
+   * - **Documentation**: https://prismic.io/docs/fields/text
+   */
+  title: prismic.KeyTextField;
+}
+
+/**
+ * Default variation for PageMasthead Slice
+ *
+ * - **API ID**: `default`
+ * - **Description**: An inset rounded photograph under the nav, with an optional eyebrow and page title
+ * - **Documentation**: https://prismic.io/docs/slices
+ */
+export type PageMastheadSliceDefault = prismic.SharedSliceVariation<
+  "default",
+  Simplify<PageMastheadSliceDefaultPrimary>,
+  never
+>;
+
+/**
+ * Slice variation for *PageMasthead*
+ */
+type PageMastheadSliceVariation = PageMastheadSliceDefault;
+
+/**
+ * PageMasthead Shared Slice
+ *
+ * - **API ID**: `page_masthead`
+ * - **Description**: The top of an interior page: an inset photograph on the dark ground, with the page title
+ * - **Documentation**: https://prismic.io/docs/slices
+ */
+export type PageMastheadSlice = prismic.SharedSlice<
+  "page_masthead",
+  PageMastheadSliceVariation
+>;
+
+/**
+ * Primary content in *PersonGrid → Default → Primary*
+ */
+export interface PersonGridSliceDefaultPrimary {
+  /**
+   * heading field in *PersonGrid → Default → Primary*
+   *
+   * - **Field Type**: Rich Text
+   * - **Placeholder**: e.g. A Team That Cares — optional
+   * - **API ID Path**: person_grid.default.primary.heading
+   * - **Documentation**: https://prismic.io/docs/fields/rich-text
+   */
+  heading: prismic.RichTextField;
+
+  /**
+   * label field in *PersonGrid → Default → Primary*
+   *
+   * - **Field Type**: Text
+   * - **Placeholder**: e.g. Leadership
+   * - **API ID Path**: person_grid.default.primary.label
+   * - **Documentation**: https://prismic.io/docs/fields/text
+   */
+  label: prismic.KeyTextField;
+
+  /**
+   * intro field in *PersonGrid → Default → Primary*
+   *
+   * - **Field Type**: Rich Text
+   * - **Placeholder**: *None*
+   * - **API ID Path**: person_grid.default.primary.intro
+   * - **Documentation**: https://prismic.io/docs/fields/rich-text
+   */
+  intro: prismic.RichTextField;
+}
+
+/**
+ * Primary content in *PersonGrid → Default → Items*
+ */
+export interface PersonGridSliceDefaultItem {
+  /**
+   * headshot field in *PersonGrid → Default → Items*
+   *
+   * - **Field Type**: Image
+   * - **Placeholder**: *None*
+   * - **API ID Path**: person_grid.default.items[].headshot
+   * - **Documentation**: https://prismic.io/docs/fields/image
+   */
+  headshot: prismic.ImageField<never>;
+
+  /**
+   * name field in *PersonGrid → Default → Items*
+   *
+   * - **Field Type**: Text
+   * - **Placeholder**: e.g. Brooke Perucki
+   * - **API ID Path**: person_grid.default.items[].name
+   * - **Documentation**: https://prismic.io/docs/fields/text
+   */
+  name: prismic.KeyTextField;
+
+  /**
+   * role field in *PersonGrid → Default → Items*
+   *
+   * - **Field Type**: Text
+   * - **Placeholder**: e.g. Executive Director
+   * - **API ID Path**: person_grid.default.items[].role
+   * - **Documentation**: https://prismic.io/docs/fields/text
+   */
+  role: prismic.KeyTextField;
+
+  /**
+   * email field in *PersonGrid → Default → Items*
+   *
+   * - **Field Type**: Text
+   * - **Placeholder**: e.g. brooke@vidalegacy.org
+   * - **API ID Path**: person_grid.default.items[].email
+   * - **Documentation**: https://prismic.io/docs/fields/text
+   */
+  email: prismic.KeyTextField;
+
+  /**
+   * bio field in *PersonGrid → Default → Items*
+   *
+   * - **Field Type**: Rich Text
+   * - **Placeholder**: Long-form bio; fill it to give the card its pop-up
+   * - **API ID Path**: person_grid.default.items[].bio
+   * - **Documentation**: https://prismic.io/docs/fields/rich-text
+   */
+  bio: prismic.RichTextField;
+}
+
+/**
+ * Default variation for PersonGrid Slice
+ *
+ * - **API ID**: `default`
+ * - **Description**: An optional display heading, a labelled intro column, and a grid of headshot cards
+ * - **Documentation**: https://prismic.io/docs/slices
+ */
+export type PersonGridSliceDefault = prismic.SharedSliceVariation<
+  "default",
+  Simplify<PersonGridSliceDefaultPrimary>,
+  Simplify<PersonGridSliceDefaultItem>
+>;
+
+/**
+ * Slice variation for *PersonGrid*
+ */
+type PersonGridSliceVariation = PersonGridSliceDefault;
+
+/**
+ * PersonGrid Shared Slice
+ *
+ * - **API ID**: `person_grid`
+ * - **Description**: A labelled group of people — headshot cards with an optional bio pop-up
+ * - **Documentation**: https://prismic.io/docs/slices
+ */
+export type PersonGridSlice = prismic.SharedSlice<
+  "person_grid",
+  PersonGridSliceVariation
 >;
 
 /**
@@ -832,7 +1293,37 @@ export type SectionGridSliceDefault = prismic.SharedSliceVariation<
 /**
  * Slice variation for *SectionGrid*
  */
-type SectionGridSliceVariation = SectionGridSliceDefault;
+/**
+ * Primary content in *SectionGrid → On Dark → Primary*
+ */
+export interface SectionGridSliceOnDarkPrimary {
+  /** heading field — section_grid.onDark.primary.heading */
+  heading: prismic.RichTextField;
+
+  /** outro field — section_grid.onDark.primary.outro */
+  outro: prismic.RichTextField;
+
+  /** cta_label field — section_grid.onDark.primary.cta_label */
+  cta_label: prismic.KeyTextField;
+
+  /** cta_link field — section_grid.onDark.primary.cta_link */
+  cta_link: prismic.LinkField;
+}
+
+/**
+ * On Dark variation for SectionGrid Slice
+ *
+ * - **API ID**: `onDark`
+ * - **Description**: A grid of text-only cards on the dark green ground, with an optional closing note and CTA
+ * - **Documentation**: https://prismic.io/docs/slices
+ */
+export type SectionGridSliceOnDark = prismic.SharedSliceVariation<
+  "onDark",
+  Simplify<SectionGridSliceOnDarkPrimary>,
+  Simplify<SectionGridSliceDefaultItem>
+>;
+
+type SectionGridSliceVariation = SectionGridSliceDefault | SectionGridSliceOnDark;
 
 /**
  * SectionGrid Shared Slice
@@ -844,6 +1335,167 @@ type SectionGridSliceVariation = SectionGridSliceDefault;
 export type SectionGridSlice = prismic.SharedSlice<
   "section_grid",
   SectionGridSliceVariation
+>;
+
+/**
+ * Primary content in *StatementPanel → Default → Primary*
+ */
+export interface StatementPanelSliceDefaultPrimary {
+  /**
+   * statement field in *StatementPanel → Default → Primary*
+   *
+   * - **Field Type**: Rich Text
+   * - **Placeholder**: e.g. Our mission is to honor the gift of life…
+   * - **API ID Path**: statement_panel.default.primary.statement
+   * - **Documentation**: https://prismic.io/docs/fields/rich-text
+   */
+  statement: prismic.RichTextField;
+
+  /**
+   * body field in *StatementPanel → Default → Primary*
+   *
+   * - **Field Type**: Rich Text
+   * - **Placeholder**: *None*
+   * - **API ID Path**: statement_panel.default.primary.body
+   * - **Documentation**: https://prismic.io/docs/fields/rich-text
+   */
+  body: prismic.RichTextField;
+}
+
+/**
+ * Default variation for StatementPanel Slice
+ *
+ * - **API ID**: `default`
+ * - **Description**: A mission-scale statement on the left, with the long-form explanation in a textured card beside it
+ * - **Documentation**: https://prismic.io/docs/slices
+ */
+export type StatementPanelSliceDefault = prismic.SharedSliceVariation<
+  "default",
+  Simplify<StatementPanelSliceDefaultPrimary>,
+  never
+>;
+
+/**
+ * Slice variation for *StatementPanel*
+ */
+type StatementPanelSliceVariation = StatementPanelSliceDefault;
+
+/**
+ * StatementPanel Shared Slice
+ *
+ * - **API ID**: `statement_panel`
+ * - **Description**: A short statement beside a textured panel of body copy
+ * - **Documentation**: https://prismic.io/docs/slices
+ */
+export type StatementPanelSlice = prismic.SharedSlice<
+  "statement_panel",
+  StatementPanelSliceVariation
+>;
+
+/**
+ * Primary content in *StatsBand → Default → Primary*
+ */
+export interface StatsBandSliceDefaultPrimary {
+  /**
+   * eyebrow field in *StatsBand → Default → Primary*
+   *
+   * - **Field Type**: Text
+   * - **Placeholder**: e.g. By the numbers
+   * - **API ID Path**: stats_band.default.primary.eyebrow
+   * - **Documentation**: https://prismic.io/docs/fields/text
+   */
+  eyebrow: prismic.KeyTextField;
+
+  /**
+   * cta_label field in *StatsBand → Default → Primary*
+   *
+   * - **Field Type**: Text
+   * - **Placeholder**: e.g. Register to be an organ donor
+   * - **API ID Path**: stats_band.default.primary.cta_label
+   * - **Documentation**: https://prismic.io/docs/fields/text
+   */
+  cta_label: prismic.KeyTextField;
+
+  /**
+   * cta_link field in *StatsBand → Default → Primary*
+   *
+   * - **Field Type**: Link
+   * - **Placeholder**: *None*
+   * - **API ID Path**: stats_band.default.primary.cta_link
+   * - **Documentation**: https://prismic.io/docs/fields/link
+   */
+  cta_link: prismic.LinkField<
+    string,
+    string,
+    unknown,
+    prismic.FieldState,
+    never
+  >;
+}
+
+/**
+ * Primary content in *StatsBand → Default → Items*
+ */
+export interface StatsBandSliceDefaultItem {
+  /**
+   * value field in *StatsBand → Default → Items*
+   *
+   * - **Field Type**: Number
+   * - **Placeholder**: e.g. 100000 — digits only; put the + or % in suffix
+   * - **API ID Path**: stats_band.default.items[].value
+   * - **Documentation**: https://prismic.io/docs/fields/number
+   */
+  value: prismic.NumberField;
+
+  /**
+   * suffix field in *StatsBand → Default → Items*
+   *
+   * - **Field Type**: Text
+   * - **Placeholder**: e.g. + or % or people — a word gets a space, a symbol does not
+   * - **API ID Path**: stats_band.default.items[].suffix
+   * - **Documentation**: https://prismic.io/docs/fields/text
+   */
+  suffix: prismic.KeyTextField;
+
+  /**
+   * description field in *StatsBand → Default → Items*
+   *
+   * - **Field Type**: Text
+   * - **Placeholder**: *None*
+   * - **API ID Path**: stats_band.default.items[].description
+   * - **Documentation**: https://prismic.io/docs/fields/text
+   */
+  description: prismic.KeyTextField;
+}
+
+/**
+ * Default variation for StatsBand Slice
+ *
+ * - **API ID**: `default`
+ * - **Description**: An eyebrow above a row of figures, with an optional call to action in the last column
+ * - **Documentation**: https://prismic.io/docs/slices
+ */
+export type StatsBandSliceDefault = prismic.SharedSliceVariation<
+  "default",
+  Simplify<StatsBandSliceDefaultPrimary>,
+  Simplify<StatsBandSliceDefaultItem>
+>;
+
+/**
+ * Slice variation for *StatsBand*
+ */
+type StatsBandSliceVariation = StatsBandSliceDefault;
+
+/**
+ * StatsBand Shared Slice
+ *
+ * - **API ID**: `stats_band`
+ * - **Description**: A raised card of headline figures on the night-blue ground
+ * - **Documentation**: https://prismic.io/docs/slices
+ */
+export type StatsBandSlice = prismic.SharedSlice<
+  "stats_band",
+  StatsBandSliceVariation
 >;
 
 /**
@@ -917,7 +1569,62 @@ export type TestimonialSliceDefault = prismic.SharedSliceVariation<
 /**
  * Slice variation for *Testimonial*
  */
-type TestimonialSliceVariation = TestimonialSliceDefault;
+/**
+ * Primary content in *Testimonial -> On Cream*
+ */
+export interface TestimonialSliceOnCreamPrimary {
+  /**
+   * quote field in *Testimonial -> On Cream*
+   *
+   * - **Field Type**: Text
+   * - **Placeholder**: Quote text — this variation draws NO quote marks
+   * - **API ID Path**: testimonial.onCream.primary.quote
+   * - **Documentation**: https://prismic.io/docs/fields/text
+   */
+  quote: prismic.KeyTextField;
+
+  /**
+   * name field in *Testimonial -> On Cream*
+   *
+   * - **Field Type**: Text
+   * - **Placeholder**: e.g. Grateful Family Member — the component adds the em dash
+   * - **API ID Path**: testimonial.onCream.primary.name
+   * - **Documentation**: https://prismic.io/docs/fields/text
+   */
+  name: prismic.KeyTextField;
+}
+
+/**
+ * Primary content in *Testimonial -> On Cream -> Items*
+ */
+export interface TestimonialSliceOnCreamItem {
+  /**
+   * image field in *Testimonial -> On Cream -> Items*
+   *
+   * - **Field Type**: Image
+   * - **Placeholder**: *None*
+   * - **API ID Path**: testimonial.onCream.items[].image
+   * - **Documentation**: https://prismic.io/docs/fields/image
+   */
+  image: prismic.ImageField<never>;
+}
+
+/**
+ * On Cream variation for Testimonial Slice
+ *
+ * - **API ID**: `onCream`
+ * - **Description**: A quote beside a row of photographs, on the cream closing panel
+ * - **Documentation**: https://prismic.io/docs/slices
+ */
+export type TestimonialSliceOnCream = prismic.SharedSliceVariation<
+  "onCream",
+  Simplify<TestimonialSliceOnCreamPrimary>,
+  Simplify<TestimonialSliceOnCreamItem>
+>;
+
+type TestimonialSliceVariation =
+  | TestimonialSliceDefault
+  | TestimonialSliceOnCream;
 
 /**
  * Testimonial Shared Slice
@@ -1067,6 +1774,10 @@ declare module "@prismicio/client" {
       AccordionSliceDefault,
       CtaBannerSlice,
       CtaBannerSliceDefaultPrimary,
+      CtaBannerSliceOnDarkPrimary,
+      CtaBannerSliceOnDark,
+      CtaBannerSliceOnCreamPrimary,
+      CtaBannerSliceOnCream,
       CtaBannerSliceVariation,
       CtaBannerSliceDefault,
       HeartHeroSlice,
@@ -1078,10 +1789,21 @@ declare module "@prismicio/client" {
       HeroSliceDefaultPrimary,
       HeroSliceVariation,
       HeroSliceDefault,
+      IconColumnsSlice,
+      IconColumnsSliceDefaultPrimary,
+      IconColumnsSliceDefaultItem,
+      IconColumnsSliceVariation,
+      IconColumnsSliceDefault,
+      ImageBandSlice,
+      ImageBandSliceDefaultPrimary,
+      ImageBandSliceVariation,
+      ImageBandSliceDefault,
       LeadTextSlice,
       LeadTextSliceDefaultPrimary,
       LeadTextSliceOnDarkPrimary,
       LeadTextSliceOnDark,
+      LeadTextSliceStatementPrimary,
+      LeadTextSliceStatement,
       LeadTextSliceVariation,
       LeadTextSliceDefault,
       MediaTextSlice,
@@ -1097,10 +1819,33 @@ declare module "@prismicio/client" {
       SectionGridSlice,
       SectionGridSliceDefaultPrimary,
       SectionGridSliceDefaultItem,
+      SectionGridSliceOnDarkPrimary,
+      SectionGridSliceOnDark,
       SectionGridSliceVariation,
       SectionGridSliceDefault,
+      PageMastheadSlice,
+      PageMastheadSliceDefaultPrimary,
+      PageMastheadSliceVariation,
+      PageMastheadSliceDefault,
+      PersonGridSlice,
+      PersonGridSliceDefaultPrimary,
+      PersonGridSliceDefaultItem,
+      PersonGridSliceVariation,
+      PersonGridSliceDefault,
+      StatementPanelSlice,
+      StatementPanelSliceDefaultPrimary,
+      StatementPanelSliceVariation,
+      StatementPanelSliceDefault,
+      StatsBandSlice,
+      StatsBandSliceDefaultPrimary,
+      StatsBandSliceDefaultItem,
+      StatsBandSliceVariation,
+      StatsBandSliceDefault,
       TestimonialSlice,
       TestimonialSliceDefaultPrimary,
+      TestimonialSliceOnCreamPrimary,
+      TestimonialSliceOnCreamItem,
+      TestimonialSliceOnCream,
       TestimonialSliceVariation,
       TestimonialSliceDefault,
       TextColumnsSlice,
