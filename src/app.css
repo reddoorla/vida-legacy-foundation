@@ -263,6 +263,8 @@ main > section.hero-band:first-child {
 
   body {
     font-family: var(--font-body);
+    /* Figma "Body 1": Pragmatica Light 16/24. */
+    font-weight: 300;
     max-width: 100vw;
     overflow-x: clip;
     overflow-y: auto;
@@ -283,10 +285,11 @@ main > section.hero-band:first-child {
     width: 0;
   }
 
-  /* Type scale — define per project (sizes, leading, responsive variants).
-     The comps set every heading in Pragmatica Extended LIGHT; 300 is the
-     weight the kit serves for it (a `font-medium`/`font-bold` utility still
-     wins where a slice asks for one). */
+  /* Type scale — the Figma text styles (get_variable_defs on both page
+     frames): H1 60 / H2 36 / H3 24 are Pragmatica Extended LIGHT, H4 18 and
+     H5 12 are Pragmatica Extended BOOK (the tracked uppercase labels). Sizes
+     stay per slice; only the family and weight are global. A `font-*` weight
+     utility on the element still wins. */
   h1,
   h2,
   h3,
@@ -294,7 +297,25 @@ main > section.hero-band:first-child {
   h5,
   h6 {
     font-family: var(--font-heading);
+  }
+
+  h1,
+  h2,
+  h3 {
     font-weight: 300;
+  }
+
+  h4,
+  h5,
+  h6 {
+    font-weight: 400;
+  }
+
+  /* Figma "Button": Area Normal Bold 10/1.5, 1px tracking. The kit serves
+     area-normal at 600 and 700 only, so the weight has to be explicit — with
+     the body at 300 the browser would otherwise settle on 600. */
+  .font-button {
+    font-weight: 700;
   }
 
   /* Respect users who ask for less motion: neutralize CSS transitions/animations

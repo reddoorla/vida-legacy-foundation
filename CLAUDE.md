@@ -192,11 +192,19 @@ shared kit now. What it serves (measured from the kit CSS):
 | `pragmatica`          | 200, 300, 400, 700, 900, + italics     |
 | `area-normal`         | 600, 700                               |
 
-So the comps' _Pragmatica Extended Light_ headings render as drawn — the base
-`h1`–`h6` rule in `app.css` sets `font-weight: 300` — and `--font-button` is
-the real _Area Normal_ Bold. If you add a display-size text that is not a
-heading element (the nav menu's entries, a stat figure), give it `font-light`
-yourself.
+The Figma text styles, and what `app.css` does with them globally:
+
+| style  | face                              | base rule              |
+| ------ | --------------------------------- | ---------------------- |
+| H1–H3  | Pragmatica Extended **Light** 300 | `h1, h2, h3 { 300 }`   |
+| H4–H5  | Pragmatica Extended **Book** 400  | `h4, h5, h6 { 400 }`   |
+| Body 1 | Pragmatica Light 16/24            | `body { 300 }`         |
+| Button | Area Normal Bold 10               | `.font-button { 700 }` |
+
+Sizes stay per slice. A display-size text that is not a heading element (the
+nav menu's entries, a stat figure) needs `font-light` itself. The button rule
+is explicit because the kit serves `area-normal` at 600 and 700 only — with
+the body at 300 the browser would settle on 600.
 
 Adding more families to the kit costs almost nothing client-side: browsers
 fetch a `@font-face` file only when text actually uses that family and weight,
