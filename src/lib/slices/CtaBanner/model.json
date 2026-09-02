@@ -47,6 +47,57 @@
         }
       },
       "items": {}
+    },
+    {
+      "id": "onDark",
+      "name": "On Dark",
+      "docURL": "...",
+      "version": "initial",
+      "description": "An eyebrow, a statement and one button on the night-blue ground",
+      "imageUrl": "",
+      "primary": {
+        "eyebrow": {
+          "type": "Text",
+          "config": {
+            "label": "eyebrow",
+            "placeholder": "e.g. Compassion in Action"
+          }
+        },
+        "heading": {
+          "type": "StructuredText",
+          "config": {
+            "label": "heading",
+            "placeholder": "e.g. No family should walk the transplant journey alone.",
+            "allowTargetBlank": true,
+            "single": "heading2,heading3"
+          }
+        },
+        "body": {
+          "type": "StructuredText",
+          "config": {
+            "label": "body",
+            "allowTargetBlank": true,
+            "multi": "paragraph,strong,em,hyperlink"
+          }
+        },
+        "buttonLabel": {
+          "type": "Text",
+          "config": {
+            "label": "buttonLabel",
+            "placeholder": "e.g. Donate now"
+          }
+        },
+        "buttonLink": {
+          "type": "Link",
+          "config": {
+            "label": "buttonLink",
+            "placeholder": "",
+            "allowTargetBlank": true,
+            "select": null
+          }
+        }
+      },
+      "items": {}
     }
   ]
 }

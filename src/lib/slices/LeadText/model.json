@@ -56,6 +56,27 @@
         }
       },
       "items": {}
+    },
+    {
+      "id": "statement",
+      "name": "Statement",
+      "docURL": "...",
+      "version": "initial",
+      "description": "A page-scale statement on the night-blue ground; a highlighted phrase starts its own line",
+      "imageUrl": "",
+      "primary": {
+        "body": {
+          "type": "StructuredText",
+          "config": {
+            "label": "body",
+            "placeholder": "e.g. Hope that heals. Help that Lasts.",
+            "allowTargetBlank": true,
+            "single": "heading2",
+            "labels": ["highlight"]
+          }
+        }
+      },
+      "items": {}
     }
   ]
 }
