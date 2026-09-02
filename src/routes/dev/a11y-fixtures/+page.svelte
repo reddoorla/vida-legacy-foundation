@@ -167,6 +167,23 @@
       body: rtx("They needed an identity on a tight timeline to communicate that message."),
     },
   };
+  // The VLF mission statement: onDark ground with a `highlight` label on the
+  // opening phrase. Locks the label styling and the 11.35:1 / 5.86:1 pairings
+  // under the axe gate.
+  const leadTextOnDarkFixture: ComponentProps<typeof LeadText>["slice"] = {
+    slice_type: "lead_text",
+    variation: "onDark",
+    primary: {
+      eyebrow: "",
+      body: [
+        {
+          type: "paragraph",
+          text: "Vida Legacy Foundation is dedicated to honoring the gift of life through education, outreach, and compassionate support for South Texas families affected by organ donation.",
+          spans: [{ type: "label", start: 0, end: 64, data: { label: "highlight" } }],
+        },
+      ],
+    } as never,
+  };
   // Eyebrow-less + duplicate/blank titles: locks the h2-promotion (no skip) and
   // index-key (no each_key_duplicate crash) behaviour under the axe gate.
   const textColumnsFixture: ComponentProps<typeof TextColumns>["slice"] = {
@@ -439,6 +456,7 @@
   <MediaText slice={mediaTextFixture} />
   <SectionGrid slice={sectionGridFixture} />
   <LeadText slice={leadTextFixture} />
+  <LeadText slice={leadTextOnDarkFixture} />
   <TextColumns slice={textColumnsFixture} />
   <AccordionSlice slice={accordionFixture} />
   <Testimonial slice={testimonialFixture} />

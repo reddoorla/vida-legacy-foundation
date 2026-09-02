@@ -28,6 +28,27 @@ describe("LeadText slice", () => {
     expect(container.querySelector('[data-slice-type="lead_text"]')).not.toBeNull();
   });
 
+  it("puts the onDark variation on the dark green ground", () => {
+    const onDark = {
+      slice_type: "lead_text",
+      variation: "onDark",
+      primary: { eyebrow: "", body: rt("Dedicated to honoring the gift of life.") },
+      items: [],
+    } as never;
+    const { container } = render(LeadText, { props: { slice: onDark } });
+    const section = container.querySelector('[data-slice-type="lead_text"]');
+    expect(section?.getAttribute("data-slice-variation")).toBe("onDark");
+    // #263b02 against #fdf5e8 body copy is 11.35:1 and against the #9cbf5b
+    // highlight is 5.86:1 — both clear AA, which is why this ground was chosen.
+    expect(section?.className).toContain("bg-green-btn");
+  });
+
+  it("leaves the default variation ungrounded so a site can restyle it", () => {
+    const { container } = render(LeadText, { props: { slice } });
+    const section = container.querySelector('[data-slice-type="lead_text"]');
+    expect(section?.className).not.toContain("bg-green-btn");
+  });
+
   it("omits the heading when no eyebrow is authored", () => {
     const noEyebrow = {
       slice_type: "lead_text",
