@@ -17,17 +17,44 @@
         "edit": {
           "background": "transparent",
           "zoom": 1,
-          "crop": {
-            "x": 0,
-            "y": 0
-          },
+          "crop": { "x": 0, "y": 0 },
           "name": "focuspoint"
         },
         "credits": null,
-        "alt": "A mother and daughter embracing at home",
+        "alt": "A mother and daughter listening to a clinician in a waiting room",
         "thumbnails": {}
+      },
+      "eyebrow": {
+        "__TYPE__": "FieldContent",
+        "type": "Text",
+        "value": "Connecting Hope and Support"
+      },
+      "heading": {
+        "__TYPE__": "StructuredTextContent",
+        "value": [
+          {
+            "type": "heading1",
+            "content": {
+              "text": "Financial Relief and Support for Donor and Recipient Families"
+            }
+          }
+        ]
       }
     },
-    "items": []
+    "items": [
+      {
+        "__TYPE__": "GroupItemContent",
+        "value": [
+          ["cta_label", { "__TYPE__": "FieldContent", "type": "Text", "value": "Donate now" }],
+          [
+            "cta_link",
+            {
+              "__TYPE__": "LinkContent",
+              "value": { "__TYPE__": "ExternalLink", "url": "https://example.com/donate" }
+            }
+          ]
+        ]
+      }
+    ]
   }
 ]

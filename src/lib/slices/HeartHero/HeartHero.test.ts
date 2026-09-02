@@ -13,8 +13,16 @@ const slice = {
       alt: "A patient smiling with a family member",
       dimensions: { width: 1600, height: 1067 },
     },
+    eyebrow: "Connecting Hope and Support",
+    heading: [
+      {
+        type: "heading1",
+        text: "Financial Relief and Support for Donor and Recipient Families",
+        spans: [],
+      },
+    ],
   },
-  items: [],
+  items: [{ cta_label: "Donate now", cta_link: { link_type: "Web", url: "https://example.com" } }],
 } as unknown as Content.HeartHeroSlice;
 
 describe("HeartHero slice", () => {
@@ -36,12 +44,16 @@ describe("HeartHero slice", () => {
   it("renders the green ground but no photo when the image is empty", () => {
     const bare = {
       ...slice,
-      primary: { image: {} },
+      // A realistic "empty" slice: Prismic returns [] for an unset rich text
+      // and null for an unset key text, never undefined.
+      primary: { image: {}, eyebrow: null, heading: [] },
     } as unknown as Content.HeartHeroSlice;
     const { container } = render(HeartHero, { props: { slice: bare } });
     const section = container.querySelector("[data-slice-type='heart_hero']");
     expect(section).not.toBeNull();
-    expect(section?.querySelector("img")).toBeNull();
+    // Scoped to the mask: the scroll-cue arrow is an <img> too, so a bare
+    // "no images" assertion would pass for the wrong reason.
+    expect(section?.querySelector(".heart-mask")).toBeNull();
     // The grain still renders — it belongs to the ground, not the photo.
     expect(section?.querySelector(".texture-full")).not.toBeNull();
   });
@@ -74,6 +86,38 @@ describe("HeartHero slice", () => {
     const stage = container.querySelector(".heart-hero-stage");
     expect(stage).not.toBeNull();
     expect(stage?.className).not.toContain("fixed");
+  });
+
+  it("renders the eyebrow, heading and CTA from content", () => {
+    const { container } = render(HeartHero, { props: { slice } });
+    expect(container.textContent).toContain("Connecting Hope and Support");
+    expect(container.querySelector("h1")?.textContent).toContain("Financial Relief and Support");
+    const link = container.querySelector("a");
+    expect(link?.textContent?.trim()).toBe("Donate now");
+    expect(link?.getAttribute("href")).toBe("https://example.com");
+  });
+
+  it("keeps the copy in the DOM before it is revealed", () => {
+    // The reveal is opacity/transform only — never display or visibility — so
+    // the heading and links stay in the accessibility tree and the tab order
+    // from the first paint, before any scrolling has happened.
+    const { container } = render(HeartHero, { props: { slice } });
+    const copy = container.querySelector(".hero-copy");
+    expect(copy?.classList.contains("is-in")).toBe(false);
+    expect(copy?.querySelector("h1")).not.toBeNull();
+    expect(copy?.querySelector("a")).not.toBeNull();
+  });
+
+  it("drops a CTA that has a label but no link", () => {
+    const partial = {
+      ...slice,
+      items: [
+        { cta_label: "Donate now", cta_link: { link_type: "Web", url: "https://example.com" } },
+        { cta_label: "Referral", cta_link: { link_type: "Any" } },
+      ],
+    } as unknown as Content.HeartHeroSlice;
+    const { container } = render(HeartHero, { props: { slice: partial } });
+    expect(container.querySelectorAll("a").length).toBe(1);
   });
 
   it("keeps the grain decorative and non-interactive", () => {

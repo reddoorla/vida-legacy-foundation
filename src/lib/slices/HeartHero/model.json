@@ -2,14 +2,14 @@
   "id": "heart_hero",
   "type": "SharedSlice",
   "name": "HeartHero",
-  "description": "Full-bleed brand-green hero with a heart-masked photo",
+  "description": "Scroll-revealed hero: a heart mask opens over the brand green to a full-bleed photo, then the copy and CTAs arrive",
   "variations": [
     {
       "id": "default",
       "name": "Default",
       "docURL": "...",
       "version": "initial",
-      "description": "Heart-masked photo centred on the brand green ground",
+      "description": "Heart opens on scroll, then eyebrow, heading and CTAs reveal",
       "imageUrl": "",
       "primary": {
         "image": {
@@ -19,9 +19,37 @@
             "constraint": {},
             "thumbnails": []
           }
+        },
+        "eyebrow": {
+          "type": "Text",
+          "config": {
+            "label": "eyebrow",
+            "placeholder": "Connecting Hope and Support"
+          }
+        },
+        "heading": {
+          "type": "StructuredText",
+          "config": {
+            "label": "heading",
+            "single": "heading1,heading2"
+          }
         }
       },
-      "items": {}
+      "items": {
+        "cta_label": {
+          "type": "Text",
+          "config": {
+            "label": "cta_label"
+          }
+        },
+        "cta_link": {
+          "type": "Link",
+          "config": {
+            "label": "cta_link",
+            "allowTargetBlank": true
+          }
+        }
+      }
     }
   ]
 }
