@@ -4,6 +4,7 @@
   import Accordion from "$lib/components/Accordion.svelte";
   import BrandIcon from "$lib/components/BrandIcon.svelte";
   import Modal from "$lib/components/Modal.svelte";
+  import NavMenu from "$lib/components/NavMenu.svelte";
   import Form from "$lib/components/Form.svelte";
   import Field from "$lib/components/Field.svelte";
   import HeroBackgroundImage from "$lib/components/HeroBackgroundImage.svelte";
@@ -589,6 +590,27 @@
           </button>
         </div>
       {/if}
+    </section>
+
+    <section aria-labelledby="nav-menu-heading" class="space-y-4">
+      <h2 id="nav-menu-heading" class="text-xl font-semibold">Navigation menu</h2>
+      <!-- The site menu is not in the DOM until opened, so the root layout's
+           Nav never shows it to axe. Rendered in-flow here (inline: absolute
+           inside this box, no focus trap) so the cream and green labels on the
+           textured dark green are audited. Its entries mirror site-config,
+           including the href-less one that renders as text. -->
+      <div class="relative h-[520px] overflow-hidden">
+        <NavMenu
+          inline
+          onClose={() => {}}
+          entries={[
+            { label: "Who We Are", href: "" },
+            { label: "Donate", href: "https://example.org/donate" },
+            { label: "Contact Us", href: "#nav-menu-heading" },
+            { label: "Become a Donor", href: "https://example.org/register" },
+          ]}
+        />
+      </div>
     </section>
 
     <section aria-labelledby="rich-text-heading" class="space-y-4">

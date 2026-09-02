@@ -1,8 +1,7 @@
 <script lang="ts">
-  import { Menu, X, ChevronDown } from "@lucide/svelte";
-  import { trapFocus } from "$lib/actions/trapFocus";
-  import { fade } from "$lib/transitions";
   import type { NavItem } from "$lib/site-config";
+  import type { NavTone } from "$lib/nav-tone";
+  import NavMenu from "./NavMenu.svelte";
 
   interface NavLink {
     text: string;
@@ -11,220 +10,147 @@
 
   interface Props {
     /** Optional per-route override of the `$lib/site-config.json` nav (no
-     * route in the bare template supplies this). When non-empty they take
-     * precedence — inline links on desktop, a focus-trapped full-screen menu
-     * on mobile. */
+     * route on this site supplies one). When non-empty they take precedence
+     * over `items`. */
     navLinks?: NavLink[];
-    /** Nav entries — a leaf is a link; an entry with `children` is a dropdown.
-     * Omit for a logo-only bar (the bare-template default; comes from
-     * site-config). */
+    /** Nav entries from site-config. An entry with an empty href renders as
+     * plain text, not a dead link (see "Who we are" there, which waits on its
+     * Prismic page); an entry with `children` lists them beneath it. Omit for
+     * a lockup-only bar. */
     items?: NavItem[];
-    /** The site logo (resolved from site-config); falls back to the "Logo"
-     * wordmark. */
-    logo?: { url: string; maxWidth?: string };
+    /** Colouring for the ground the page's first slice paints under the bar —
+     * see `$lib/nav-tone`. Ignored once the bar has scrolled onto its own
+     * cream ground. */
+    tone?: NavTone;
+    /** The current route. A change closes the menu and re-measures the
+     * ground. Passed in rather than read from $app/state so the component
+     * stays a plain unit under test. */
+    pathname?: string;
   }
 
-  let { navLinks = [], items = [], logo }: Props = $props();
+  let { navLinks = [], items = [], tone = "default", pathname = "/" }: Props = $props();
+
+  const entries = $derived<NavItem[]>(
+    navLinks.length > 0 ? navLinks.map((l) => ({ label: l.text, href: l.href })) : items,
+  );
 
   let isMenuOpen = $state(false);
-  let openButtonEl = $state<HTMLButtonElement>();
-  // Which dropdown is expanded. Desktop click-toggles + hover/focus reveal;
-  // mobile is a tap accordion.
-  let openMobileIndex = $state<number | null>(null);
-  let openDesktopIndex = $state<number | null>(null);
+  let triggerEl = $state<HTMLButtonElement>();
+  let scrolled = $state(false);
 
-  // A route's flat `navLinks` prop override wins when supplied; every other
-  // route falls back to the site-config `items`/`logo` dropdown nav.
-  const useNavLinks = $derived(navLinks.length > 0);
+  // The comp's bar is 70px tall (Figma 5314:2013).
+  const NAV_HEIGHT = 70;
 
-  const openMenu = () => (isMenuOpen = true);
-  const closeMenu = () => {
+  // Transparent over the page's first slice (whose ground `tone` was chosen
+  // for), and the cream bar with the default lockup from the moment that
+  // slice's bottom edge passes under it. Measured from the DOM, not a fixed
+  // scroll offset: the first slice's height varies — HeartHero is a 260vh
+  // scroll runway, PageMasthead is about 650px — and the swap must not happen
+  // while the masthead is still on screen.
+  function measure() {
+    const first = document.getElementById("main-content")?.firstElementChild;
+    scrolled = first
+      ? first.getBoundingClientRect().bottom <= NAV_HEIGHT
+      : window.scrollY > NAV_HEIGHT;
+  }
+
+  $effect(() => {
+    let frame = 0;
+    const onScroll = () => {
+      if (frame) return;
+      frame = requestAnimationFrame(() => {
+        frame = 0;
+        measure();
+      });
+    };
+    measure();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll);
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onScroll);
+      if (frame) cancelAnimationFrame(frame);
+    };
+  });
+
+  // A route change closes the menu and re-measures against the new page once
+  // it has rendered — next frame, because the new slices are not laid out yet
+  // when the pathname prop changes.
+  $effect(() => {
+    void pathname;
     isMenuOpen = false;
-    openMobileIndex = null;
+    const frame = requestAnimationFrame(measure);
+    return () => cancelAnimationFrame(frame);
+  });
+
+  const effectiveTone = $derived<NavTone>(scrolled ? "default" : tone);
+
+  // The three navbar variants' lockups (Figma 5314:2013 / 5314:1743 /
+  // 5314:1744): the shipped lockup SVG carrying each variant's fills, not a
+  // redraw. See static/.
+  const LOCKUP: Record<NavTone, string> = {
+    default: "/logo-lockup.svg",
+    onDark: "/logo-lockup-on-dark.svg",
+    onGreen: "/logo-lockup-cream.svg",
+  };
+
+  // Hamburger colour per tone. `onGreen` is the one departure from the comp:
+  // navbar-white draws a cream hamburger on the green hero, and cream on
+  // #9cbf5b is 1.93:1. A logo is exempt from contrast rules; a control is not
+  // (WCAG 1.4.11 asks 3:1). #263b02 is the design's own dark-on-green pairing
+  // at 5.86:1 — the same couple every button in the cream sections uses.
+  const ICON: Record<NavTone, string> = {
+    default: "text-primary",
+    onDark: "text-background",
+    onGreen: "text-green-btn",
   };
 </script>
 
-{#if useNavLinks}
-  <!-- navLinks (per-route override) chrome: inline links on desktop,
-       focus-trapped full-screen menu on mobile. -->
-  <nav class="fixed top-0 left-0 z-50 flex w-full items-center justify-between px-8 py-4">
-    <a href="/" class="text-lg font-bold">Logo</a>
-
-    <div class="hidden items-center gap-8 lg:flex">
-      {#each navLinks as link (link.href)}
-        <a href={link.href}>{link.text}</a>
-      {/each}
-    </div>
-
-    {#if !isMenuOpen}
-      <button
-        bind:this={openButtonEl}
-        type="button"
-        class="flex min-h-11 min-w-11 items-center justify-center lg:hidden"
-        onclick={openMenu}
-        aria-label="Open menu"
-      >
-        <Menu size={24} />
-      </button>
-    {/if}
-  </nav>
-{:else}
-  <!-- site-config (#71) chrome: logo + dropdown nav. -->
-  <nav
-    class="fixed top-0 left-0 z-50 flex w-full items-center justify-between bg-background/95 px-8 py-4 backdrop-blur-sm"
+<!-- Figma 5314:2013 (navbar-default), 5314:1743 (navbar) and 5314:1744
+     (navbar-white): one bar, three colourings. The lockup sits at 30px and the
+     row aligns with the page's 1440px / 80px grid (px-6 below md, as the
+     footer and mastheads do). -->
+<nav
+  data-tone={effectiveTone}
+  data-scrolled={scrolled}
+  class="fixed top-0 left-0 z-50 w-full motion-safe:transition-colors motion-safe:duration-300 {scrolled
+    ? 'bg-background/95 backdrop-blur-sm'
+    : 'bg-transparent'}"
+>
+  <div
+    class="mx-auto flex h-[70px] w-full max-w-[1440px] items-center justify-between px-6 md:px-20"
   >
-    <a href="/" class="flex items-center text-lg font-bold">
-      {#if logo}
-        <img
-          src={logo.url}
-          alt="Home"
-          class="h-8 w-auto"
-          style={logo.maxWidth ? `max-width:${logo.maxWidth}` : undefined}
-        />
-      {:else}
-        Logo
-      {/if}
+    <a href="/" class="flex items-center">
+      <img
+        src={LOCKUP[effectiveTone]}
+        alt="Vida Legacy Foundation home"
+        width="242"
+        height="38"
+        class="h-[30px] w-auto"
+      />
     </a>
 
-    {#if items.length > 0}
-      <!-- Desktop: inline top items. An item with children is a disclosure —
-           click toggles it (aria-expanded), and hover/focus-within also reveal it
-           for pointer/keyboard-tab users. Keyed by index: nav labels/hrefs aren't
-           unique (two "" heading hrefs or repeated labels would collide and Svelte
-           throws each_key_duplicate at hydration). -->
-      <ul class="hidden items-center gap-8 lg:flex">
-        {#each items as item, i (i)}
-          {#if item.children && item.children.length > 0}
-            <li class="group relative">
-              <button
-                type="button"
-                class="flex items-center gap-1"
-                aria-expanded={openDesktopIndex === i}
-                aria-controls="nav-dropdown-{i}"
-                onclick={() => (openDesktopIndex = openDesktopIndex === i ? null : i)}
-                onkeydown={(e) => {
-                  if (e.key === "Escape") openDesktopIndex = null;
-                }}
-              >
-                {item.label}
-                <ChevronDown size={16} aria-hidden="true" />
-              </button>
-              <ul
-                id="nav-dropdown-{i}"
-                class="absolute top-full left-0 flex min-w-48 flex-col gap-1 bg-background p-2 shadow-lg transition-opacity group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100"
-                class:invisible={openDesktopIndex !== i}
-                class:opacity-0={openDesktopIndex !== i}
-              >
-                {#each item.children as child, ci (ci)}
-                  <li>
-                    {#if child.href}
-                      <a href={child.href} class="block px-3 py-2 hover:opacity-70">{child.label}</a
-                      >
-                    {:else}
-                      <span class="block px-3 py-2">{child.label}</span>
-                    {/if}
-                  </li>
-                {/each}
-              </ul>
-            </li>
-          {:else if item.href}
-            <li><a href={item.href}>{item.label}</a></li>
-          {:else}
-            <li><span>{item.label}</span></li>
-          {/if}
-        {/each}
-      </ul>
-
-      {#if !isMenuOpen}
-        <button
-          bind:this={openButtonEl}
-          type="button"
-          class="flex min-h-11 min-w-11 items-center justify-center lg:hidden"
-          onclick={openMenu}
-          aria-label="Open menu"
-        >
-          <Menu size={24} />
-        </button>
-      {/if}
+    {#if entries.length > 0}
+      <!-- A 44px hit target around the comp's 20x16 glyph (Figma 5314:1993);
+           the negative margin keeps the glyph on the grid's right edge. -->
+      <button
+        bind:this={triggerEl}
+        type="button"
+        class="-mr-3 flex h-11 w-11 items-center justify-center {ICON[effectiveTone]}"
+        aria-label="Open menu"
+        aria-expanded={isMenuOpen}
+        onclick={() => (isMenuOpen = true)}
+      >
+        <svg width="20" height="16" viewBox="0 0 20 16" fill="currentColor" aria-hidden="true">
+          <path
+            d="M1.90735e-06 0.75001V3.75001H20V0.75001H1.90735e-06ZM1.90735e-06 6.50001V9.50001H20V6.50001H1.90735e-06ZM1.90735e-06 12.25V15.25H20V12.25H1.90735e-06Z"
+          />
+        </svg>
+      </button>
     {/if}
-  </nav>
-{/if}
+  </div>
+</nav>
 
 {#if isMenuOpen}
-  <!-- The open trigger above unmounts while the menu is open, so the element
-       trapFocus captured is detached by close time — `restoreFocus` hands it
-       the re-mounted trigger instead. -->
-  {#if useNavLinks}
-    <div
-      role="dialog"
-      aria-modal="true"
-      aria-label="Menu"
-      class="fixed inset-0 z-50 flex h-dvh w-screen flex-col items-center justify-center gap-8 bg-background lg:hidden"
-      transition:fade
-      use:trapFocus={{ onEscape: closeMenu, restoreFocus: () => openButtonEl }}
-    >
-      <button
-        type="button"
-        class="absolute top-4 right-8 flex min-h-11 min-w-11 items-center justify-center"
-        onclick={closeMenu}
-        aria-label="Close menu"
-      >
-        <X size={24} />
-      </button>
-
-      {#each navLinks as link (link.href)}
-        <a href={link.href} class="px-4 py-3" onclick={closeMenu}>{link.text}</a>
-      {/each}
-    </div>
-  {:else}
-    <div
-      role="dialog"
-      aria-modal="true"
-      aria-label="Menu"
-      class="fixed inset-0 z-50 flex h-dvh w-screen flex-col items-center justify-center gap-4 overflow-y-auto bg-background py-20 lg:hidden"
-      transition:fade
-      use:trapFocus={{ onEscape: closeMenu, restoreFocus: () => openButtonEl }}
-    >
-      <button
-        type="button"
-        class="absolute top-4 right-8 flex min-h-11 min-w-11 items-center justify-center"
-        onclick={closeMenu}
-        aria-label="Close menu"
-      >
-        <X size={24} />
-      </button>
-
-      {#each items as item, i (i)}
-        {#if item.children && item.children.length > 0}
-          <!-- Mobile: a dropdown becomes an accordion — tap to expand its links. -->
-          <div class="flex flex-col items-center gap-2">
-            <button
-              type="button"
-              class="flex items-center gap-1 px-4 py-2"
-              aria-expanded={openMobileIndex === i}
-              onclick={() => (openMobileIndex = openMobileIndex === i ? null : i)}
-            >
-              {item.label}
-              <ChevronDown size={16} aria-hidden="true" />
-            </button>
-            {#if openMobileIndex === i}
-              {#each item.children as child, ci (ci)}
-                {#if child.href}
-                  <a href={child.href} class="px-4 py-2 opacity-80" onclick={closeMenu}
-                    >{child.label}</a
-                  >
-                {:else}
-                  <span class="px-4 py-2 opacity-80">{child.label}</span>
-                {/if}
-              {/each}
-            {/if}
-          </div>
-        {:else if item.href}
-          <a href={item.href} class="px-4 py-3" onclick={closeMenu}>{item.label}</a>
-        {:else}
-          <span class="px-4 py-3">{item.label}</span>
-        {/if}
-      {/each}
-    </div>
-  {/if}
+  <NavMenu {entries} onClose={() => (isMenuOpen = false)} restoreFocus={() => triggerEl} />
 {/if}

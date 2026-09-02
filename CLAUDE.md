@@ -102,15 +102,17 @@ What is NOT done, in the order it blocks things:
 1. **The site has no real content.** The homepage slices exist and the mocks
    render, but the `home` document's slice zone is still empty — filling it is
    a Prismic authoring job, not a code one.
-2. `src/lib/site-config.json` **footer is populated; `nav.items` is still
-   empty.** The IA is derivable from `content/es-website-content.txt`
-   (`ENLACES`, `CONTACTO`, `AVISO LEGAL`).
+2. `src/lib/site-config.json` **footer and nav are both populated.** Two of
+   the nav's targets are provisional: `Contact Us` points at the template's
+   `/contact` route (an unstyled skeleton — the recorded decision is a contact
+   _modal_, which has no comp yet), and `Become a Donor` points at the
+   operator's noted registry URL, which the client has not confirmed.
 3. **`Who we are` has no href yet, and that is deliberate.** Prerendering
    loud-fails, and the crawler follows every internal link it renders — so a
    `/about` href in the footer or nav 404s the build until that Prismic page
-   exists and is published. The footer item ships href-less (it renders as a
-   `<p>`); adding `"href": "/about"` is the whole change once the page is live.
-   Same rule for any nav item.
+   exists and is published. The footer item and the nav entry both ship
+   href-less (the footer renders a `<p>`, the menu a `<span>`); adding
+   `"href": "/about"` to both is the whole change once the page is live.
 4. `DEFAULT_OG_IMAGE` unset — every share is imageless. Needs a 1200×630
    `static/og-default.png`.
 5. Netlify site + `FORMS_INGEST_URL` / `FORMS_INGEST_TOKEN` (docs/NEW-SITE.md).
@@ -236,8 +238,32 @@ disappears on a dark tab bar. 16px stays marginal regardless of inset.
 
 `DEFAULT_OG_IMAGE` is intentionally unset — shipping the starter's card would
 leak Reddoor branding onto a client site. Needs a 1200×630 `og-default.png`.
-`src/lib/site-config.json` now carries the real footer; `nav.items` is still
-empty, so the Nav is logo-only.
+`src/lib/site-config.json` now carries the real footer and nav.
+
+## The nav has no ground of its own
+
+The bar (Figma `5314:2013` / `5314:1743` / `5314:1744`) is transparent and
+fixed over the page, so its colouring is decided by whatever the page's
+**first slice** paints under it. `$lib/nav-tone` maps that slice to the comp's
+variant — `heart_hero` → all-cream lockup, `page_masthead` → cream wordmark
+with the green swoosh, anything else → the blue default — and the layout passes
+it in. Once the first slice's bottom edge scrolls under the bar, Nav swaps to a
+cream `bg-background/95` bar with the default lockup; that state is measured
+from the DOM (`#main-content`'s first child), not a scroll offset, because
+HeartHero is a 260vh runway and the swap must not fire mid-hero.
+
+The three lockup files in `static/` are the same shipped SVG with each
+variant's fills — `navbar-white` really does set `FOUNDATION` and the heart to
+`#FFFFFF`, not cream — not redraws.
+
+**One deliberate departure from the comp:** `navbar-white` draws a cream
+hamburger on the green hero, which is 1.93:1 against `#9cbf5b`. A logo is
+exempt from contrast rules; a control is not (1.4.11 wants 3:1). The hamburger
+there is `--color-green-btn`, the design's own dark-on-green pairing at 5.86.
+
+The open menu (`5314:1679`) is `NavMenu`, extracted so the a11y fixtures can
+render it in-flow (`inline`) — the real one is not in the DOM until opened, so
+that fixture is the only thing that puts its colours in front of axe.
 
 ## The footer is chrome, not a slice
 
