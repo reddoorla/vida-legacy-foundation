@@ -6,6 +6,34 @@
 
   let { data, form }: { data: PageData; form: ActionData } = $props();
 
+  // The page's copy in both locales; the loader picks `data.lang` from the
+  // URL prefix. Field NAMES stay English — they are the ingest payload keys.
+  const COPY = {
+    en: {
+      heading: "Contact us",
+      lede: "Send us a message and we'll get back to you.",
+      success: "Thanks — your message is on its way. We'll be in touch soon.",
+      name: "Name",
+      email: "Email",
+      phone: "Phone",
+      message: "Message",
+      send: "Send message",
+      sending: "Sending…",
+    },
+    es: {
+      heading: "Contáctenos",
+      lede: "Envíenos un mensaje y nos pondremos en contacto con usted.",
+      success: "Gracias, su mensaje va en camino. Nos comunicaremos pronto.",
+      name: "Nombre",
+      email: "Correo electrónico",
+      phone: "Teléfono",
+      message: "Mensaje",
+      send: "Enviar mensaje",
+      sending: "Enviando…",
+    },
+  } as const;
+  const copy = $derived(COPY[data.lang]);
+
   let name = $state("");
   let email = $state("");
   let phone = $state("");
@@ -27,14 +55,14 @@
 
 <main class="max-w-2xl mx-auto px-8 py-16 space-y-8">
   <header class="space-y-2">
-    <h1 class="text-3xl font-bold">Contact us</h1>
-    <p class="text-secondary">Send us a message and we'll get back to you.</p>
+    <h1 class="text-3xl font-bold">{copy.heading}</h1>
+    <p class="text-secondary">{copy.lede}</p>
   </header>
 
   <!-- One-and-done: on success the form unmounts. To allow another submission, keep the form mounted and reset the field state instead. -->
   {#if form?.success}
     <p role="status" class="border-2 border-green-600 bg-green-50 rounded p-4 text-green-900">
-      Thanks — your message is on its way. We'll be in touch soon.
+      {copy.success}
     </p>
   {:else}
     <form
@@ -67,19 +95,19 @@
         class="hidden"
       />
 
-      <Field name="name" label="Name" autocomplete="name" required bind:value={name} />
+      <Field name="name" label={copy.name} autocomplete="name" required bind:value={name} />
       <Field
         name="email"
-        label="Email"
+        label={copy.email}
         type="email"
         autocomplete="email"
         required
         bind:value={email}
       />
-      <Field name="phone" label="Phone" type="tel" autocomplete="tel" bind:value={phone} />
+      <Field name="phone" label={copy.phone} type="tel" autocomplete="tel" bind:value={phone} />
       <Field
         name="message"
-        label="Message"
+        label={copy.message}
         type="textarea"
         maxlength={5000}
         required
@@ -98,7 +126,7 @@
         disabled={submitting}
         class="px-4 py-2 bg-primary text-white rounded bump disabled:opacity-60"
       >
-        {submitting ? "Sending…" : "Send message"}
+        {submitting ? copy.sending : copy.send}
       </button>
     </form>
   {/if}

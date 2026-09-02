@@ -123,4 +123,33 @@ describe("Seo head output", () => {
     render(Seo, { ...base, url: "https://acme.com/x?y=1" });
     expect(attr('link[rel="canonical"]', "href")).toBe("https://acme.com/x");
   });
+
+  it("emits reciprocal hreflang links plus an English x-default for a translated page", () => {
+    render(Seo, {
+      ...base,
+      alternates: [
+        { lang: "es", href: "https://acme.com/es/about" },
+        { lang: "en", href: "https://acme.com/about" },
+      ],
+    });
+    const links = Array.from(head.querySelectorAll('link[rel="alternate"]')).map((l) => [
+      l.getAttribute("hreflang"),
+      l.getAttribute("href"),
+    ]);
+    expect(links).toEqual([
+      ["es", "https://acme.com/es/about"],
+      ["en", "https://acme.com/about"],
+      ["x-default", "https://acme.com/about"],
+    ]);
+  });
+
+  it("emits no hreflang for a page that only exists in one locale", () => {
+    render(Seo, { ...base, alternates: [{ lang: "en", href: "https://acme.com/about" }] });
+    expect(head.querySelector('link[rel="alternate"]')).toBeNull();
+  });
+
+  it("takes og:locale from the page", () => {
+    render(Seo, { ...base, locale: "es_MX" });
+    expect(attr('meta[property="og:locale"]')).toBe("es_MX");
+  });
 });

@@ -2,6 +2,7 @@
   import { trapFocus } from "$lib/actions/trapFocus";
   import { fade } from "$lib/transitions";
   import type { NavItem } from "$lib/site-config";
+  import type { SwitchTarget } from "$lib/locale";
 
   interface Props {
     entries: NavItem[];
@@ -13,9 +14,12 @@
      * trap — trapping focus in a page section would itself be a keyboard
      * trap. */
     inline?: boolean;
+    /** The other locale's version of this page; rendered under the entries
+     * when present (see Nav). */
+    switchTo?: SwitchTarget;
   }
 
-  let { entries, onClose, restoreFocus, inline = false }: Props = $props();
+  let { entries, onClose, restoreFocus, inline = false, switchTo }: Props = $props();
 
   // Only http(s) links open in a new tab; a route stays same-tab. The same
   // shape as Footer's, so target/rel cannot drift between the two.
@@ -123,6 +127,18 @@
         </li>
       {/each}
     </ul>
+
+    {#if switchTo}
+      <a
+        href={switchTo.href}
+        hreflang={switchTo.lang}
+        lang={switchTo.lang}
+        onclick={onClose}
+        class="text-background font-heading w-fit text-2xl hover:text-green focus-visible:text-green"
+      >
+        {switchTo.label}
+      </a>
+    {/if}
   </div>
 </div>
 

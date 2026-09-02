@@ -1,5 +1,8 @@
 <script lang="ts">
   import { page } from "$app/state";
+  import { langFromParam, pathForDoc } from "$lib/locale";
+
+  const lang = $derived(langFromParam(page.params.lang));
 </script>
 
 <svelte:head>
@@ -12,5 +15,7 @@
   <p class="mt-4 text-lg opacity-70">
     {page.error?.message ?? "Something went wrong"}
   </p>
-  <a href="/" class="mt-8 underline hover:no-underline">Go home</a>
+  <a href={pathForDoc("home", lang)} class="mt-8 underline hover:no-underline">
+    {lang === "es" ? "Ir al inicio" : "Go home"}
+  </a>
 </div>

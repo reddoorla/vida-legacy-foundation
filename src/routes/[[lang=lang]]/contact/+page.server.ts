@@ -1,5 +1,6 @@
 import { env } from "$env/dynamic/private";
 import { createIngestAction } from "@reddoorla/maintenance/forms";
+import { langFromParam } from "$lib/locale";
 import type { Actions, PageServerLoad } from "./$types";
 
 // The root layout sets `prerender = "auto"`; a form `action` cannot run on a
@@ -9,10 +10,14 @@ export const prerender = false;
 
 // Plant a per-request timestamp for the bot timing screen. `title` flows to
 // the root layout's <Seo> (static routes set head via data, not their own tags).
-export const load: PageServerLoad = () => ({
-  formTs: Date.now(),
-  title: "Contact",
-});
+export const load: PageServerLoad = ({ params }) => {
+  const lang = langFromParam(params.lang);
+  return {
+    formTs: Date.now(),
+    lang,
+    title: lang === "es" ? "Contáctenos" : "Contact",
+  };
+};
 
 export const actions: Actions = {
   default: createIngestAction({

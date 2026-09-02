@@ -9,6 +9,31 @@ describe("loadSiteConfig", () => {
     expect(Array.isArray(config.nav.items)).toBe(true);
     expect(Array.isArray(config.footer.socials)).toBe(true);
   });
+
+  it("serves the Spanish chrome for es, with localized internal hrefs", () => {
+    const es = loadSiteConfig("es");
+    expect(es.nav.items.map((i) => i.label)).toEqual([
+      "Quiénes Somos",
+      "Donar",
+      "Contáctenos",
+      "Conviértase en Donante",
+    ]);
+    expect(es.nav.items.find((i) => i.label === "Contáctenos")?.href).toBe("/es/contact");
+    // The footer's fine print is the Spanish rights line.
+    const fine = es.footer.columns?.[0].items.find((i) => "tone" in i && i.tone === "fine");
+    expect(fine && "text" in fine ? fine.text : "").toContain("Todos los derechos reservados");
+  });
+
+  it("is the base config for the default locale, untouched by the overrides", () => {
+    const en = loadSiteConfig("en");
+    expect(en).toBe(loadSiteConfig());
+    expect(en.nav.items.map((i) => i.label)).toEqual([
+      "Who We Are",
+      "Donate",
+      "Contact Us",
+      "Become a Donor",
+    ]);
+  });
 });
 
 describe("footerColumns", () => {

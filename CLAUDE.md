@@ -91,11 +91,13 @@ What is in Prismic:
   sentinel could come out. The home page currently renders as nav + footer +
   an `<h1>` and nothing else. `/figma-slices` fills the slice zone.
 
-Custom types still cannot be created from an agent session — there is no
-create-custom-type API, and the Prismic MCP connector is read-only for types.
-Pushing a new one means `pnpm slicemachine` and a browser. Documents _can_ be
-created over MCP, but only staged into a release; **publishing is a human step
-in the dashboard** — do not call `publish_release`.
+Slice and custom-type models CAN be pushed from a session: `@slicemachine/manager`
+is in the pnpm store (not a top-level dep; load its CJS entry, the ESM one fails
+on a directory import) and, once `~/.prismic` holds a login, its
+`slices.pushSlice` / `customTypes.pushCustomType` do what Slice Machine's Push
+button does. Documents _can_ be created over MCP, but only staged into a
+release; **publishing is a human step in the dashboard** — do not call
+`publish_release`.
 
 What is NOT done, in the order it blocks things:
 
@@ -256,6 +258,35 @@ disappears on a dark tab bar. 16px stays marginal regardless of inset.
 `DEFAULT_OG_IMAGE` is intentionally unset — shipping the starter's card would
 leak Reddoor branding onto a client site. Needs a 1200×630 `og-default.png`.
 `src/lib/site-config.json` now carries the real footer and nav.
+
+## Two locales, one route tree
+
+Spanish ships at launch. English is the master locale at the bare paths;
+Spanish is `/es` and `/es/<uid>`. The prefix is the optional route param
+`[[lang=lang]]` (matcher: `src/params/lang.ts`, only `es` — `/en` is
+deliberately not a URL), so one set of loaders serves both and `params.lang`
+picks the Prismic locale through `$lib/locale`. Prismic's ids (`en-us`,
+`es-mx`) never reach a URL.
+
+- **Prerender enumerates both locales** from `getAllByType("page", { lang:
+"*" })` via `$lib/prerender-entries`. A locale whose document is not
+  published is simply absent from `entries()`, so an unpublished translation
+  never becomes a 404 that fails the build.
+- **The language switch only renders where the target exists**: a Prismic
+  page's published translation (`page.data.alternates`), or a route in
+  `LOCALIZED_STATIC_ROUTES` (`/contact`). Anything else — a page with no
+  translation yet, the dev pages — gets no switch, because the crawler would
+  follow it into a 404. Do not "fix" a missing switch by pointing it at `/es`
+  until the Spanish home is published.
+- **Chrome per locale** lives in `site-config.json` under `locales.es` (nav and
+  footer replaced wholesale, hrefs included); `loadSiteConfig(lang)` resolves
+  it. The contact page carries its own two-language copy.
+- **Head**: `<html lang>` is set per request in `hooks.server.ts` (app.html
+  carries `%lang%`), `og:locale` comes from the loader, and `Seo` emits
+  reciprocal `hreflang` links plus an English `x-default` only when a page has
+  a translation.
+- **Previews** pass the locale-aware `linkResolver`, so an es-mx preview lands
+  on `/es/…`.
 
 ## The nav has no ground of its own
 

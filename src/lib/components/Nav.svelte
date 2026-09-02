@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { NavItem } from "$lib/site-config";
   import type { NavTone } from "$lib/nav-tone";
+  import type { SwitchTarget } from "$lib/locale";
   import NavMenu from "./NavMenu.svelte";
 
   interface NavLink {
@@ -26,9 +27,13 @@
      * ground. Passed in rather than read from $app/state so the component
      * stays a plain unit under test. */
     pathname?: string;
+    /** The other locale's version of this page (see `switchTarget` in
+     * $lib/locale). Omit when there is none — the switch then does not render,
+     * because a link to a page that does not exist fails the prerender. */
+    switchTo?: SwitchTarget;
   }
 
-  let { navLinks = [], items = [], tone = "default", pathname = "/" }: Props = $props();
+  let { navLinks = [], items = [], tone = "default", pathname = "/", switchTo }: Props = $props();
 
   const entries = $derived<NavItem[]>(
     navLinks.length > 0 ? navLinks.map((l) => ({ label: l.text, href: l.href })) : items,
@@ -130,27 +135,52 @@
       />
     </a>
 
-    {#if entries.length > 0}
-      <!-- A 44px hit target around the comp's 20x16 glyph (Figma 5314:1993);
-           the negative margin keeps the glyph on the grid's right edge. -->
-      <button
-        bind:this={triggerEl}
-        type="button"
-        class="-mr-3 flex h-11 w-11 items-center justify-center {ICON[effectiveTone]}"
-        aria-label="Open menu"
-        aria-expanded={isMenuOpen}
-        onclick={() => (isMenuOpen = true)}
-      >
-        <svg width="20" height="16" viewBox="0 0 20 16" fill="currentColor" aria-hidden="true">
-          <path
-            d="M1.90735e-06 0.75001V3.75001H20V0.75001H1.90735e-06ZM1.90735e-06 6.50001V9.50001H20V6.50001H1.90735e-06ZM1.90735e-06 12.25V15.25H20V12.25H1.90735e-06Z"
-          />
-        </svg>
-      </button>
-    {/if}
+    <div class="flex items-center gap-3">
+      {#if switchTo}
+        <!-- Language switch. Not in the comps: the smallest addition that fits
+             the bar — the button face at button size, in the tone's control
+             colour. "ES" is the visible label; the accessible name is the
+             language's own name, which begins with it. -->
+        <a
+          href={switchTo.href}
+          hreflang={switchTo.lang}
+          lang={switchTo.lang}
+          aria-label={switchTo.label}
+          class="font-button flex h-11 items-center px-2 text-[10px] tracking-[1px] uppercase {ICON[
+            effectiveTone
+          ]}"
+        >
+          {switchTo.short}
+        </a>
+      {/if}
+
+      {#if entries.length > 0}
+        <!-- A 44px hit target around the comp's 20x16 glyph (Figma 5314:1993);
+             the negative margin keeps the glyph on the grid's right edge. -->
+        <button
+          bind:this={triggerEl}
+          type="button"
+          class="-mr-3 flex h-11 w-11 items-center justify-center {ICON[effectiveTone]}"
+          aria-label="Open menu"
+          aria-expanded={isMenuOpen}
+          onclick={() => (isMenuOpen = true)}
+        >
+          <svg width="20" height="16" viewBox="0 0 20 16" fill="currentColor" aria-hidden="true">
+            <path
+              d="M1.90735e-06 0.75001V3.75001H20V0.75001H1.90735e-06ZM1.90735e-06 6.50001V9.50001H20V6.50001H1.90735e-06ZM1.90735e-06 12.25V15.25H20V12.25H1.90735e-06Z"
+            />
+          </svg>
+        </button>
+      {/if}
+    </div>
   </div>
 </nav>
 
 {#if isMenuOpen}
-  <NavMenu {entries} onClose={() => (isMenuOpen = false)} restoreFocus={() => triggerEl} />
+  <NavMenu
+    {entries}
+    {switchTo}
+    onClose={() => (isMenuOpen = false)}
+    restoreFocus={() => triggerEl}
+  />
 {/if}
