@@ -886,7 +886,37 @@ export type SectionGridSliceDefault = prismic.SharedSliceVariation<
 /**
  * Slice variation for *SectionGrid*
  */
-type SectionGridSliceVariation = SectionGridSliceDefault;
+/**
+ * Primary content in *SectionGrid → On Dark → Primary*
+ */
+export interface SectionGridSliceOnDarkPrimary {
+  /** heading field — section_grid.onDark.primary.heading */
+  heading: prismic.RichTextField;
+
+  /** outro field — section_grid.onDark.primary.outro */
+  outro: prismic.RichTextField;
+
+  /** cta_label field — section_grid.onDark.primary.cta_label */
+  cta_label: prismic.KeyTextField;
+
+  /** cta_link field — section_grid.onDark.primary.cta_link */
+  cta_link: prismic.LinkField;
+}
+
+/**
+ * On Dark variation for SectionGrid Slice
+ *
+ * - **API ID**: `onDark`
+ * - **Description**: A grid of text-only cards on the dark green ground, with an optional closing note and CTA
+ * - **Documentation**: https://prismic.io/docs/slices
+ */
+export type SectionGridSliceOnDark = prismic.SharedSliceVariation<
+  "onDark",
+  Simplify<SectionGridSliceOnDarkPrimary>,
+  Simplify<SectionGridSliceDefaultItem>
+>;
+
+type SectionGridSliceVariation = SectionGridSliceDefault | SectionGridSliceOnDark;
 
 /**
  * SectionGrid Shared Slice
@@ -1156,6 +1186,8 @@ declare module "@prismicio/client" {
       SectionGridSlice,
       SectionGridSliceDefaultPrimary,
       SectionGridSliceDefaultItem,
+      SectionGridSliceOnDarkPrimary,
+      SectionGridSliceOnDark,
       SectionGridSliceVariation,
       SectionGridSliceDefault,
       TestimonialSlice,

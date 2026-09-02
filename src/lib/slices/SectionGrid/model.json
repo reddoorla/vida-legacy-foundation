@@ -60,6 +60,59 @@
           }
         }
       }
+    },
+    {
+      "id": "onDark",
+      "name": "On Dark",
+      "docURL": "...",
+      "version": "initial",
+      "description": "A grid of text-only cards on the dark green ground, with an optional closing note and CTA",
+      "imageUrl": "",
+      "primary": {
+        "heading": {
+          "type": "StructuredText",
+          "config": {
+            "label": "heading",
+            "single": "heading2,heading3"
+          }
+        },
+        "outro": {
+          "type": "StructuredText",
+          "config": {
+            "label": "outro",
+            "multi": "paragraph,strong,em,hyperlink"
+          }
+        },
+        "cta_label": {
+          "type": "Text",
+          "config": {
+            "label": "cta_label"
+          }
+        },
+        "cta_link": {
+          "type": "Link",
+          "config": {
+            "label": "cta_link",
+            "allowTargetBlank": true
+          }
+        }
+      },
+      "items": {
+        "item_heading": {
+          "type": "StructuredText",
+          "config": {
+            "label": "item_heading",
+            "single": "heading3,heading4"
+          }
+        },
+        "item_body": {
+          "type": "StructuredText",
+          "config": {
+            "label": "item_body",
+            "multi": "paragraph,strong,em,hyperlink"
+          }
+        }
+      }
     }
   ]
 }

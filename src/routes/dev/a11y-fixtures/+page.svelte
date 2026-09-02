@@ -168,6 +168,55 @@
       body: rtx("They needed an identity on a tight timeline to communicate that message."),
     },
   };
+  // VLF TOSA x Vida grid: text-only cards on #172303 plus a closing CTA cell.
+  // The CTA is an EXTERNAL url on purpose — an internal /about here would be
+  // followed by the prerender crawler and 404 the build, since no such Prismic
+  // page exists yet.
+  const sectionGridOnDarkFixture = {
+    slice_type: "section_grid",
+    variation: "onDark",
+    primary: {
+      heading: [],
+      outro: [
+        {
+          type: "paragraph",
+          text: "Together, TOSA and Vida Legacy Foundation provide ongoing support for families impacted by organ donation.",
+          spans: [],
+        },
+      ],
+      cta_label: "Who we are",
+      cta_link: { link_type: "Web", url: "https://example.com/about" },
+    },
+    items: [
+      {
+        item_heading: [{ type: "heading3", text: "Independent but Connected", spans: [] }],
+        item_body: [
+          { type: "paragraph", text: "A separate 501(c)(3) created by TOSA.", spans: [] },
+        ],
+      },
+      {
+        item_heading: [{ type: "heading3", text: "Complementary Missions", spans: [] }],
+        item_body: [
+          {
+            type: "paragraph",
+            text: "TOSA handles organ procurement; VLF supports families.",
+            spans: [],
+          },
+        ],
+      },
+      {
+        item_heading: [{ type: "heading3", text: "Local Impact", spans: [] }],
+        item_body: [
+          {
+            type: "paragraph",
+            text: "Philanthropic support stays in Central and South Texas.",
+            spans: [],
+          },
+        ],
+      },
+    ],
+  } as unknown as Content.SectionGridSlice;
+
   // VLF "A companion on the journey": sticky intro + icon card + photo. Locks
   // the decorative-icon markup and the 7.84 / 15.18 pairings on #172303.
   const iconColumnsFixture = {
@@ -494,6 +543,7 @@
   <LeadText slice={leadTextFixture} />
   <LeadText slice={leadTextOnDarkFixture} />
   <IconColumns slice={iconColumnsFixture} />
+  <SectionGrid slice={sectionGridOnDarkFixture} />
   <TextColumns slice={textColumnsFixture} />
   <AccordionSlice slice={accordionFixture} />
   <Testimonial slice={testimonialFixture} />
