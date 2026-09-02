@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { loadSiteConfig, footerColumns, type SiteConfig } from "./site-config";
+import { loadSiteConfig, footerColumns, type SiteConfig, type FooterText } from "./site-config";
 
 describe("loadSiteConfig", () => {
   it("returns a well-formed config from the checked-in stub", () => {
@@ -33,6 +33,50 @@ describe("loadSiteConfig", () => {
       "Contact Us",
       "Become a Donor",
     ]);
+  });
+});
+
+describe("loadSiteConfig page references", () => {
+  // A chrome item that names a Prismic page (`"page": "about"`) links to it
+  // ONLY once that page is published: the loud-fail prerender follows every
+  // internal link it renders, so a hard-coded "/about" would 404 the build
+  // until the document exists. The layout hands in the published uids.
+  const nav = (cfg: SiteConfig, label: string) => cfg.nav.items.find((i) => i.label === label);
+  const footerRow = (cfg: SiteConfig, text: string) =>
+    cfg.footer
+      .columns!.flatMap((c) => c.items)
+      .filter((i): i is FooterText => "text" in i)
+      .find((i) => i.text === text);
+
+  it("links a page reference once that page is published, unlinked before", () => {
+    const before = nav(loadSiteConfig("en", []), "Who We Are");
+    expect(before?.href).toBe("");
+    // The reference is consumed: Nav and Footer only ever see hrefs.
+    expect(before && "page" in before).toBe(false);
+    expect(nav(loadSiteConfig("en", ["about"]), "Who We Are")?.href).toBe("/about");
+  });
+
+  it("localizes the resolved path", () => {
+    expect(nav(loadSiteConfig("es", ["about"]), "Quiénes Somos")?.href).toBe("/es/about");
+  });
+
+  it("keeps the href fallback while the page is unpublished — Donate goes to LGL", () => {
+    expect(nav(loadSiteConfig("en", ["about"]), "Donate")?.href).toMatch(
+      /^https:\/\/secure\.lglforms\.com\//,
+    );
+    expect(nav(loadSiteConfig("en", ["donate"]), "Donate")?.href).toBe("/donate");
+  });
+
+  it("resolves footer rows the same way", () => {
+    expect(footerRow(loadSiteConfig("en", []), "Who we are")?.href).toBeUndefined();
+    expect(footerRow(loadSiteConfig("en", ["about"]), "Who we are")?.href).toBe("/about");
+    expect(footerRow(loadSiteConfig("es", ["about"]), "Quiénes somos")?.href).toBe("/es/about");
+  });
+
+  it("never mutates the checked-in config", () => {
+    loadSiteConfig("en", ["about", "donate"]);
+    expect(nav(loadSiteConfig(), "Who We Are")?.href).toBe("");
+    expect(nav(loadSiteConfig(), "Who We Are")?.page).toBe("about");
   });
 });
 
