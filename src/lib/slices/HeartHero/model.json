@@ -1,0 +1,27 @@
+{
+  "id": "heart_hero",
+  "type": "SharedSlice",
+  "name": "HeartHero",
+  "description": "Full-bleed brand-green hero with a heart-masked photo",
+  "variations": [
+    {
+      "id": "default",
+      "name": "Default",
+      "docURL": "...",
+      "version": "initial",
+      "description": "Heart-masked photo centred on the brand green ground",
+      "imageUrl": "",
+      "primary": {
+        "image": {
+          "type": "Image",
+          "config": {
+            "label": "image",
+            "constraint": {},
+            "thumbnails": []
+          }
+        }
+      },
+      "items": {}
+    }
+  ]
+}
