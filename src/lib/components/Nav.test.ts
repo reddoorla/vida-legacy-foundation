@@ -31,204 +31,162 @@ beforeEach(() => {
 afterEach(() => {
   cleanup();
   vi.restoreAllMocks();
+  document.body.innerHTML = "";
 });
 
 const frame = () => new Promise((r) => requestAnimationFrame(r));
 
-// Hash hrefs keep jsdom from attempting (unimplemented) page navigation.
+// The real site-config shape: one entry still waiting on its Prismic page
+// (empty href), one external, one route. Hash/route hrefs keep jsdom from
+// attempting (unimplemented) page navigation.
 const items = [
-  { label: "Services", href: "#services" },
-  { label: "About", href: "#about" },
+  { label: "Who We Are", href: "" },
+  { label: "Donate", href: "https://donate.example/form" },
+  { label: "Contact Us", href: "/contact" },
 ];
 
-// A top item with dropdown children (renders as a desktop dropdown / mobile
-// accordion).
-const itemsWithDropdown = [
-  {
-    label: "Products",
-    href: "",
-    children: [
-      { label: "Chairs", href: "#chairs" },
-      { label: "Tables", href: "#tables" },
-    ],
-  },
-  { label: "About", href: "#about" },
-];
-
-// Flat `navLinks` — a per-route override of the site-config nav. These take
-// precedence over `items` and render the focus-trapped mobile menu below.
+// Flat `navLinks` — a per-route override of the site-config nav.
 const navLinks = [
   { text: "Services", href: "#services" },
   { text: "About", href: "#about" },
 ];
 
-describe("Nav — logo-only mode", () => {
-  it("renders no menu button without items", () => {
-    const { queryByLabelText, getByText } = render(Nav);
-    expect(getByText("Logo")).toBeTruthy();
+/** A stand-in for the layout's <main>: Nav measures its first child to decide
+ *  when the bar has scrolled onto its own ground. */
+function mountMain(bottom: () => number) {
+  const main = document.createElement("main");
+  main.id = "main-content";
+  const first = document.createElement("section");
+  main.appendChild(first);
+  document.body.appendChild(main);
+  vi.spyOn(first, "getBoundingClientRect").mockImplementation(
+    () => ({ bottom: bottom() }) as DOMRect,
+  );
+  return main;
+}
+
+describe("Nav — the bar", () => {
+  it("links the lockup home and renders no menu button without entries", () => {
+    const { getByAltText, queryByLabelText } = render(Nav);
+    const img = getByAltText("Vida Legacy Foundation home");
+    expect(img.closest("a")?.getAttribute("href")).toBe("/");
     expect(queryByLabelText("Open menu")).toBeNull();
   });
 
-  it("renders the resolved logo image when given a logo", () => {
-    const { getByAltText } = render(Nav, {
-      logo: { url: "https://cdn.example/logo.png", maxWidth: "250px" },
-    });
-    const img = getByAltText("Home") as HTMLImageElement;
-    expect(img.getAttribute("src")).toBe("https://cdn.example/logo.png");
-    expect(img.style.maxWidth).toBe("250px");
-  });
-});
-
-describe("Nav — mobile menu", () => {
-  it("opens the menu and moves focus into it", async () => {
-    const { getByLabelText, getByRole } = render(Nav, { items });
-
-    await fireEvent.click(getByLabelText("Open menu"));
-    const dialog = getByRole("dialog");
-    expect(dialog.getAttribute("aria-modal")).toBe("true");
-
-    await frame();
-    expect(document.activeElement).toBe(getByLabelText("Close menu"));
-  });
-
-  it("wraps Tab from the last link back to the close button", async () => {
-    const { getByLabelText, getByRole } = render(Nav, { items });
-    await fireEvent.click(getByLabelText("Open menu"));
-    await frame();
-
-    const dialog = getByRole("dialog");
-    const links = Array.from(dialog.querySelectorAll("a"));
-    const last = links[links.length - 1];
-    last.focus();
-
-    const e = new KeyboardEvent("keydown", {
-      key: "Tab",
-      bubbles: true,
-      cancelable: true,
-    });
-    last.dispatchEvent(e);
-
-    expect(e.defaultPrevented).toBe(true);
-    expect(document.activeElement).toBe(getByLabelText("Close menu"));
-  });
-
-  it("closes on Escape and returns focus to the re-mounted trigger", async () => {
-    const { getByLabelText, getByRole, queryByRole } = render(Nav, {
+  it("is transparent with the page's tone over the first slice", () => {
+    const { container, getByAltText, getByLabelText } = render(Nav, {
       items,
+      tone: "onGreen",
     });
-    await fireEvent.click(getByLabelText("Open menu"));
-    await frame();
-
-    await fireEvent.keyDown(getByRole("dialog"), { key: "Escape" });
-    expect(queryByRole("dialog")).toBeNull();
-
-    // The trigger unmounted while the menu was open; focus lands on the fresh
-    // instance one frame after close.
-    await frame();
-    await frame();
-    expect(document.activeElement).toBe(getByLabelText("Open menu"));
-  });
-
-  it("closes when a menu link is activated", async () => {
-    const { getByLabelText, getByRole, queryByRole } = render(Nav, {
-      items,
-    });
-    await fireEvent.click(getByLabelText("Open menu"));
-    await frame();
-
-    const link = Array.from(getByRole("dialog").querySelectorAll("a"))[0];
-    await fireEvent.click(link);
-
-    expect(queryByRole("dialog")).toBeNull();
-  });
-
-  it("renders duplicate labels/hrefs without crashing (index-keyed each)", () => {
-    // Two children pointing at the same href, and repeated top-level labels —
-    // both would throw each_key_duplicate at hydration if keyed by label/href.
-    const dupes = [
-      {
-        label: "Company",
-        href: "",
-        children: [
-          { label: "About", href: "/contact" },
-          { label: "Team", href: "/contact" },
-        ],
-      },
-      { label: "Company", href: "/company" },
-    ];
-    expect(() => render(Nav, { items: dupes })).not.toThrow();
-  });
-
-  it("renders an empty-href item as non-interactive text, not a dead link", () => {
-    const { container, getByText } = render(Nav, {
-      items: [{ label: "Heading", href: "" }],
-    });
-    expect(getByText("Heading").tagName).toBe("SPAN");
-    // The only <a> is the logo home link; no <a href=""> leaf.
-    const emptyLinks = Array.from(container.querySelectorAll("a")).filter(
-      (a) => a.getAttribute("href") === "",
+    const nav = container.querySelector("nav")!;
+    expect(nav.dataset.tone).toBe("onGreen");
+    expect(nav.dataset.scrolled).toBe("false");
+    expect(nav.className).toContain("bg-transparent");
+    expect(getByAltText("Vida Legacy Foundation home").getAttribute("src")).toBe(
+      "/logo-lockup-cream.svg",
     );
-    expect(emptyLinks).toHaveLength(0);
+    // The comp's cream hamburger on the green hero is 1.93:1 — the control
+    // takes the design's dark-on-green pairing instead.
+    expect(getByLabelText("Open menu").className).toContain("text-green-btn");
   });
 
-  it("desktop dropdown is a disclosure: aria-expanded toggles, Escape closes", async () => {
-    const { container } = render(Nav, { items: itemsWithDropdown });
-    // The desktop dropdown toggle carries aria-controls (the mobile menu isn't
-    // open, so it's the only such button).
-    const toggle = container.querySelector("button[aria-controls]") as HTMLButtonElement;
-    expect(toggle).toBeTruthy();
-    // No misleading aria-haspopup (the popup is a list of links, not a menu).
-    expect(toggle.getAttribute("aria-haspopup")).toBeNull();
-    expect(toggle.getAttribute("aria-expanded")).toBe("false");
-
-    await fireEvent.click(toggle);
-    expect(toggle.getAttribute("aria-expanded")).toBe("true");
-
-    await fireEvent.keyDown(toggle, { key: "Escape" });
-    expect(toggle.getAttribute("aria-expanded")).toBe("false");
+  it("uses the cream-and-green lockup and a cream hamburger on the dark ground", () => {
+    const { getByAltText, getByLabelText } = render(Nav, { items, tone: "onDark" });
+    expect(getByAltText("Vida Legacy Foundation home").getAttribute("src")).toBe(
+      "/logo-lockup-on-dark.svg",
+    );
+    expect(getByLabelText("Open menu").className).toContain("text-background");
   });
 
-  it("expands a dropdown as an accordion and reveals its children", async () => {
-    const { getByLabelText, getByRole } = render(Nav, {
-      items: itemsWithDropdown,
-    });
-    await fireEvent.click(getByLabelText("Open menu"));
+  it("defaults to the blue lockup on cream", () => {
+    const { getByAltText, getByLabelText } = render(Nav, { items });
+    expect(getByAltText("Vida Legacy Foundation home").getAttribute("src")).toBe(
+      "/logo-lockup.svg",
+    );
+    expect(getByLabelText("Open menu").className).toContain("text-primary");
+  });
+
+  it("becomes the cream bar with the default lockup once the first slice scrolls under it", async () => {
+    let bottom = 800;
+    mountMain(() => bottom);
+    const { container, getByAltText } = render(Nav, { items, tone: "onGreen" });
+    const nav = container.querySelector("nav")!;
+    expect(nav.dataset.scrolled).toBe("false");
+
+    // The hero is still on screen: a scroll does not flip the bar.
+    bottom = 400;
+    window.dispatchEvent(new Event("scroll"));
     await frame();
+    expect(nav.dataset.scrolled).toBe("false");
+    expect(nav.dataset.tone).toBe("onGreen");
 
-    // Scope to the dialog: the desktop dropdown <ul> also holds these links and
-    // jsdom applies no stylesheet, so Tailwind's `hidden`/`lg:flex` doesn't hide
-    // it — only the dialog's accordion actually collapses its children.
-    const dialog = getByRole("dialog");
-    expect(dialog.textContent).not.toContain("Chairs");
+    // Its bottom edge passes under the 70px bar.
+    bottom = 40;
+    window.dispatchEvent(new Event("scroll"));
+    await frame();
+    expect(nav.dataset.scrolled).toBe("true");
+    expect(nav.dataset.tone).toBe("default");
+    expect(nav.className).toContain("bg-background/95");
+    expect(getByAltText("Vida Legacy Foundation home").getAttribute("src")).toBe(
+      "/logo-lockup.svg",
+    );
+  });
 
-    const toggle = Array.from(dialog.querySelectorAll("button")).find((b) =>
-      b.textContent?.includes("Products"),
-    )!;
-    expect(toggle.getAttribute("aria-expanded")).toBe("false");
-
-    await fireEvent.click(toggle);
-    expect(toggle.getAttribute("aria-expanded")).toBe("true");
-    expect(dialog.textContent).toContain("Chairs");
-    expect(dialog.textContent).toContain("Tables");
+  it("exposes the menu state on the trigger", async () => {
+    const { getByLabelText } = render(Nav, { items });
+    const trigger = getByLabelText("Open menu");
+    expect(trigger.getAttribute("aria-expanded")).toBe("false");
+    await fireEvent.click(trigger);
+    expect(trigger.getAttribute("aria-expanded")).toBe("true");
   });
 });
 
-// The flat-links chrome a route renders when it passes a `navLinks` prop
-// override. Distinct code path from the `items` dropdown nav above.
-describe("Nav — navLinks (per-route override) mode", () => {
-  it("opens the menu and moves focus into it", async () => {
-    const { getByLabelText, getByRole } = render(Nav, { navLinks });
+describe("Nav — the menu", () => {
+  it("opens as a modal dialog and moves focus to its first control", async () => {
+    const { getByLabelText, getByRole } = render(Nav, { items });
 
     await fireEvent.click(getByLabelText("Open menu"));
     const dialog = getByRole("dialog");
     expect(dialog.getAttribute("aria-modal")).toBe("true");
 
+    // DOM order is visual order: the lockup (a home link) leads the header
+    // row, the close button follows it, then the entries.
     await frame();
-    expect(document.activeElement).toBe(getByLabelText("Close menu"));
+    const first = dialog.querySelector("a, button")!;
+    expect(first.getAttribute("href")).toBe("/");
+    expect(document.activeElement).toBe(first);
   });
 
-  it("wraps Tab from the last link back to the close button", async () => {
-    const { getByLabelText, getByRole } = render(Nav, { navLinks });
+  it("lists the entries in order, from navLinks when a route supplies them", async () => {
+    const { getByLabelText, getByRole } = render(Nav, { items, navLinks });
+    await fireEvent.click(getByLabelText("Open menu"));
+    const labels = Array.from(getByRole("dialog").querySelectorAll("li > a, li > span")).map((el) =>
+      el.textContent?.trim(),
+    );
+    expect(labels).toEqual(["Services", "About"]);
+  });
+
+  it("renders an entry without an href as text, never as a dead link", async () => {
+    const { getByLabelText, getByRole, getByText } = render(Nav, { items });
+    await fireEvent.click(getByLabelText("Open menu"));
+    const dialog = getByRole("dialog");
+    expect(dialog.querySelector('a[href=""]')).toBeNull();
+    expect(getByText("Who We Are").closest("a")).toBeNull();
+  });
+
+  it("opens external entries in a new tab and routes in the same one", async () => {
+    const { getByLabelText, getByText } = render(Nav, { items });
+    await fireEvent.click(getByLabelText("Open menu"));
+    const donate = getByText("Donate").closest("a")!;
+    expect(donate.getAttribute("target")).toBe("_blank");
+    expect(donate.getAttribute("rel")).toBe("noopener noreferrer");
+    const contact = getByText("Contact Us").closest("a")!;
+    expect(contact.getAttribute("href")).toBe("/contact");
+    expect(contact.hasAttribute("target")).toBe(false);
+  });
+
+  it("wraps Tab from the last entry back to the first control", async () => {
+    const { getByLabelText, getByRole } = render(Nav, { items });
     await fireEvent.click(getByLabelText("Open menu"));
     await frame();
 
@@ -237,38 +195,36 @@ describe("Nav — navLinks (per-route override) mode", () => {
     const last = links[links.length - 1];
     last.focus();
 
-    const e = new KeyboardEvent("keydown", {
-      key: "Tab",
-      bubbles: true,
-      cancelable: true,
-    });
+    const e = new KeyboardEvent("keydown", { key: "Tab", bubbles: true, cancelable: true });
     last.dispatchEvent(e);
 
     expect(e.defaultPrevented).toBe(true);
-    expect(document.activeElement).toBe(getByLabelText("Close menu"));
+    expect(document.activeElement).toBe(dialog.querySelector("a, button"));
   });
 
-  it("closes on Escape and returns focus to the re-mounted trigger", async () => {
-    const { getByLabelText, getByRole, queryByRole } = render(Nav, {
-      navLinks,
-    });
+  it("closes on Escape and returns focus to the trigger", async () => {
+    const { getByLabelText, getByRole, queryByRole } = render(Nav, { items });
     await fireEvent.click(getByLabelText("Open menu"));
     await frame();
 
     await fireEvent.keyDown(getByRole("dialog"), { key: "Escape" });
     expect(queryByRole("dialog")).toBeNull();
 
-    // The trigger unmounted while the menu was open; focus lands on the fresh
-    // instance one frame after close.
+    // trapFocus restores focus one frame after the overlay unmounts.
     await frame();
     await frame();
     expect(document.activeElement).toBe(getByLabelText("Open menu"));
   });
 
-  it("closes when a menu link is activated", async () => {
-    const { getByLabelText, getByRole, queryByRole } = render(Nav, {
-      navLinks,
-    });
+  it("closes from its own close button", async () => {
+    const { getByLabelText, queryByRole } = render(Nav, { items });
+    await fireEvent.click(getByLabelText("Open menu"));
+    await fireEvent.click(getByLabelText("Close menu"));
+    expect(queryByRole("dialog")).toBeNull();
+  });
+
+  it("closes when an entry is activated", async () => {
+    const { getByLabelText, getByRole, queryByRole } = render(Nav, { items });
     await fireEvent.click(getByLabelText("Open menu"));
     await frame();
 
@@ -276,5 +232,32 @@ describe("Nav — navLinks (per-route override) mode", () => {
     await fireEvent.click(link);
 
     expect(queryByRole("dialog")).toBeNull();
+  });
+
+  it("closes when the route changes", async () => {
+    const { getByLabelText, queryByRole, rerender } = render(Nav, { items, pathname: "/" });
+    await fireEvent.click(getByLabelText("Open menu"));
+    expect(queryByRole("dialog")).not.toBeNull();
+
+    await rerender({ items, pathname: "/about" });
+    expect(queryByRole("dialog")).toBeNull();
+  });
+
+  it("lists an entry's children beneath it", async () => {
+    const { getByLabelText, getByRole } = render(Nav, {
+      items: [
+        {
+          label: "Programs",
+          href: "",
+          children: [
+            { label: "Grants", href: "#grants" },
+            { label: "Education", href: "#education" },
+          ],
+        },
+      ],
+    });
+    await fireEvent.click(getByLabelText("Open menu"));
+    const nested = getByRole("dialog").querySelectorAll("li ul a");
+    expect(Array.from(nested).map((a) => a.textContent?.trim())).toEqual(["Grants", "Education"]);
   });
 });

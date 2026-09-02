@@ -1,5 +1,15 @@
 {
-  "nav": { "items": [] },
+  "nav": {
+    "items": [
+      { "label": "Who We Are", "href": "" },
+      {
+        "label": "Donate",
+        "href": "https://secure.lglforms.com/form_engine/s/1DAy4mOf7OlVR4Ke-4h2gA"
+      },
+      { "label": "Contact Us", "href": "/contact" },
+      { "label": "Become a Donor", "href": "https://registerme.org/" }
+    ]
+  },
   "footer": {
     "socials": [],
     "columns": [

@@ -11,6 +11,7 @@
   import Nav from "$lib/components/Nav.svelte";
   import Footer from "$lib/components/Footer.svelte";
   import { loadSiteConfig, footerColumns } from "$lib/site-config";
+  import { navToneFor } from "$lib/nav-tone";
   import { disableSmoothScroll, restoreSmoothScroll } from "$lib/utils/instantNavScroll";
 
   let { data, children } = $props();
@@ -46,7 +47,15 @@
      else from the site-config stub. Each component applies its own
      page-data-over-config precedence. -->
 <div class="flex flex-col min-h-screen">
-  <Nav navLinks={page.data.navLinks} items={siteConfig.nav.items} logo={siteConfig.nav.logo} />
+  <!-- The bar is transparent over the page's first slice, so its colouring
+       comes from that slice's ground (see $lib/nav-tone); the route closes the
+       menu and re-measures on navigation. -->
+  <Nav
+    navLinks={page.data.navLinks}
+    items={siteConfig.nav.items}
+    tone={navToneFor(page.data.page?.data?.slices)}
+    pathname={page.url.pathname}
+  />
 
   <main id="main-content" tabindex="-1" class="flex-1">
     {@render children?.()}
