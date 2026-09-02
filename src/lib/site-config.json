@@ -1,4 +1,36 @@
 {
   "nav": { "items": [] },
-  "footer": { "socials": [] }
+  "footer": {
+    "socials": [],
+    "columns": [
+      {
+        "items": [
+          {
+            "image": {
+              "url": "/logo-lockup.svg",
+              "maxWidth": "241px",
+              "alt": "Vida Legacy Foundation"
+            }
+          },
+          {
+            "text": "© 2026 Vida Legacy Foundation. All Rights Reserved.",
+            "tone": "fine"
+          }
+        ]
+      },
+      {
+        "items": [
+          { "text": "Who we are" },
+          {
+            "text": "Donate",
+            "href": "https://secure.lglforms.com/form_engine/s/1DAy4mOf7OlVR4Ke-4h2gA"
+          },
+          { "text": "Contact us" },
+          { "text": "726-234-6910", "href": "tel:+17262346910", "tight": true, "tone": "detail" },
+          { "text": "8632 Fredericksburg Rd. Suite 221", "tight": true, "tone": "detail" },
+          { "text": "San Antonio, TX 78240", "tight": true, "tone": "detail" }
+        ]
+      }
+    ]
+  }
 }
