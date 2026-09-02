@@ -67,6 +67,7 @@ type ContentRelationshipFieldWithData<
 }[Exclude<TCustomType[number], string>["id"]];
 
 type PageDocumentDataSlicesSlice =
+  | PageMastheadSlice
   | StatementPanelSlice
   | PersonGridSlice
   | ImageBandSlice
@@ -971,6 +972,71 @@ export type MediaTextSlice = prismic.SharedSlice<
 >;
 
 /**
+ * Primary content in *PageMasthead → Default → Primary*
+ */
+export interface PageMastheadSliceDefaultPrimary {
+  /**
+   * image field in *PageMasthead → Default → Primary*
+   *
+   * - **Field Type**: Image
+   * - **Placeholder**: *None*
+   * - **API ID Path**: page_masthead.default.primary.image
+   * - **Documentation**: https://prismic.io/docs/fields/image
+   */
+  image: prismic.ImageField<never>;
+
+  /**
+   * eyebrow field in *PageMasthead → Default → Primary*
+   *
+   * - **Field Type**: Text
+   * - **Placeholder**: e.g. About us
+   * - **API ID Path**: page_masthead.default.primary.eyebrow
+   * - **Documentation**: https://prismic.io/docs/fields/text
+   */
+  eyebrow: prismic.KeyTextField;
+
+  /**
+   * title field in *PageMasthead → Default → Primary*
+   *
+   * - **Field Type**: Text
+   * - **Placeholder**: e.g. Who We Are — renders as the page's h1
+   * - **API ID Path**: page_masthead.default.primary.title
+   * - **Documentation**: https://prismic.io/docs/fields/text
+   */
+  title: prismic.KeyTextField;
+}
+
+/**
+ * Default variation for PageMasthead Slice
+ *
+ * - **API ID**: `default`
+ * - **Description**: An inset rounded photograph under the nav, with an optional eyebrow and page title
+ * - **Documentation**: https://prismic.io/docs/slices
+ */
+export type PageMastheadSliceDefault = prismic.SharedSliceVariation<
+  "default",
+  Simplify<PageMastheadSliceDefaultPrimary>,
+  never
+>;
+
+/**
+ * Slice variation for *PageMasthead*
+ */
+type PageMastheadSliceVariation = PageMastheadSliceDefault;
+
+/**
+ * PageMasthead Shared Slice
+ *
+ * - **API ID**: `page_masthead`
+ * - **Description**: The top of an interior page: an inset photograph on the dark ground, with the page title
+ * - **Documentation**: https://prismic.io/docs/slices
+ */
+export type PageMastheadSlice = prismic.SharedSlice<
+  "page_masthead",
+  PageMastheadSliceVariation
+>;
+
+/**
  * Primary content in *PersonGrid → Default → Primary*
  */
 export interface PersonGridSliceDefaultPrimary {
@@ -1757,6 +1823,10 @@ declare module "@prismicio/client" {
       SectionGridSliceOnDark,
       SectionGridSliceVariation,
       SectionGridSliceDefault,
+      PageMastheadSlice,
+      PageMastheadSliceDefaultPrimary,
+      PageMastheadSliceVariation,
+      PageMastheadSliceDefault,
       PersonGridSlice,
       PersonGridSliceDefaultPrimary,
       PersonGridSliceDefaultItem,

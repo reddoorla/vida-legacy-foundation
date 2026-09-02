@@ -20,6 +20,7 @@
   import StatsBand from "$lib/slices/StatsBand/index.svelte";
   import IconColumns from "$lib/slices/IconColumns/index.svelte";
   import ImageBand from "$lib/slices/ImageBand/index.svelte";
+  import PageMasthead from "$lib/slices/PageMasthead/index.svelte";
   import PersonGrid from "$lib/slices/PersonGrid/index.svelte";
   import StatementPanel from "$lib/slices/StatementPanel/index.svelte";
   import LeadText from "$lib/slices/LeadText/index.svelte";
@@ -512,6 +513,19 @@
     },
   } as unknown as Content.PersonGridSlice;
 
+  // Who We Are masthead. Its title is an h1 — the ONLY slice that renders one,
+  // since the [uid] route renders nothing but the slice zone. The fixture is
+  // deliberately title-LESS: this page already has its own h1, and a second
+  // would be a page-has-heading-one violation of the fixtures page, not of the
+  // slice. The h1 is asserted in the unit test; what axe audits here is the
+  // photo-only form the comp actually ships.
+  const pageMastheadFixture = {
+    slice_type: "page_masthead",
+    variation: "default",
+    primary: { image: heroImage, eyebrow: "About us", title: "" },
+    items: [],
+  } as unknown as Content.PageMastheadSlice;
+
   const accordionFixture: ComponentProps<typeof AccordionSlice>["slice"] = {
     slice_type: "accordion",
     variation: "default",
@@ -749,6 +763,7 @@
   <CtaBanner slice={ctaBannerOnCreamFixture} />
   <Testimonial slice={testimonialOnCreamFixture} />
   <ImageBand slice={imageBandFixture} />
+  <PageMasthead slice={pageMastheadFixture} />
   <StatementPanel slice={statementPanelFixture} />
   <PersonGrid slice={personGridFixture} />
   <PersonGrid slice={personGridNoHeadingFixture} />

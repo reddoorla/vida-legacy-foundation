@@ -1,0 +1,41 @@
+{
+  "id": "page_masthead",
+  "type": "SharedSlice",
+  "name": "PageMasthead",
+  "description": "The top of an interior page: an inset photograph on the dark ground, with the page title",
+  "variations": [
+    {
+      "id": "default",
+      "name": "Default",
+      "docURL": "...",
+      "version": "initial",
+      "description": "An inset rounded photograph under the nav, with an optional eyebrow and page title",
+      "imageUrl": "",
+      "primary": {
+        "image": {
+          "type": "Image",
+          "config": {
+            "label": "image",
+            "constraint": {},
+            "thumbnails": []
+          }
+        },
+        "eyebrow": {
+          "type": "Text",
+          "config": {
+            "label": "eyebrow",
+            "placeholder": "e.g. About us"
+          }
+        },
+        "title": {
+          "type": "Text",
+          "config": {
+            "label": "title",
+            "placeholder": "e.g. Who We Are — renders as the page's <h1>; leave empty for a photo-only masthead"
+          }
+        }
+      },
+      "items": {}
+    }
+  ]
+}

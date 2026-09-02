@@ -1,0 +1,40 @@
+[
+  {
+    "__TYPE__": "SharedSliceContent",
+    "variation": "default",
+    "primary": {
+      "image": {
+        "__TYPE__": "ImageContent",
+        "url": "/dev/placeholder-wide.webp",
+        "origin": {
+          "id": "main",
+          "url": "/dev/placeholder-wide.webp",
+          "width": 1280,
+          "height": 853
+        },
+        "width": 1280,
+        "height": 853,
+        "edit": {
+          "background": "transparent",
+          "zoom": 1,
+          "crop": { "x": 0, "y": 0 },
+          "name": "focuspoint"
+        },
+        "credits": null,
+        "alt": "Two men embracing in a moment of comfort",
+        "thumbnails": {}
+      },
+      "eyebrow": {
+        "__TYPE__": "FieldContent",
+        "type": "Text",
+        "value": "About us"
+      },
+      "title": {
+        "__TYPE__": "FieldContent",
+        "type": "Text",
+        "value": "Who We Are"
+      }
+    },
+    "items": []
+  }
+]
