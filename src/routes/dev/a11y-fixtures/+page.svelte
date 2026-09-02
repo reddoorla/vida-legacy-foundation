@@ -17,6 +17,7 @@
   import Hero from "$lib/slices/Hero/index.svelte";
   import MediaText from "$lib/slices/MediaText/index.svelte";
   import SectionGrid from "$lib/slices/SectionGrid/index.svelte";
+  import IconColumns from "$lib/slices/IconColumns/index.svelte";
   import LeadText from "$lib/slices/LeadText/index.svelte";
   import TextColumns from "$lib/slices/TextColumns/index.svelte";
   import Testimonial from "$lib/slices/Testimonial/index.svelte";
@@ -167,6 +168,41 @@
       body: rtx("They needed an identity on a tight timeline to communicate that message."),
     },
   };
+  // VLF "A companion on the journey": sticky intro + icon card + photo. Locks
+  // the decorative-icon markup and the 7.84 / 15.18 pairings on #172303.
+  const iconColumnsFixture = {
+    slice_type: "icon_columns",
+    variation: "default",
+    primary: {
+      eyebrow: "A companion on the journey",
+      body: [
+        {
+          type: "paragraph",
+          text: "Vida Legacy Foundation leads the way in organ donation after-care.",
+          spans: [],
+        },
+      ],
+      image: heroImage,
+    },
+    items: [
+      {
+        icon: { url: "/icons/relief.svg", alt: "", dimensions: { width: 81, height: 82 } },
+        title: "Grants for recovery",
+        description: "Families find relief with our grants making recovery stress-free.",
+      },
+      {
+        icon: { url: "/icons/brain.svg", alt: "", dimensions: { width: 133, height: 133 } },
+        title: "Access to education",
+        description: "We equip families to make better choices.",
+      },
+      {
+        icon: { url: "/icons/community.svg", alt: "", dimensions: { width: 100, height: 75 } },
+        title: "Compassionate support",
+        description: "We provide support through community and compassion.",
+      },
+    ],
+  } as unknown as Content.IconColumnsSlice;
+
   // The VLF mission statement: onDark ground with a `highlight` label on the
   // opening phrase. Locks the label styling and the 11.35:1 / 5.86:1 pairings
   // under the axe gate.
@@ -457,6 +493,7 @@
   <SectionGrid slice={sectionGridFixture} />
   <LeadText slice={leadTextFixture} />
   <LeadText slice={leadTextOnDarkFixture} />
+  <IconColumns slice={iconColumnsFixture} />
   <TextColumns slice={textColumnsFixture} />
   <AccordionSlice slice={accordionFixture} />
   <Testimonial slice={testimonialFixture} />

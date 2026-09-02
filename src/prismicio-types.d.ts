@@ -67,6 +67,7 @@ type ContentRelationshipFieldWithData<
 }[Exclude<TCustomType[number], string>["id"]];
 
 type PageDocumentDataSlicesSlice =
+  | IconColumnsSlice
   | LeadTextSlice
   | TextColumnsSlice
   | AccordionSlice
@@ -487,6 +488,59 @@ type HeroSliceVariation = HeroSliceDefault;
  * - **Documentation**: https://prismic.io/docs/slices
  */
 export type HeroSlice = prismic.SharedSlice<"hero", HeroSliceVariation>;
+
+/**
+ * Primary content in *IconColumns → Default → Primary*
+ */
+export interface IconColumnsSliceDefaultPrimary {
+  /** eyebrow field — icon_columns.default.primary.eyebrow */
+  eyebrow: prismic.KeyTextField;
+
+  /** body field — icon_columns.default.primary.body */
+  body: prismic.RichTextField;
+
+  /** image field — icon_columns.default.primary.image */
+  image: prismic.ImageField<never>;
+}
+
+/**
+ * Primary content in *IconColumns → Default → Items*
+ */
+export interface IconColumnsSliceDefaultItem {
+  /** icon field — icon_columns.default.items[].icon */
+  icon: prismic.ImageField<never>;
+
+  /** title field — icon_columns.default.items[].title */
+  title: prismic.KeyTextField;
+
+  /** description field — icon_columns.default.items[].description */
+  description: prismic.KeyTextField;
+}
+
+/**
+ * Default variation for IconColumns Slice
+ *
+ * - **API ID**: `default`
+ * - **Documentation**: https://prismic.io/docs/slices
+ */
+export type IconColumnsSliceDefault = prismic.SharedSliceVariation<
+  "default",
+  Simplify<IconColumnsSliceDefaultPrimary>,
+  Simplify<IconColumnsSliceDefaultItem>
+>;
+
+/**
+ * Slice variation for *IconColumns*
+ */
+type IconColumnsSliceVariation = IconColumnsSliceDefault;
+
+/**
+ * IconColumns Shared Slice
+ *
+ * - **API ID**: `icon_columns`
+ * - **Documentation**: https://prismic.io/docs/slices
+ */
+export type IconColumnsSlice = prismic.SharedSlice<"icon_columns", IconColumnsSliceVariation>;
 
 /**
  * Primary content in *LeadText → Default → Primary*
@@ -1078,6 +1132,11 @@ declare module "@prismicio/client" {
       HeroSliceDefaultPrimary,
       HeroSliceVariation,
       HeroSliceDefault,
+      IconColumnsSlice,
+      IconColumnsSliceDefaultPrimary,
+      IconColumnsSliceDefaultItem,
+      IconColumnsSliceVariation,
+      IconColumnsSliceDefault,
       LeadTextSlice,
       LeadTextSliceDefaultPrimary,
       LeadTextSliceOnDarkPrimary,
