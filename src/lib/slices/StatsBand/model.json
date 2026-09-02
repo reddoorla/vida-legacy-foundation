@@ -1,0 +1,63 @@
+{
+  "id": "stats_band",
+  "type": "SharedSlice",
+  "name": "StatsBand",
+  "description": "A raised card of headline figures on the night-blue ground",
+  "variations": [
+    {
+      "id": "default",
+      "name": "Default",
+      "docURL": "...",
+      "version": "initial",
+      "description": "An eyebrow above a row of figures, with an optional call to action in the last column",
+      "imageUrl": "",
+      "primary": {
+        "eyebrow": {
+          "type": "Text",
+          "config": {
+            "label": "eyebrow",
+            "placeholder": "e.g. By the numbers"
+          }
+        },
+        "cta_label": {
+          "type": "Text",
+          "config": {
+            "label": "cta_label",
+            "placeholder": "e.g. Register to be an organ donor"
+          }
+        },
+        "cta_link": {
+          "type": "Link",
+          "config": {
+            "label": "cta_link",
+            "placeholder": "",
+            "allowTargetBlank": true,
+            "select": null
+          }
+        }
+      },
+      "items": {
+        "value": {
+          "type": "Number",
+          "config": {
+            "label": "value",
+            "placeholder": "e.g. 100000 — digits only; put the + or % in suffix"
+          }
+        },
+        "suffix": {
+          "type": "Text",
+          "config": {
+            "label": "suffix",
+            "placeholder": "e.g. + or % or people — a word gets a space, a symbol does not"
+          }
+        },
+        "description": {
+          "type": "Text",
+          "config": {
+            "label": "description"
+          }
+        }
+      }
+    }
+  ]
+}

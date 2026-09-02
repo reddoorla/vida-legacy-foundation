@@ -67,6 +67,7 @@ type ContentRelationshipFieldWithData<
 }[Exclude<TCustomType[number], string>["id"]];
 
 type PageDocumentDataSlicesSlice =
+  | StatsBandSlice
   | IconColumnsSlice
   | LeadTextSlice
   | TextColumnsSlice
@@ -300,7 +301,81 @@ export type CtaBannerSliceDefault = prismic.SharedSliceVariation<
 /**
  * Slice variation for *CtaBanner*
  */
-type CtaBannerSliceVariation = CtaBannerSliceDefault;
+/**
+ * Primary content in *CtaBanner -> On Dark*
+ */
+export interface CtaBannerSliceOnDarkPrimary {
+  /**
+   * eyebrow field in *CtaBanner -> On Dark*
+   *
+   * - **Field Type**: Text
+   * - **Placeholder**: e.g. Compassion in Action
+   * - **API ID Path**: cta_banner.onDark.primary.eyebrow
+   * - **Documentation**: https://prismic.io/docs/fields/text
+   */
+  eyebrow: prismic.KeyTextField;
+
+  /**
+   * heading field in *CtaBanner -> On Dark*
+   *
+   * - **Field Type**: Rich Text
+   * - **Placeholder**: e.g. No family should walk the transplant journey alone.
+   * - **API ID Path**: cta_banner.onDark.primary.heading
+   * - **Documentation**: https://prismic.io/docs/fields/rich-text
+   */
+  heading: prismic.RichTextField;
+
+  /**
+   * body field in *CtaBanner -> On Dark*
+   *
+   * - **Field Type**: Rich Text
+   * - **Placeholder**: *None*
+   * - **API ID Path**: cta_banner.onDark.primary.body
+   * - **Documentation**: https://prismic.io/docs/fields/rich-text
+   */
+  body: prismic.RichTextField;
+
+  /**
+   * buttonLabel field in *CtaBanner -> On Dark*
+   *
+   * - **Field Type**: Text
+   * - **Placeholder**: e.g. Donate now
+   * - **API ID Path**: cta_banner.onDark.primary.buttonLabel
+   * - **Documentation**: https://prismic.io/docs/fields/text
+   */
+  buttonLabel: prismic.KeyTextField;
+
+  /**
+   * buttonLink field in *CtaBanner -> On Dark*
+   *
+   * - **Field Type**: Link
+   * - **Placeholder**: *None*
+   * - **API ID Path**: cta_banner.onDark.primary.buttonLink
+   * - **Documentation**: https://prismic.io/docs/fields/link
+   */
+  buttonLink: prismic.LinkField<
+    string,
+    string,
+    unknown,
+    prismic.FieldState,
+    never
+  >;
+}
+
+/**
+ * On Dark variation for CtaBanner Slice
+ *
+ * - **API ID**: `onDark`
+ * - **Description**: An eyebrow, a statement and one button on the night-blue ground
+ * - **Documentation**: https://prismic.io/docs/slices
+ */
+export type CtaBannerSliceOnDark = prismic.SharedSliceVariation<
+  "onDark",
+  Simplify<CtaBannerSliceOnDarkPrimary>,
+  never
+>;
+
+type CtaBannerSliceVariation = CtaBannerSliceDefault | CtaBannerSliceOnDark;
 
 /**
  * CtaBanner Shared Slice
@@ -621,7 +696,38 @@ export type LeadTextSliceOnDark = prismic.SharedSliceVariation<
   never
 >;
 
-type LeadTextSliceVariation = LeadTextSliceDefault | LeadTextSliceOnDark;
+/**
+ * Primary content in *LeadText -> Statement*
+ */
+export interface LeadTextSliceStatementPrimary {
+  /**
+   * body field in *LeadText -> Statement*
+   *
+   * - **Field Type**: Rich Text
+   * - **Placeholder**: e.g. Hope that heals. Help that Lasts.
+   * - **API ID Path**: lead_text.statement.primary.body
+   * - **Documentation**: https://prismic.io/docs/fields/rich-text
+   */
+  body: prismic.RichTextField;
+}
+
+/**
+ * Statement variation for LeadText Slice
+ *
+ * - **API ID**: `statement`
+ * - **Description**: A page-scale statement on the night-blue ground; a highlighted phrase starts its own line
+ * - **Documentation**: https://prismic.io/docs/slices
+ */
+export type LeadTextSliceStatement = prismic.SharedSliceVariation<
+  "statement",
+  Simplify<LeadTextSliceStatementPrimary>,
+  never
+>;
+
+type LeadTextSliceVariation =
+  | LeadTextSliceDefault
+  | LeadTextSliceOnDark
+  | LeadTextSliceStatement;
 
 /**
  * LeadText Shared Slice
@@ -931,6 +1037,112 @@ export type SectionGridSlice = prismic.SharedSlice<
 >;
 
 /**
+ * Primary content in *StatsBand → Default → Primary*
+ */
+export interface StatsBandSliceDefaultPrimary {
+  /**
+   * eyebrow field in *StatsBand → Default → Primary*
+   *
+   * - **Field Type**: Text
+   * - **Placeholder**: e.g. By the numbers
+   * - **API ID Path**: stats_band.default.primary.eyebrow
+   * - **Documentation**: https://prismic.io/docs/fields/text
+   */
+  eyebrow: prismic.KeyTextField;
+
+  /**
+   * cta_label field in *StatsBand → Default → Primary*
+   *
+   * - **Field Type**: Text
+   * - **Placeholder**: e.g. Register to be an organ donor
+   * - **API ID Path**: stats_band.default.primary.cta_label
+   * - **Documentation**: https://prismic.io/docs/fields/text
+   */
+  cta_label: prismic.KeyTextField;
+
+  /**
+   * cta_link field in *StatsBand → Default → Primary*
+   *
+   * - **Field Type**: Link
+   * - **Placeholder**: *None*
+   * - **API ID Path**: stats_band.default.primary.cta_link
+   * - **Documentation**: https://prismic.io/docs/fields/link
+   */
+  cta_link: prismic.LinkField<
+    string,
+    string,
+    unknown,
+    prismic.FieldState,
+    never
+  >;
+}
+
+/**
+ * Primary content in *StatsBand → Default → Items*
+ */
+export interface StatsBandSliceDefaultItem {
+  /**
+   * value field in *StatsBand → Default → Items*
+   *
+   * - **Field Type**: Number
+   * - **Placeholder**: e.g. 100000 — digits only; put the + or % in suffix
+   * - **API ID Path**: stats_band.default.items[].value
+   * - **Documentation**: https://prismic.io/docs/fields/number
+   */
+  value: prismic.NumberField;
+
+  /**
+   * suffix field in *StatsBand → Default → Items*
+   *
+   * - **Field Type**: Text
+   * - **Placeholder**: e.g. + or % or people — a word gets a space, a symbol does not
+   * - **API ID Path**: stats_band.default.items[].suffix
+   * - **Documentation**: https://prismic.io/docs/fields/text
+   */
+  suffix: prismic.KeyTextField;
+
+  /**
+   * description field in *StatsBand → Default → Items*
+   *
+   * - **Field Type**: Text
+   * - **Placeholder**: *None*
+   * - **API ID Path**: stats_band.default.items[].description
+   * - **Documentation**: https://prismic.io/docs/fields/text
+   */
+  description: prismic.KeyTextField;
+}
+
+/**
+ * Default variation for StatsBand Slice
+ *
+ * - **API ID**: `default`
+ * - **Description**: An eyebrow above a row of figures, with an optional call to action in the last column
+ * - **Documentation**: https://prismic.io/docs/slices
+ */
+export type StatsBandSliceDefault = prismic.SharedSliceVariation<
+  "default",
+  Simplify<StatsBandSliceDefaultPrimary>,
+  Simplify<StatsBandSliceDefaultItem>
+>;
+
+/**
+ * Slice variation for *StatsBand*
+ */
+type StatsBandSliceVariation = StatsBandSliceDefault;
+
+/**
+ * StatsBand Shared Slice
+ *
+ * - **API ID**: `stats_band`
+ * - **Description**: A raised card of headline figures on the night-blue ground
+ * - **Documentation**: https://prismic.io/docs/slices
+ */
+export type StatsBandSlice = prismic.SharedSlice<
+  "stats_band",
+  StatsBandSliceVariation
+>;
+
+/**
  * Primary content in *Testimonial → Default → Primary*
  */
 export interface TestimonialSliceDefaultPrimary {
@@ -1151,6 +1363,8 @@ declare module "@prismicio/client" {
       AccordionSliceDefault,
       CtaBannerSlice,
       CtaBannerSliceDefaultPrimary,
+      CtaBannerSliceOnDarkPrimary,
+      CtaBannerSliceOnDark,
       CtaBannerSliceVariation,
       CtaBannerSliceDefault,
       HeartHeroSlice,
@@ -1171,6 +1385,8 @@ declare module "@prismicio/client" {
       LeadTextSliceDefaultPrimary,
       LeadTextSliceOnDarkPrimary,
       LeadTextSliceOnDark,
+      LeadTextSliceStatementPrimary,
+      LeadTextSliceStatement,
       LeadTextSliceVariation,
       LeadTextSliceDefault,
       MediaTextSlice,
@@ -1190,6 +1406,11 @@ declare module "@prismicio/client" {
       SectionGridSliceOnDark,
       SectionGridSliceVariation,
       SectionGridSliceDefault,
+      StatsBandSlice,
+      StatsBandSliceDefaultPrimary,
+      StatsBandSliceDefaultItem,
+      StatsBandSliceVariation,
+      StatsBandSliceDefault,
       TestimonialSlice,
       TestimonialSliceDefaultPrimary,
       TestimonialSliceVariation,

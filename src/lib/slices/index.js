@@ -9,6 +9,7 @@ import LeadText from "./LeadText/index.svelte";
 import MediaText from "./MediaText/index.svelte";
 import RichText from "./RichText/index.svelte";
 import SectionGrid from "./SectionGrid/index.svelte";
+import StatsBand from "./StatsBand/index.svelte";
 import Testimonial from "./Testimonial/index.svelte";
 import TextColumns from "./TextColumns/index.svelte";
 
@@ -22,6 +23,7 @@ export const components = {
   media_text: MediaText,
   rich_text: RichText,
   section_grid: SectionGrid,
+  stats_band: StatsBand,
   testimonial: Testimonial,
   text_columns: TextColumns,
 };
