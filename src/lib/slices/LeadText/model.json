@@ -29,6 +29,33 @@
         }
       },
       "items": {}
+    },
+    {
+      "id": "onDark",
+      "name": "On Dark",
+      "docURL": "...",
+      "version": "initial",
+      "description": "A large lead statement on the dark green ground, with an optional highlighted opening phrase",
+      "imageUrl": "",
+      "primary": {
+        "eyebrow": {
+          "type": "Text",
+          "config": {
+            "label": "eyebrow",
+            "placeholder": "e.g. Our Mission"
+          }
+        },
+        "body": {
+          "type": "StructuredText",
+          "config": {
+            "label": "body",
+            "allowTargetBlank": true,
+            "multi": "paragraph,strong,em,hyperlink",
+            "labels": ["highlight"]
+          }
+        }
+      },
+      "items": {}
     }
   ]
 }

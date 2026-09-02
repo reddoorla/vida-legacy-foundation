@@ -529,7 +529,45 @@ export type LeadTextSliceDefault = prismic.SharedSliceVariation<
 /**
  * Slice variation for *LeadText*
  */
-type LeadTextSliceVariation = LeadTextSliceDefault;
+/**
+ * Primary content in *LeadText -> On Dark*
+ */
+export interface LeadTextSliceOnDarkPrimary {
+  /**
+   * eyebrow field in *LeadText -> On Dark*
+   *
+   * - **Field Type**: Text
+   * - **Placeholder**: e.g. Our Mission
+   * - **API ID Path**: lead_text.onDark.primary.eyebrow
+   * - **Documentation**: https://prismic.io/docs/fields/text
+   */
+  eyebrow: prismic.KeyTextField;
+
+  /**
+   * body field in *LeadText -> On Dark*
+   *
+   * - **Field Type**: Rich Text
+   * - **Placeholder**: *None*
+   * - **API ID Path**: lead_text.onDark.primary.body
+   * - **Documentation**: https://prismic.io/docs/fields/rich-text
+   */
+  body: prismic.RichTextField;
+}
+
+/**
+ * On Dark variation for LeadText Slice
+ *
+ * - **API ID**: `onDark`
+ * - **Description**: A large lead statement on the dark green ground, with an optional highlighted opening phrase
+ * - **Documentation**: https://prismic.io/docs/slices
+ */
+export type LeadTextSliceOnDark = prismic.SharedSliceVariation<
+  "onDark",
+  Simplify<LeadTextSliceOnDarkPrimary>,
+  never
+>;
+
+type LeadTextSliceVariation = LeadTextSliceDefault | LeadTextSliceOnDark;
 
 /**
  * LeadText Shared Slice
@@ -1042,6 +1080,8 @@ declare module "@prismicio/client" {
       HeroSliceDefault,
       LeadTextSlice,
       LeadTextSliceDefaultPrimary,
+      LeadTextSliceOnDarkPrimary,
+      LeadTextSliceOnDark,
       LeadTextSliceVariation,
       LeadTextSliceDefault,
       MediaTextSlice,
