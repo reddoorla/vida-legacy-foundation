@@ -1,0 +1,88 @@
+[
+  {
+    "__TYPE__": "SharedSliceContent",
+    "variation": "default",
+    "primary": {
+      "eyebrow": {
+        "__TYPE__": "FieldContent",
+        "type": "Text",
+        "value": "By the numbers"
+      },
+      "cta_label": {
+        "__TYPE__": "FieldContent",
+        "type": "Text",
+        "value": "Register to be an organ donor"
+      },
+      "cta_link": {
+        "key": "6d2b7f18-4a90-4c53-b1e6-0f7c9a3d5182",
+        "__TYPE__": "LinkContent",
+        "value": {
+          "__TYPE__": "ExternalLink",
+          "url": "https://registerme.org/"
+        }
+      }
+    },
+    "items": [
+      {
+        "__TYPE__": "GroupItemContent",
+        "value": [
+          ["value", { "__TYPE__": "FieldContent", "type": "Number", "value": 100000 }],
+          ["suffix", { "__TYPE__": "FieldContent", "type": "Text", "value": "+" }],
+          [
+            "description",
+            {
+              "__TYPE__": "FieldContent",
+              "type": "Text",
+              "value": "More than 100,000 people are on the waiting list right now, with another added every eight minutes."
+            }
+          ]
+        ]
+      },
+      {
+        "__TYPE__": "GroupItemContent",
+        "value": [
+          ["value", { "__TYPE__": "FieldContent", "type": "Number", "value": 13 }],
+          ["suffix", { "__TYPE__": "FieldContent", "type": "Text", "value": "people" }],
+          [
+            "description",
+            {
+              "__TYPE__": "FieldContent",
+              "type": "Text",
+              "value": "Thirteen people die every day waiting for an organ that never comes."
+            }
+          ]
+        ]
+      },
+      {
+        "__TYPE__": "GroupItemContent",
+        "value": [
+          ["value", { "__TYPE__": "FieldContent", "type": "Number", "value": 30 }],
+          ["suffix", { "__TYPE__": "FieldContent", "type": "Text", "value": "%" }],
+          [
+            "description",
+            {
+              "__TYPE__": "FieldContent",
+              "type": "Text",
+              "value": "90% of us support organ donation but only 60% have signed up, that's a 30% gap you can close in seconds."
+            }
+          ]
+        ]
+      },
+      {
+        "__TYPE__": "GroupItemContent",
+        "value": [
+          ["value", { "__TYPE__": "FieldContent", "type": "Number", "value": 8 }],
+          ["suffix", { "__TYPE__": "FieldContent", "type": "Text", "value": "lives" }],
+          [
+            "description",
+            {
+              "__TYPE__": "FieldContent",
+              "type": "Text",
+              "value": "One donor can save up to eight lives."
+            }
+          ]
+        ]
+      }
+    ]
+  }
+]

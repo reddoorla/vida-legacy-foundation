@@ -17,6 +17,7 @@
   import Hero from "$lib/slices/Hero/index.svelte";
   import MediaText from "$lib/slices/MediaText/index.svelte";
   import SectionGrid from "$lib/slices/SectionGrid/index.svelte";
+  import StatsBand from "$lib/slices/StatsBand/index.svelte";
   import IconColumns from "$lib/slices/IconColumns/index.svelte";
   import LeadText from "$lib/slices/LeadText/index.svelte";
   import TextColumns from "$lib/slices/TextColumns/index.svelte";
@@ -317,6 +318,74 @@
     },
     items: [],
   } as unknown as Content.CtaBannerSlice;
+  // VLF "Compassion in Action": the night-blue CTA band. Locks the eyebrow
+  // staying OUT of the outline (one h2 per section) and the #263b02/#9cbf5b
+  // button couple under the axe gate — never white-on-green.
+  const ctaBannerOnDarkFixture = {
+    slice_type: "cta_banner",
+    variation: "onDark",
+    primary: {
+      eyebrow: "Compassion in Action",
+      heading: [
+        {
+          type: "heading2",
+          text: "Vida Legacy Foundation believes no family should walk the transplant journey alone.",
+          spans: [],
+        },
+      ],
+      body: [
+        {
+          type: "paragraph",
+          text: "Your financial gift will bring hope, healing, and relief to families in need.",
+          spans: [],
+        },
+      ],
+      buttonLabel: "Donate now",
+      buttonLink: { link_type: "Web", url: "https://example.com/donate" },
+    },
+    items: [],
+  } as unknown as Content.CtaBannerSlice;
+
+  // VLF "By the numbers". The contrast-sensitive one: #9cbf5b figures sit at
+  // 4.92:1 on #004370, dropping to 3.80 under the brightest grain pixel — AA
+  // for large text only, which is why nothing small here is green.
+  const statsBandFixture = {
+    slice_type: "stats_band",
+    variation: "default",
+    primary: {
+      eyebrow: "By the numbers",
+      cta_label: "Register to be an organ donor",
+      // External on purpose: an internal path here would be followed by the
+      // prerender crawler and 404 the build.
+      cta_link: { link_type: "Web", url: "https://example.com/register" },
+    },
+    items: [
+      {
+        value: 100000,
+        suffix: "+",
+        description: "More than 100,000 people are on the waiting list right now.",
+      },
+      { value: 13, suffix: "people", description: "Thirteen people die every day waiting." },
+      { value: 30, suffix: "%", description: "A 30% gap you can close in seconds." },
+      { value: 8, suffix: "lives", description: "One donor can save up to eight lives." },
+    ],
+  } as unknown as Content.StatsBandSlice;
+
+  // The VLF homepage tagline: the copy IS the h2, and the `highlight` label
+  // both colours the second phrase and breaks the line.
+  const leadTextStatementFixture: ComponentProps<typeof LeadText>["slice"] = {
+    slice_type: "lead_text",
+    variation: "statement",
+    primary: {
+      body: [
+        {
+          type: "heading2",
+          text: "Hope that heals. Help that Lasts.",
+          spans: [{ type: "label", start: 17, end: 33, data: { label: "highlight" } }],
+        },
+      ],
+    } as never,
+  };
   const accordionFixture: ComponentProps<typeof AccordionSlice>["slice"] = {
     slice_type: "accordion",
     variation: "default",
@@ -548,6 +617,9 @@
   <AccordionSlice slice={accordionFixture} />
   <Testimonial slice={testimonialFixture} />
   <CtaBanner slice={ctaBannerFixture} />
+  <CtaBanner slice={ctaBannerOnDarkFixture} />
+  <StatsBand slice={statsBandFixture} />
+  <LeadText slice={leadTextStatementFixture} />
 </div>
 
 <!-- Renders nothing at rest (overlay only appears mid-navigation, aria-hidden);
