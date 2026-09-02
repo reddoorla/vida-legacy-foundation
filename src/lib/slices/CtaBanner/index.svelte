@@ -22,6 +22,17 @@
   let dark = $derived(
     slice.variation === "onDark" ? (slice.primary as Content.CtaBannerSliceOnDarkPrimary) : null,
   );
+
+  // onCream is the page's closing panel (Figma 5249:1286): the same
+  // eyebrow/statement/button parts as onDark, but at display scale on the
+  // cream ground, and it draws the 80px rounded top that lifts the whole
+  // closing region (this + the testimonial row + the footer) off the dark
+  // band above it. Only this slice paints that corner — the sections beneath
+  // it are flat cream and stack into the same panel.
+  let cream = $derived(slice.variation === "onCream");
+  let light = $derived(
+    slice.variation === "onCream" ? (slice.primary as Content.CtaBannerSliceOnCreamPrimary) : null,
+  );
   // `background` belongs to the default variation only.
   const background = $derived(
     ("background" in slice.primary ? slice.primary.background : null) ?? "light",
@@ -102,6 +113,50 @@
       {/if}
     </div>
   </ContentBand>
+{:else if cream && light}
+  <!--
+    Figma 5249:1286. The cream panel rounds off the dark band above it, so the
+    <section> stays dark and the CONTENT box carries the ground and the corner.
+
+    Contrast on #fdf5e8, measured:
+      #263b02 eyebrow + statement  11.35:1
+      #527e01 highlight             4.47:1 — LARGE TEXT ONLY (it misses AA body
+        by 0.03), which is why the highlight is scoped to this display-scale
+        heading and nowhere else on cream.
+      button #9cbf5b + #263b02 — the design's couple inverted, still 5.86:1
+
+    Pays pb-10 (40px): the comp's 80px gap to the testimonial row below is
+    split 40/40, since the two ship as separate slices.
+  -->
+  <ContentBand
+    sliceType={slice.slice_type}
+    variation={slice.variation}
+    sectionClass="bg-dark"
+    contentClass="bg-background max-w-[1440px] rounded-t-[40px] px-6 pt-16 pb-10 md:rounded-t-[80px] md:px-20 md:pt-25"
+  >
+    <div class="flex flex-col items-start gap-10 md:ml-auto md:w-[74.6%]">
+      {#if light.eyebrow}
+        <!-- A label, not the section heading — same call as onDark: the
+             statement below is the real h2. -->
+        <p class="text-green-btn font-heading text-xs tracking-[1.5px] uppercase">
+          {light.eyebrow}
+        </p>
+      {/if}
+      {#if isFilled.richText(slice.primary.heading)}
+        <div class="cta-display text-green-btn font-heading leading-[1.35]">
+          <RichTextBody field={slice.primary.heading} />
+        </div>
+      {/if}
+      {#if hasButton}
+        <PrismicLink
+          field={slice.primary.buttonLink}
+          class="bg-green text-green-btn font-button inline-flex h-10 w-fit items-center justify-center rounded-full px-3.75 text-[10px] tracking-[1px] uppercase"
+        >
+          {slice.primary.buttonLabel}
+        </PrismicLink>
+      {/if}
+    </div>
+  </ContentBand>
 {:else}
   <!-- A closing call-to-action band: one headline, one link. Deliberately
      unstyled beyond the theme tokens — the heading's size comes from the
@@ -138,5 +193,19 @@
     line-height: inherit;
     letter-spacing: inherit;
     font-weight: 400;
+  }
+
+  /* onCream sets the same statement at page-display scale instead. */
+  .cta-display :global(h2) {
+    font-size: clamp(2rem, 4.17vw, 3.75rem);
+    line-height: inherit;
+    letter-spacing: 0;
+    font-weight: 300;
+  }
+
+  /* #527e01 on cream is 4.47:1 — large text only. It is safe HERE because this
+     heading is display scale and nothing else on the cream ground uses it. */
+  .cta-display :global(.highlight) {
+    color: var(--color-green-mid);
   }
 </style>

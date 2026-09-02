@@ -375,7 +375,74 @@ export type CtaBannerSliceOnDark = prismic.SharedSliceVariation<
   never
 >;
 
-type CtaBannerSliceVariation = CtaBannerSliceDefault | CtaBannerSliceOnDark;
+/**
+ * Primary content in *CtaBanner -> On Cream*
+ */
+export interface CtaBannerSliceOnCreamPrimary {
+  /**
+   * eyebrow field in *CtaBanner -> On Cream*
+   *
+   * - **Field Type**: Text
+   * - **Placeholder**: e.g. Make a contribution
+   * - **API ID Path**: cta_banner.onCream.primary.eyebrow
+   * - **Documentation**: https://prismic.io/docs/fields/text
+   */
+  eyebrow: prismic.KeyTextField;
+
+  /**
+   * heading field in *CtaBanner -> On Cream*
+   *
+   * - **Field Type**: Rich Text
+   * - **Placeholder**: e.g. We understand this journey can make families feel alone. We're there to help.
+   * - **API ID Path**: cta_banner.onCream.primary.heading
+   * - **Documentation**: https://prismic.io/docs/fields/rich-text
+   */
+  heading: prismic.RichTextField;
+
+  /**
+   * buttonLabel field in *CtaBanner -> On Cream*
+   *
+   * - **Field Type**: Text
+   * - **Placeholder**: e.g. Donate now
+   * - **API ID Path**: cta_banner.onCream.primary.buttonLabel
+   * - **Documentation**: https://prismic.io/docs/fields/text
+   */
+  buttonLabel: prismic.KeyTextField;
+
+  /**
+   * buttonLink field in *CtaBanner -> On Cream*
+   *
+   * - **Field Type**: Link
+   * - **Placeholder**: *None*
+   * - **API ID Path**: cta_banner.onCream.primary.buttonLink
+   * - **Documentation**: https://prismic.io/docs/fields/link
+   */
+  buttonLink: prismic.LinkField<
+    string,
+    string,
+    unknown,
+    prismic.FieldState,
+    never
+  >;
+}
+
+/**
+ * On Cream variation for CtaBanner Slice
+ *
+ * - **API ID**: `onCream`
+ * - **Description**: The page's closing panel: a display-scale statement and one button on cream, rounded off the dark ground above it
+ * - **Documentation**: https://prismic.io/docs/slices
+ */
+export type CtaBannerSliceOnCream = prismic.SharedSliceVariation<
+  "onCream",
+  Simplify<CtaBannerSliceOnCreamPrimary>,
+  never
+>;
+
+type CtaBannerSliceVariation =
+  | CtaBannerSliceDefault
+  | CtaBannerSliceOnDark
+  | CtaBannerSliceOnCream;
 
 /**
  * CtaBanner Shared Slice
@@ -1213,7 +1280,62 @@ export type TestimonialSliceDefault = prismic.SharedSliceVariation<
 /**
  * Slice variation for *Testimonial*
  */
-type TestimonialSliceVariation = TestimonialSliceDefault;
+/**
+ * Primary content in *Testimonial -> On Cream*
+ */
+export interface TestimonialSliceOnCreamPrimary {
+  /**
+   * quote field in *Testimonial -> On Cream*
+   *
+   * - **Field Type**: Text
+   * - **Placeholder**: Quote text — this variation draws NO quote marks
+   * - **API ID Path**: testimonial.onCream.primary.quote
+   * - **Documentation**: https://prismic.io/docs/fields/text
+   */
+  quote: prismic.KeyTextField;
+
+  /**
+   * name field in *Testimonial -> On Cream*
+   *
+   * - **Field Type**: Text
+   * - **Placeholder**: e.g. Grateful Family Member — the component adds the em dash
+   * - **API ID Path**: testimonial.onCream.primary.name
+   * - **Documentation**: https://prismic.io/docs/fields/text
+   */
+  name: prismic.KeyTextField;
+}
+
+/**
+ * Primary content in *Testimonial -> On Cream -> Items*
+ */
+export interface TestimonialSliceOnCreamItem {
+  /**
+   * image field in *Testimonial -> On Cream -> Items*
+   *
+   * - **Field Type**: Image
+   * - **Placeholder**: *None*
+   * - **API ID Path**: testimonial.onCream.items[].image
+   * - **Documentation**: https://prismic.io/docs/fields/image
+   */
+  image: prismic.ImageField<never>;
+}
+
+/**
+ * On Cream variation for Testimonial Slice
+ *
+ * - **API ID**: `onCream`
+ * - **Description**: A quote beside a row of photographs, on the cream closing panel
+ * - **Documentation**: https://prismic.io/docs/slices
+ */
+export type TestimonialSliceOnCream = prismic.SharedSliceVariation<
+  "onCream",
+  Simplify<TestimonialSliceOnCreamPrimary>,
+  Simplify<TestimonialSliceOnCreamItem>
+>;
+
+type TestimonialSliceVariation =
+  | TestimonialSliceDefault
+  | TestimonialSliceOnCream;
 
 /**
  * Testimonial Shared Slice
@@ -1365,6 +1487,8 @@ declare module "@prismicio/client" {
       CtaBannerSliceDefaultPrimary,
       CtaBannerSliceOnDarkPrimary,
       CtaBannerSliceOnDark,
+      CtaBannerSliceOnCreamPrimary,
+      CtaBannerSliceOnCream,
       CtaBannerSliceVariation,
       CtaBannerSliceDefault,
       HeartHeroSlice,
@@ -1413,6 +1537,9 @@ declare module "@prismicio/client" {
       StatsBandSliceDefault,
       TestimonialSlice,
       TestimonialSliceDefaultPrimary,
+      TestimonialSliceOnCreamPrimary,
+      TestimonialSliceOnCreamItem,
+      TestimonialSliceOnCream,
       TestimonialSliceVariation,
       TestimonialSliceDefault,
       TextColumnsSlice,
