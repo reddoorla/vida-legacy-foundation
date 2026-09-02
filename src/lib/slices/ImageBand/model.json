@@ -1,0 +1,27 @@
+{
+  "id": "image_band",
+  "type": "SharedSlice",
+  "name": "ImageBand",
+  "description": "A full-bleed photograph, edge to edge, with no copy over it",
+  "variations": [
+    {
+      "id": "default",
+      "name": "Default",
+      "docURL": "...",
+      "version": "initial",
+      "description": "One photograph spanning the viewport, used to break up the page between content bands",
+      "imageUrl": "",
+      "primary": {
+        "image": {
+          "type": "Image",
+          "config": {
+            "label": "image",
+            "constraint": {},
+            "thumbnails": []
+          }
+        }
+      },
+      "items": {}
+    }
+  ]
+}

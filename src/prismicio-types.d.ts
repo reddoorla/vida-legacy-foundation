@@ -67,6 +67,7 @@ type ContentRelationshipFieldWithData<
 }[Exclude<TCustomType[number], string>["id"]];
 
 type PageDocumentDataSlicesSlice =
+  | ImageBandSlice
   | StatsBandSlice
   | IconColumnsSlice
   | LeadTextSlice
@@ -683,6 +684,51 @@ type IconColumnsSliceVariation = IconColumnsSliceDefault;
  * - **Documentation**: https://prismic.io/docs/slices
  */
 export type IconColumnsSlice = prismic.SharedSlice<"icon_columns", IconColumnsSliceVariation>;
+
+/**
+ * Primary content in *ImageBand → Default → Primary*
+ */
+export interface ImageBandSliceDefaultPrimary {
+  /**
+   * image field in *ImageBand → Default → Primary*
+   *
+   * - **Field Type**: Image
+   * - **Placeholder**: *None*
+   * - **API ID Path**: image_band.default.primary.image
+   * - **Documentation**: https://prismic.io/docs/fields/image
+   */
+  image: prismic.ImageField<never>;
+}
+
+/**
+ * Default variation for ImageBand Slice
+ *
+ * - **API ID**: `default`
+ * - **Description**: One photograph spanning the viewport, used to break up the page between content bands
+ * - **Documentation**: https://prismic.io/docs/slices
+ */
+export type ImageBandSliceDefault = prismic.SharedSliceVariation<
+  "default",
+  Simplify<ImageBandSliceDefaultPrimary>,
+  never
+>;
+
+/**
+ * Slice variation for *ImageBand*
+ */
+type ImageBandSliceVariation = ImageBandSliceDefault;
+
+/**
+ * ImageBand Shared Slice
+ *
+ * - **API ID**: `image_band`
+ * - **Description**: A full-bleed photograph, edge to edge, with no copy over it
+ * - **Documentation**: https://prismic.io/docs/slices
+ */
+export type ImageBandSlice = prismic.SharedSlice<
+  "image_band",
+  ImageBandSliceVariation
+>;
 
 /**
  * Primary content in *LeadText → Default → Primary*
@@ -1505,6 +1551,10 @@ declare module "@prismicio/client" {
       IconColumnsSliceDefaultItem,
       IconColumnsSliceVariation,
       IconColumnsSliceDefault,
+      ImageBandSlice,
+      ImageBandSliceDefaultPrimary,
+      ImageBandSliceVariation,
+      ImageBandSliceDefault,
       LeadTextSlice,
       LeadTextSliceDefaultPrimary,
       LeadTextSliceOnDarkPrimary,
