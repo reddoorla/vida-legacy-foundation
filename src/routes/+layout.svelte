@@ -7,12 +7,14 @@
   import Seo from "$lib/components/Seo.svelte";
   import { composeTitle, DEFAULT_OG_IMAGE } from "$lib/seo";
   import LandscapeModal from "$lib/components/LandscapeModal.svelte";
+  import ContactModal from "$lib/components/ContactModal.svelte";
+  import { contactModal } from "$lib/contact-modal.svelte";
   import TransitionOverlay from "$lib/components/TransitionOverlay.svelte";
   import Nav from "$lib/components/Nav.svelte";
   import Footer from "$lib/components/Footer.svelte";
   import { loadSiteConfig, footerColumns } from "$lib/site-config";
   import { navToneFor } from "$lib/nav-tone";
-  import { LOCALES, langFromParam, switchTarget } from "$lib/locale";
+  import { LANGS, LOCALES, langFromParam, localizePath, switchTarget } from "$lib/locale";
   import { disableSmoothScroll, restoreSmoothScroll } from "$lib/utils/instantNavScroll";
 
   let { data, children } = $props();
@@ -34,6 +36,21 @@
     })),
   );
   const switchTo = $derived(switchTarget(lang, page.data.alternates, page.url.pathname));
+
+  // Any link to the contact route opens the contact modal instead of
+  // navigating — the nav's "Contact Us", a footer row, a Prismic link field.
+  // Intercepted in the router (the PreNavTransition idea: cancel, then do
+  // something else) rather than with a click listener, which would race
+  // Kit's own document click handler for the same anchor. The href stays the
+  // real route, so without scripts (and for the crawler) the link is the
+  // contact page, which renders the same panel in-flow; modified clicks open
+  // it in a new tab as usual, since those never reach the router.
+  const CONTACT_PATHS = new Set(LANGS.map((l) => localizePath("/contact", l)));
+  beforeNavigate((nav) => {
+    if (nav.type !== "link" || !nav.to || !CONTACT_PATHS.has(nav.to.url.pathname)) return;
+    nav.cancel();
+    contactModal.open = true;
+  });
 
   // Kit's own post-nav scroll (top / hash anchor / popstate restore) runs
   // instantly instead of gliding under app.css's smooth-scroll. See the util.
@@ -86,6 +103,7 @@
 </div>
 <TransitionOverlay />
 <LandscapeModal />
+<ContactModal {lang} />
 {#if data.isPreviewSession}
   <PrismicPreview {repositoryName} />
 {/if}

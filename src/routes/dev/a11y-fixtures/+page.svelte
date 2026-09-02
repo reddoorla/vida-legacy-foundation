@@ -5,6 +5,7 @@
   import BrandIcon from "$lib/components/BrandIcon.svelte";
   import Modal from "$lib/components/Modal.svelte";
   import NavMenu from "$lib/components/NavMenu.svelte";
+  import ContactModal from "$lib/components/ContactModal.svelte";
   import Form from "$lib/components/Form.svelte";
   import Field from "$lib/components/Field.svelte";
   import HeroBackgroundImage from "$lib/components/HeroBackgroundImage.svelte";
@@ -697,6 +698,13 @@
         <h3 class="text-lg font-semibold mb-2">Dialog title</h3>
         <p>Native dialog element with backdrop, ESC-to-close, and focus trap.</p>
       </Modal>
+    </section>
+
+    <!-- The site-wide contact modal, in-flow: the real dialog is not in the
+         DOM until opened, so this is what puts its form in front of axe —
+         the NavMenu `inline` idea. -->
+    <section aria-label="Contact modal (inline)">
+      <ContactModal inline />
     </section>
 
     <section aria-labelledby="form-heading" class="space-y-4">
