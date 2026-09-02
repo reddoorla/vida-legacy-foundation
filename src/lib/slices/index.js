@@ -8,8 +8,10 @@ import IconColumns from "./IconColumns/index.svelte";
 import ImageBand from "./ImageBand/index.svelte";
 import LeadText from "./LeadText/index.svelte";
 import MediaText from "./MediaText/index.svelte";
+import PersonGrid from "./PersonGrid/index.svelte";
 import RichText from "./RichText/index.svelte";
 import SectionGrid from "./SectionGrid/index.svelte";
+import StatementPanel from "./StatementPanel/index.svelte";
 import StatsBand from "./StatsBand/index.svelte";
 import Testimonial from "./Testimonial/index.svelte";
 import TextColumns from "./TextColumns/index.svelte";
@@ -23,8 +25,10 @@ export const components = {
   image_band: ImageBand,
   lead_text: LeadText,
   media_text: MediaText,
+  person_grid: PersonGrid,
   rich_text: RichText,
   section_grid: SectionGrid,
+  statement_panel: StatementPanel,
   stats_band: StatsBand,
   testimonial: Testimonial,
   text_columns: TextColumns,

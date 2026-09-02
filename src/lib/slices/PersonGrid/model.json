@@ -1,0 +1,83 @@
+{
+  "id": "person_grid",
+  "type": "SharedSlice",
+  "name": "PersonGrid",
+  "description": "A labelled group of people — headshot cards with an optional bio pop-up",
+  "variations": [
+    {
+      "id": "default",
+      "name": "Default",
+      "docURL": "...",
+      "version": "initial",
+      "description": "An optional display heading, a labelled intro column, and a grid of headshot cards",
+      "imageUrl": "",
+      "primary": {
+        "heading": {
+          "type": "StructuredText",
+          "config": {
+            "label": "heading",
+            "placeholder": "e.g. A Team That Cares — optional; only the first group on a page needs one",
+            "allowTargetBlank": true,
+            "single": "heading2",
+            "labels": ["highlight"]
+          }
+        },
+        "label": {
+          "type": "Text",
+          "config": {
+            "label": "label",
+            "placeholder": "e.g. Leadership"
+          }
+        },
+        "intro": {
+          "type": "StructuredText",
+          "config": {
+            "label": "intro",
+            "allowTargetBlank": true,
+            "multi": "paragraph,strong,em,hyperlink"
+          }
+        }
+      },
+      "items": {
+        "headshot": {
+          "type": "Image",
+          "config": {
+            "label": "headshot",
+            "constraint": { "width": 592, "height": 592 },
+            "thumbnails": []
+          }
+        },
+        "name": {
+          "type": "Text",
+          "config": {
+            "label": "name",
+            "placeholder": "e.g. Brooke Perucki"
+          }
+        },
+        "role": {
+          "type": "Text",
+          "config": {
+            "label": "role",
+            "placeholder": "e.g. Executive Director"
+          }
+        },
+        "email": {
+          "type": "Text",
+          "config": {
+            "label": "email",
+            "placeholder": "e.g. brooke@vidalegacy.org — the component makes the mailto:"
+          }
+        },
+        "bio": {
+          "type": "StructuredText",
+          "config": {
+            "label": "bio",
+            "placeholder": "Long-form bio. Fill this to give the card its bio pop-up; leave it empty and no trigger is drawn.",
+            "allowTargetBlank": true,
+            "multi": "paragraph,strong,em,hyperlink"
+          }
+        }
+      }
+    }
+  ]
+}

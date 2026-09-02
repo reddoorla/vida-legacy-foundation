@@ -20,6 +20,8 @@
   import StatsBand from "$lib/slices/StatsBand/index.svelte";
   import IconColumns from "$lib/slices/IconColumns/index.svelte";
   import ImageBand from "$lib/slices/ImageBand/index.svelte";
+  import PersonGrid from "$lib/slices/PersonGrid/index.svelte";
+  import StatementPanel from "$lib/slices/StatementPanel/index.svelte";
   import LeadText from "$lib/slices/LeadText/index.svelte";
   import TextColumns from "$lib/slices/TextColumns/index.svelte";
   import Testimonial from "$lib/slices/Testimonial/index.svelte";
@@ -446,6 +448,70 @@
     items: [],
   } as unknown as Content.ImageBandSlice;
 
+  // Who We Are mission band. The statement uses --color-green-mid-aa rather
+  // than the comp's #527e01: the type clamps to 20px on a phone, which is body
+  // size, where 4.47:1 fails — and the axe gate only runs one viewport.
+  const statementPanelFixture = {
+    slice_type: "statement_panel",
+    variation: "default",
+    primary: {
+      statement: [
+        {
+          type: "heading2",
+          text: "Our mission is to honor the gift of life through education, outreach, and support for families in our South Texas community.",
+          spans: [],
+        },
+      ],
+      body: [
+        {
+          type: "paragraph",
+          text: "Vida Legacy Foundation is an independent 501(c)(3) nonprofit organization founded by Texas Organ Sharing Alliance.",
+          spans: [],
+        },
+      ],
+    },
+    items: [],
+  } as unknown as Content.StatementPanelSlice;
+
+  // Two PersonGrid fixtures on purpose: the heading levels SHIFT with the
+  // display heading (h2/h3/h4 with it, h2/h3 without), and rendering both is
+  // what lets axe's heading-order rule audit the promotion. Only the first
+  // person carries a bio, which is what draws the "+" trigger.
+  const person = (name: string, role: string, withBio: boolean) => ({
+    headshot: { url: placeholder.portrait, alt: name, dimensions: { width: 592, height: 592 } },
+    name,
+    role,
+    email: `${name.split(" ")[0].toLowerCase()}@example.org`,
+    bio: withBio ? [{ type: "paragraph", text: `${name} has served since 2019.`, spans: [] }] : [],
+  });
+  const personGridFixture = {
+    slice_type: "person_grid",
+    variation: "default",
+    primary: {
+      heading: [
+        {
+          type: "heading2",
+          text: "A Team That Cares",
+          spans: [{ type: "label", start: 12, end: 17, data: { label: "highlight" } }],
+        },
+      ],
+      label: "Leadership",
+      intro: [{ type: "paragraph", text: "Our staff is dedicated to the mission.", spans: [] }],
+    },
+    items: [
+      person("Brooke Perucki", "Executive Director", true),
+      person("Vilma Gonzalez", "Finance & Administration Manager", false),
+    ],
+  } as unknown as Content.PersonGridSlice;
+  const personGridNoHeadingFixture = {
+    ...personGridFixture,
+    primary: {
+      ...personGridFixture.primary,
+      heading: [],
+      label: "Board of Directors",
+    },
+  } as unknown as Content.PersonGridSlice;
+
   const accordionFixture: ComponentProps<typeof AccordionSlice>["slice"] = {
     slice_type: "accordion",
     variation: "default",
@@ -683,6 +749,9 @@
   <CtaBanner slice={ctaBannerOnCreamFixture} />
   <Testimonial slice={testimonialOnCreamFixture} />
   <ImageBand slice={imageBandFixture} />
+  <StatementPanel slice={statementPanelFixture} />
+  <PersonGrid slice={personGridFixture} />
+  <PersonGrid slice={personGridNoHeadingFixture} />
 </div>
 
 <!-- Renders nothing at rest (overlay only appears mid-navigation, aria-hidden);

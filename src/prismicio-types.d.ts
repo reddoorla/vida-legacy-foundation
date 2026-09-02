@@ -67,6 +67,8 @@ type ContentRelationshipFieldWithData<
 }[Exclude<TCustomType[number], string>["id"]];
 
 type PageDocumentDataSlicesSlice =
+  | StatementPanelSlice
+  | PersonGridSlice
   | ImageBandSlice
   | StatsBandSlice
   | IconColumnsSlice
@@ -969,6 +971,126 @@ export type MediaTextSlice = prismic.SharedSlice<
 >;
 
 /**
+ * Primary content in *PersonGrid → Default → Primary*
+ */
+export interface PersonGridSliceDefaultPrimary {
+  /**
+   * heading field in *PersonGrid → Default → Primary*
+   *
+   * - **Field Type**: Rich Text
+   * - **Placeholder**: e.g. A Team That Cares — optional
+   * - **API ID Path**: person_grid.default.primary.heading
+   * - **Documentation**: https://prismic.io/docs/fields/rich-text
+   */
+  heading: prismic.RichTextField;
+
+  /**
+   * label field in *PersonGrid → Default → Primary*
+   *
+   * - **Field Type**: Text
+   * - **Placeholder**: e.g. Leadership
+   * - **API ID Path**: person_grid.default.primary.label
+   * - **Documentation**: https://prismic.io/docs/fields/text
+   */
+  label: prismic.KeyTextField;
+
+  /**
+   * intro field in *PersonGrid → Default → Primary*
+   *
+   * - **Field Type**: Rich Text
+   * - **Placeholder**: *None*
+   * - **API ID Path**: person_grid.default.primary.intro
+   * - **Documentation**: https://prismic.io/docs/fields/rich-text
+   */
+  intro: prismic.RichTextField;
+}
+
+/**
+ * Primary content in *PersonGrid → Default → Items*
+ */
+export interface PersonGridSliceDefaultItem {
+  /**
+   * headshot field in *PersonGrid → Default → Items*
+   *
+   * - **Field Type**: Image
+   * - **Placeholder**: *None*
+   * - **API ID Path**: person_grid.default.items[].headshot
+   * - **Documentation**: https://prismic.io/docs/fields/image
+   */
+  headshot: prismic.ImageField<never>;
+
+  /**
+   * name field in *PersonGrid → Default → Items*
+   *
+   * - **Field Type**: Text
+   * - **Placeholder**: e.g. Brooke Perucki
+   * - **API ID Path**: person_grid.default.items[].name
+   * - **Documentation**: https://prismic.io/docs/fields/text
+   */
+  name: prismic.KeyTextField;
+
+  /**
+   * role field in *PersonGrid → Default → Items*
+   *
+   * - **Field Type**: Text
+   * - **Placeholder**: e.g. Executive Director
+   * - **API ID Path**: person_grid.default.items[].role
+   * - **Documentation**: https://prismic.io/docs/fields/text
+   */
+  role: prismic.KeyTextField;
+
+  /**
+   * email field in *PersonGrid → Default → Items*
+   *
+   * - **Field Type**: Text
+   * - **Placeholder**: e.g. brooke@vidalegacy.org
+   * - **API ID Path**: person_grid.default.items[].email
+   * - **Documentation**: https://prismic.io/docs/fields/text
+   */
+  email: prismic.KeyTextField;
+
+  /**
+   * bio field in *PersonGrid → Default → Items*
+   *
+   * - **Field Type**: Rich Text
+   * - **Placeholder**: Long-form bio; fill it to give the card its pop-up
+   * - **API ID Path**: person_grid.default.items[].bio
+   * - **Documentation**: https://prismic.io/docs/fields/rich-text
+   */
+  bio: prismic.RichTextField;
+}
+
+/**
+ * Default variation for PersonGrid Slice
+ *
+ * - **API ID**: `default`
+ * - **Description**: An optional display heading, a labelled intro column, and a grid of headshot cards
+ * - **Documentation**: https://prismic.io/docs/slices
+ */
+export type PersonGridSliceDefault = prismic.SharedSliceVariation<
+  "default",
+  Simplify<PersonGridSliceDefaultPrimary>,
+  Simplify<PersonGridSliceDefaultItem>
+>;
+
+/**
+ * Slice variation for *PersonGrid*
+ */
+type PersonGridSliceVariation = PersonGridSliceDefault;
+
+/**
+ * PersonGrid Shared Slice
+ *
+ * - **API ID**: `person_grid`
+ * - **Description**: A labelled group of people — headshot cards with an optional bio pop-up
+ * - **Documentation**: https://prismic.io/docs/slices
+ */
+export type PersonGridSlice = prismic.SharedSlice<
+  "person_grid",
+  PersonGridSliceVariation
+>;
+
+/**
  * Primary content in *RichText → Default → Primary*
  */
 export interface RichTextSliceDefaultPrimary {
@@ -1147,6 +1269,61 @@ type SectionGridSliceVariation = SectionGridSliceDefault | SectionGridSliceOnDar
 export type SectionGridSlice = prismic.SharedSlice<
   "section_grid",
   SectionGridSliceVariation
+>;
+
+/**
+ * Primary content in *StatementPanel → Default → Primary*
+ */
+export interface StatementPanelSliceDefaultPrimary {
+  /**
+   * statement field in *StatementPanel → Default → Primary*
+   *
+   * - **Field Type**: Rich Text
+   * - **Placeholder**: e.g. Our mission is to honor the gift of life…
+   * - **API ID Path**: statement_panel.default.primary.statement
+   * - **Documentation**: https://prismic.io/docs/fields/rich-text
+   */
+  statement: prismic.RichTextField;
+
+  /**
+   * body field in *StatementPanel → Default → Primary*
+   *
+   * - **Field Type**: Rich Text
+   * - **Placeholder**: *None*
+   * - **API ID Path**: statement_panel.default.primary.body
+   * - **Documentation**: https://prismic.io/docs/fields/rich-text
+   */
+  body: prismic.RichTextField;
+}
+
+/**
+ * Default variation for StatementPanel Slice
+ *
+ * - **API ID**: `default`
+ * - **Description**: A mission-scale statement on the left, with the long-form explanation in a textured card beside it
+ * - **Documentation**: https://prismic.io/docs/slices
+ */
+export type StatementPanelSliceDefault = prismic.SharedSliceVariation<
+  "default",
+  Simplify<StatementPanelSliceDefaultPrimary>,
+  never
+>;
+
+/**
+ * Slice variation for *StatementPanel*
+ */
+type StatementPanelSliceVariation = StatementPanelSliceDefault;
+
+/**
+ * StatementPanel Shared Slice
+ *
+ * - **API ID**: `statement_panel`
+ * - **Description**: A short statement beside a textured panel of body copy
+ * - **Documentation**: https://prismic.io/docs/slices
+ */
+export type StatementPanelSlice = prismic.SharedSlice<
+  "statement_panel",
+  StatementPanelSliceVariation
 >;
 
 /**
@@ -1580,6 +1757,15 @@ declare module "@prismicio/client" {
       SectionGridSliceOnDark,
       SectionGridSliceVariation,
       SectionGridSliceDefault,
+      PersonGridSlice,
+      PersonGridSliceDefaultPrimary,
+      PersonGridSliceDefaultItem,
+      PersonGridSliceVariation,
+      PersonGridSliceDefault,
+      StatementPanelSlice,
+      StatementPanelSliceDefaultPrimary,
+      StatementPanelSliceVariation,
+      StatementPanelSliceDefault,
       StatsBandSlice,
       StatsBandSliceDefaultPrimary,
       StatsBandSliceDefaultItem,
