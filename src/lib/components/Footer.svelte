@@ -1,6 +1,12 @@
 <script lang="ts">
   import BrandIcon from "./BrandIcon.svelte";
-  import type { FooterSocial, FooterItem, FooterImage, FooterColumn } from "$lib/site-config";
+  import type {
+    FooterSocial,
+    FooterItem,
+    FooterImage,
+    FooterText,
+    FooterColumn,
+  } from "$lib/site-config";
 
   interface Props {
     /** Optional per-route override of the `$lib/site-config.json` footer (no
@@ -45,6 +51,22 @@
     reddit: { platform: "reddit", label: "Reddit" },
   };
 
+  // Typographic role → classes. Colour only; every value is measured against
+  // the cream ground in app.css. `fine` uses --color-green-mid-aa, NOT the
+  // design's #527e01, which is 4.47:1 and fails AA at this size.
+  const TONE: Record<string, string> = {
+    detail: "text-primary font-heading text-xs tracking-[1.5px] uppercase",
+    fine: "text-green-mid-aa font-button text-[10px] leading-[1.5] tracking-[1px] uppercase",
+  };
+  const toneClass = (item: FooterText) =>
+    (item.tone && TONE[item.tone]) ?? "text-dark font-heading text-xs tracking-[1.5px] uppercase";
+
+  // Rows sit 30px apart, except a `tight` row which hugs the one above at 15px
+  // so a label and its detail lines read as one group. The first row in a
+  // column never takes a top margin.
+  const rowClass = (item: FooterItem, i: number) =>
+    i === 0 ? "" : !isImage(item) && item.tight ? "mt-[15px]" : "mt-[30px]";
+
   const known = $derived(
     socials
       // `Object.hasOwn` guard: a network literally named "toString" or
@@ -66,22 +88,44 @@
   />
 {/snippet}
 
-<footer class="mt-auto w-full px-8 py-12">
+<!-- The ground is the page ground (--color-background), so the footer continues
+     whatever panel sits above it rather than restarting on its own colour. The
+     columns branch pays its own padding; the placeholder branch keeps the
+     template's. -->
+<footer class="bg-background mt-auto w-full {columns?.length ? '' : 'px-8 py-12'}">
   {#if columns?.length}
-    <div class="flex flex-col sm:flex-row justify-between gap-8">
+    <!-- Figma 5249:1320. The last tenant of the cream closing panel that
+         CtaBanner onCream rounds off, so the ground continues rather than
+         restarting. Its pt-10 is the second half of the comp's 80px gap to
+         the testimonial row above. The first column stretches so its logo and
+         copyright sit at opposite ends, as in the comp. -->
+    <div
+      class="mx-auto flex w-full max-w-[1440px] flex-col gap-10 px-6 pt-10 pb-15 md:flex-row md:gap-5 md:px-20"
+    >
       {#each columns as col, colIndex (colIndex)}
-        <div class="flex flex-col gap-2">
+        <div
+          class="flex flex-col md:w-[304px] md:shrink-0 {colIndex === 0
+            ? 'gap-10 md:justify-between md:gap-0 md:self-stretch'
+            : ''}"
+        >
           {#each col.items as item, itemIndex (itemIndex)}
             {#if isImage(item)}
-              {#if item.href}
-                <a {...linkAttrs(item.href)}>{@render logo(item.image)}</a>
-              {:else}
-                {@render logo(item.image)}
-              {/if}
+              <div class={rowClass(item, itemIndex)}>
+                {#if item.href}
+                  <a {...linkAttrs(item.href)} class="inline-block">{@render logo(item.image)}</a>
+                {:else}
+                  {@render logo(item.image)}
+                {/if}
+              </div>
             {:else if item.href}
-              <a {...linkAttrs(item.href)}>{item.text}</a>
+              <a
+                {...linkAttrs(item.href)}
+                class="{toneClass(item)} {rowClass(item, itemIndex)} w-fit hover:opacity-70"
+              >
+                {item.text}
+              </a>
             {:else}
-              <p>{item.text}</p>
+              <p class="{toneClass(item)} {rowClass(item, itemIndex)}">{item.text}</p>
             {/if}
           {/each}
         </div>

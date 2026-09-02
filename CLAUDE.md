@@ -99,13 +99,21 @@ in the dashboard** — do not call `publish_release`.
 
 What is NOT done, in the order it blocks things:
 
-1. **The site has no real content.** `/figma-slices` is the next real build.
-2. `src/lib/site-config.json` still ships empty — logo-only Nav, placeholder
-   Footer. The IA is derivable from `content/es-website-content.txt`
+1. **The site has no real content.** The homepage slices exist and the mocks
+   render, but the `home` document's slice zone is still empty — filling it is
+   a Prismic authoring job, not a code one.
+2. `src/lib/site-config.json` **footer is populated; `nav.items` is still
+   empty.** The IA is derivable from `content/es-website-content.txt`
    (`ENLACES`, `CONTACTO`, `AVISO LEGAL`).
-3. `DEFAULT_OG_IMAGE` unset — every share is imageless. Needs a 1200×630
+3. **`Who we are` has no href yet, and that is deliberate.** Prerendering
+   loud-fails, and the crawler follows every internal link it renders — so a
+   `/about` href in the footer or nav 404s the build until that Prismic page
+   exists and is published. The footer item ships href-less (it renders as a
+   `<p>`); adding `"href": "/about"` is the whole change once the page is live.
+   Same rule for any nav item.
+4. `DEFAULT_OG_IMAGE` unset — every share is imageless. Needs a 1200×630
    `static/og-default.png`.
-4. Netlify site + `FORMS_INGEST_URL` / `FORMS_INGEST_TOKEN` (docs/NEW-SITE.md).
+5. Netlify site + `FORMS_INGEST_URL` / `FORMS_INGEST_TOKEN` (docs/NEW-SITE.md).
 
 ## Brand colours — two of them cannot hold text
 
@@ -122,6 +130,7 @@ Measured against the beige ground `#fdf5e8` (AA needs 4.5 body, 3.0 large):
 | `--color-green`              | `#9cbf5b` | **1.94**       | fill only         |
 | `--color-coral`              | `#de7762` | **2.80**       | fill only         |
 | `--color-green-mid`          | `#527e01` | **4.47**       | large text only   |
+| `--color-green-mid-aa`       | `#507b01` | 4.65           | green at any size |
 | `--color-primary` (blue)     | `#065184` | 7.71           | text, links       |
 | `--color-accent` (dark red)  | `#652323` | 10.67          | accent text       |
 | `--color-secondary` (forest) | `#2c3b1a` | 11.10          | body text         |
@@ -139,12 +148,34 @@ white-on-green anywhere. Do not introduce it — white on green is 2.10.
 > comps never specified it.
 
 The genuine edge case is `--color-green-mid` `#527e01` at **4.47** — it misses
-AA body by 0.03 and the design uses it for small text and form placeholders.
-Large text only, or darken it.
+AA body by 0.03 and the design uses it for small text (the 10px footer
+copyright) and form placeholders. **That is the one place the comps fail WCAG
+outright.** `--color-green-mid-aa` `#507b01` is the same green darkened 2%
+(delta 2/3/0 per channel, indistinguishable beside it) and clears AA body at
+4.65. Use `-aa` for green text below display scale; keep `--color-green-mid`
+for the big stuff, where the exact Figma value matters and 4.47 already passes.
 
-`pnpm test:a11y` gates this, so a regression fails CI rather than shipping —
-but the gate only sees rendered routes. Do not assign `--color-green` or
-`--color-coral` to text in a slice and assume review will catch it.
+### The dark grounds have their own ceilings
+
+`--color-blue-textured` `#004370` is the stats card raised off the navy band —
+the lightest dark ground on the site, so the tightest:
+
+| on `#004370`    | ratio    |
+| --------------- | -------- |
+| `#fdf5e8` beige | 9.53     |
+| `#9cbf5b` green | **4.92** |
+
+The site's grain sits over it at 15% `mix-blend-difference`, and the texture's
+brightest pixel is **254** — which lifts the ground to `#265575` at worst and
+takes green to **3.80**. That still passes for the 36px stat figures (large
+text) and they are the only green on it. **Do not put small green text on this
+ground.**
+
+`pnpm test:a11y` gates all of this, so a regression fails CI rather than
+shipping — and the footer renders on every audited route, so its contrast is
+genuinely covered. But the gate only sees rendered routes. Do not assign
+`--color-green` or `--color-coral` to text in a slice and assume review will
+catch it.
 
 ## Fonts — kit `alh8out`, and a weight that does not exist
 
@@ -205,5 +236,21 @@ disappears on a dark tab bar. 16px stays marginal regardless of inset.
 
 `DEFAULT_OG_IMAGE` is intentionally unset — shipping the starter's card would
 leak Reddoor branding onto a client site. Needs a 1200×630 `og-default.png`.
-`src/lib/site-config.json` still ships empty (logo-only Nav, placeholder
-Footer).
+`src/lib/site-config.json` now carries the real footer; `nav.items` is still
+empty, so the Nav is logo-only.
+
+## The footer is chrome, not a slice
+
+It renders from `site-config.json` through `+layout.svelte`, so it is NOT in
+the slice zone and an author cannot reorder or remove it. Two site-specific
+hints were added to `FooterText` for it, both optional:
+
+- `tight` — hug the row above at 15px instead of the 30px inter-row gap, so a
+  label and its detail lines read as one group (`Contact us` → phone →
+  address).
+- `tone` — `"detail"` is the link colour for contact lines, `"fine"` is the
+  small print. Colour only; the sizes come from the row itself.
+
+The footer's ground is `--color-background`, deliberately: it is the last
+tenant of the cream panel that `CtaBanner onCream` rounds off, so it has to
+continue that panel rather than restart on its own colour.

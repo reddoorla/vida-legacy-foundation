@@ -10,7 +10,17 @@ export type FooterSocial = { network: string; href?: string };
 // A footer column row: a text line (optionally linked — tel:/mailto:/http(s))
 // or an image (a footer logo). Shared so the type flows from site-config
 // through the layout into Footer as one source of truth.
-export type FooterText = { text: string; href?: string };
+export type FooterText = {
+  text: string;
+  href?: string;
+  /** Hug the row above instead of taking the full inter-row gap — for a group
+   *  of detail lines under a label ("Contact us" → phone → address). */
+  tight?: boolean;
+  /** Typographic role. Default is a nav-scale label; "detail" is the same
+   *  scale in the link colour (contact details); "fine" is the small print
+   *  (a copyright line). Colour only — see app.css for the measured ratios. */
+  tone?: "detail" | "fine";
+};
 export type FooterImage = {
   image: { url: string; maxWidth?: string; alt?: string };
   href?: string;

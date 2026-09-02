@@ -101,6 +101,57 @@ describe("Footer", () => {
     expect(getByRole("link", { name: "Burbank Portfolio" })).not.toBeNull();
   });
 
+  it("groups tight rows closer than the rows they hang under", () => {
+    // "Contact us" heads a group; the phone and address lines hug it at 15px
+    // instead of taking the 30px inter-row gap, so the four read as one block.
+    const { container, getByText } = render(Footer, {
+      props: {
+        columns: [
+          {
+            items: [
+              { text: "Who we are" },
+              { text: "Contact us" },
+              { text: "726-234-6910", href: "tel:+17262346910", tight: true, tone: "detail" },
+              { text: "San Antonio, TX 78240", tight: true, tone: "detail" },
+            ],
+          },
+        ],
+      },
+    });
+    // First row takes no top margin at all.
+    expect(getByText("Who we are").className).not.toContain("mt-");
+    expect(getByText("Contact us").className).toContain("mt-[30px]");
+    expect(getByText("San Antonio, TX 78240").className).toContain("mt-[15px]");
+    const tel = container.querySelector("a[href='tel:+17262346910']");
+    expect(tel?.className).toContain("mt-[15px]");
+  });
+
+  it("paints the fine tone with the AA-safe green, not the design's #527e01", () => {
+    // The comps set the 10px copyright in #527e01, which is 4.47:1 on cream —
+    // it misses AA body by 0.03. --color-green-mid-aa is the same green
+    // darkened 2% to 4.65:1. A regression here is a real WCAG failure, and the
+    // axe gate only sees it because the footer renders on every audited route.
+    const { getByText } = render(Footer, {
+      props: {
+        columns: [{ items: [{ text: "© 2026 Vida Legacy Foundation.", tone: "fine" }] }],
+      },
+    });
+    const line = getByText("© 2026 Vida Legacy Foundation.");
+    expect(line.className).toContain("text-green-mid-aa");
+    expect(line.className).not.toContain("text-green-mid ");
+  });
+
+  it("gives detail rows the link colour and everything else the dark label colour", () => {
+    const { getByText } = render(Footer, {
+      props: {
+        columns: [{ items: [{ text: "Who we are" }, { text: "726-234-6910", tone: "detail" }] }],
+      },
+    });
+    // #01263f is 14.37:1 on cream, #065184 is 7.71:1 — both clear AA body.
+    expect(getByText("Who we are").className).toContain("text-dark");
+    expect(getByText("726-234-6910").className).toContain("text-primary");
+  });
+
   it("default branch when columns is empty/undefined (fleet default preserved)", () => {
     const { container } = render(Footer, { props: { columns: [] } });
     expect(container.querySelector("footer")?.textContent).toContain("Company Name");

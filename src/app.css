@@ -53,6 +53,13 @@
   --color-green-deep: #172303; /* "textured dark green" ground */
   --color-green-btn: #263b02; /* button fill on dark, button text on green */
   --color-green-mid: #527e01; /* large text only — 4.47 on beige */
+  /* The same green, darkened 2% so it clears AA at body size (4.65 on beige).
+     The delta is 2/3/0 per channel — indistinguishable beside the design value,
+     which is the point: the comps set 10px footer copy in #527e01, and that
+     is the one place the design misses AA outright. Use this for green text
+     BELOW display scale; keep --color-green-mid for the big stuff, where the
+     exact Figma value matters and 4.47 is already compliant. */
+  --color-green-mid-aa: #507b01;
 
   /* Brand fills. Never assign these to body text on the cream background. */
   --color-green: #9cbf5b;
