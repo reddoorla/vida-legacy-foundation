@@ -9,7 +9,7 @@
       "name": "Default",
       "docURL": "...",
       "version": "initial",
-      "description": "A display heading, a labelled intro with the PayPal alternative, and the donation form card",
+      "description": "A display heading and a labelled intro; either two buttons out to the hosted form and PayPal, or the on-page donation form card",
       "imageUrl": "",
       "primary": {
         "heading": {
@@ -35,6 +35,22 @@
             "multi": "paragraph,strong,em,hyperlink"
           }
         },
+        "form_label": {
+          "type": "Text",
+          "config": {
+            "label": "form_label",
+            "placeholder": "e.g. donate online — the button to the hosted donation form"
+          }
+        },
+        "form_link": {
+          "type": "Link",
+          "config": {
+            "label": "form_link",
+            "placeholder": "",
+            "allowTargetBlank": true,
+            "select": null
+          }
+        },
         "paypal_label": {
           "type": "Text",
           "config": {
@@ -49,6 +65,15 @@
             "placeholder": "",
             "allowTargetBlank": true,
             "select": null
+          }
+        },
+        "show_form": {
+          "type": "Boolean",
+          "config": {
+            "label": "show_form",
+            "placeholder_false": "Link out to the hosted form",
+            "placeholder_true": "Draw the on-page form (no backend yet)",
+            "default_value": false
           }
         },
         "form_heading": {

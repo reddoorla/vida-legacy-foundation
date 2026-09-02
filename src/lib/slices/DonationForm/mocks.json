@@ -25,6 +25,19 @@
           }
         ]
       },
+      "form_label": {
+        "__TYPE__": "FieldContent",
+        "type": "Text",
+        "value": "donate online"
+      },
+      "form_link": {
+        "key": "a7e3c9d1-2b58-4f06-8c14-6d9e0b3a5f72",
+        "__TYPE__": "LinkContent",
+        "value": {
+          "__TYPE__": "ExternalLink",
+          "url": "https://secure.lglforms.com/form_engine/s/1DAy4mOf7OlVR4Ke-4h2gA"
+        }
+      },
       "paypal_label": {
         "__TYPE__": "FieldContent",
         "type": "Text",
@@ -37,6 +50,10 @@
           "__TYPE__": "ExternalLink",
           "url": "https://www.paypal.com/donate/?hosted_button_id=4VVJZ6HKP6RRJ"
         }
+      },
+      "show_form": {
+        "__TYPE__": "BooleanContent",
+        "value": false
       },
       "form_heading": {
         "__TYPE__": "FieldContent",

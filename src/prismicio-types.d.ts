@@ -464,6 +464,26 @@ export interface DonationFormSliceDefaultPrimary {
   body: prismic.RichTextField;
 
   /**
+   * form_label field in *DonationForm → Default → Primary*
+   *
+   * - **Field Type**: Text
+   * - **Placeholder**: e.g. donate online — the button to the hosted donation form
+   * - **API ID Path**: donation_form.default.primary.form_label
+   * - **Documentation**: https://prismic.io/docs/fields/text
+   */
+  form_label: prismic.KeyTextField;
+
+  /**
+   * form_link field in *DonationForm → Default → Primary*
+   *
+   * - **Field Type**: Link
+   * - **Placeholder**: *None*
+   * - **API ID Path**: donation_form.default.primary.form_link
+   * - **Documentation**: https://prismic.io/docs/fields/link
+   */
+  form_link: prismic.LinkField<string, string, unknown, prismic.FieldState, never>;
+
+  /**
    * paypal_label field in *DonationForm → Default → Primary*
    *
    * - **Field Type**: Text
@@ -482,6 +502,17 @@ export interface DonationFormSliceDefaultPrimary {
    * - **Documentation**: https://prismic.io/docs/fields/link
    */
   paypal_link: prismic.LinkField<string, string, unknown, prismic.FieldState, never>;
+
+  /**
+   * show_form field in *DonationForm → Default → Primary*
+   *
+   * - **Field Type**: Boolean
+   * - **Placeholder**: *None*
+   * - **Default Value**: false
+   * - **API ID Path**: donation_form.default.primary.show_form
+   * - **Documentation**: https://prismic.io/docs/fields/boolean
+   */
+  show_form: prismic.BooleanField;
 
   /**
    * form_heading field in *DonationForm → Default → Primary*

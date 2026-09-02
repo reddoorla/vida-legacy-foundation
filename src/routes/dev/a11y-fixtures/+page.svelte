@@ -532,16 +532,28 @@
           spans: [],
         },
       ],
+      form_label: "donate online",
+      form_link: {
+        link_type: "Web",
+        url: "https://secure.lglforms.com/form_engine/s/1DAy4mOf7OlVR4Ke-4h2gA",
+      },
       paypal_label: "use paypal",
       paypal_link: {
         link_type: "Web",
         url: "https://www.paypal.com/donate/?hosted_button_id=4VVJZ6HKP6RRJ",
         target: "_blank",
       },
+      show_form: true,
       form_heading: "Contact information",
       submit_label: "enter payment information",
     },
     items: [{ amount: 100 }, { amount: 50 }, { amount: 25 }],
+  } as unknown as Content.DonationFormSlice;
+  // The links-only mode the page actually ships in until the form has a
+  // backend: the same copy, two buttons where the card would be.
+  const donationLinksFixture = {
+    ...donationFormFixture,
+    primary: { ...donationFormFixture.primary, show_form: false },
   } as unknown as Content.DonationFormSlice;
 
   // Who We Are masthead. Its title is an h1 — the ONLY slice that renders one,
@@ -819,6 +831,7 @@
   <StatementPanel slice={statementPanelFixture} />
   <PersonGrid slice={personGridFixture} />
   <PersonGrid slice={personGridNoHeadingFixture} />
+  <DonationForm slice={donationLinksFixture} />
   <DonationForm slice={donationFormFixture} />
 </div>
 
