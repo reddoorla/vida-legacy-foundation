@@ -123,6 +123,17 @@ What is NOT done, in the order it blocks things:
 4. `DEFAULT_OG_IMAGE` unset — every share is imageless. Needs a 1200×630
    `static/og-default.png`.
 5. Netlify site + `FORMS_INGEST_URL` / `FORMS_INGEST_TOKEN` (docs/NEW-SITE.md).
+6. **The donation form has no backend.** `DonationForm` (Figma `5328:1611`)
+   is the comp's front end only: native validation, and a submit stays on
+   the page with a status line pointing at PayPal, because a handler-less
+   form would otherwise GET-navigate the donor's details into the URL. The
+   field names are the payload keys for whatever gets wired. LGL's hosted
+   form has exactly these fields but takes no URL parameters, so the wiring
+   is a real decision — post into LGL's form engine, embed it, or a
+   PayPal/Stripe flow — not a detail. Until it is made, keep the `donate`
+   document in its own release so publishing the content release cannot
+   ship an inert form; the `Donate` chrome item falls back to LGL while
+   `/donate` is unpublished (see item 3).
 
 ## Brand colours — two of them cannot hold text
 
@@ -317,6 +328,23 @@ there is `--color-green-btn`, the design's own dark-on-green pairing at 5.86.
 The open menu (`5314:1679`) is `NavMenu`, extracted so the a11y fixtures can
 render it in-flow (`inline`) — the real one is not in the DOM until opened, so
 that fixture is the only thing that puts its colours in front of axe.
+
+## The donation form's labels are code, its copy is content
+
+`DonationForm` is one slice that IS the donate page — the comp has no
+masthead, so the slice renders the `<h1>`. The author owns the copy around
+the form (heading, eyebrow, paragraph, both button labels, the preset
+amounts); the field labels, placeholders and the schedule options live in the
+component in both languages, keyed by the document's locale. That split is the
+contact page's: the labels belong to the field set, which is the payload the
+backend will read, and they change with it. The locale reaches the slice
+through SliceZone's `context` — both page routes pass `{ lang }` — so a slice
+that needs the locale reads `context.lang`, never `$app/state`, which keeps it
+renderable in the fixtures and the simulator.
+
+Two things the comp draws that the slice does not: the reCAPTCHA (it belongs
+to the backend) and a 100px-fixed schedule dropdown ("Quarterly" and
+"Trimestral" overflow it; the width follows the longest option).
 
 ## The footer is chrome, not a slice
 

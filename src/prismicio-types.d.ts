@@ -74,7 +74,8 @@ type PageDocumentDataSlicesSlice =
   | ImageBandSlice
   | PageMastheadSlice
   | StatementPanelSlice
-  | PersonGridSlice;
+  | PersonGridSlice
+  | DonationFormSlice;
 
 /**
  * Content for Page documents
@@ -427,6 +428,123 @@ type CtaBannerSliceVariation = CtaBannerSliceDefault | CtaBannerSliceOnDark | Ct
  * - **Documentation**: https://prismic.io/docs/slices
  */
 export type CtaBannerSlice = prismic.SharedSlice<"cta_banner", CtaBannerSliceVariation>;
+
+/**
+ * Primary content in *DonationForm → Default → Primary*
+ */
+export interface DonationFormSliceDefaultPrimary {
+  /**
+   * heading field in *DonationForm → Default → Primary*
+   *
+   * - **Field Type**: Text
+   * - **Placeholder**: e.g. Make a Donation — the page title; this slice renders the h1
+   * - **API ID Path**: donation_form.default.primary.heading
+   * - **Documentation**: https://prismic.io/docs/fields/text
+   */
+  heading: prismic.KeyTextField;
+
+  /**
+   * eyebrow field in *DonationForm → Default → Primary*
+   *
+   * - **Field Type**: Text
+   * - **Placeholder**: e.g. help that lasts
+   * - **API ID Path**: donation_form.default.primary.eyebrow
+   * - **Documentation**: https://prismic.io/docs/fields/text
+   */
+  eyebrow: prismic.KeyTextField;
+
+  /**
+   * body field in *DonationForm → Default → Primary*
+   *
+   * - **Field Type**: Rich Text
+   * - **Placeholder**: e.g. Your contribution allows us to provide families access to resources…
+   * - **API ID Path**: donation_form.default.primary.body
+   * - **Documentation**: https://prismic.io/docs/fields/rich-text
+   */
+  body: prismic.RichTextField;
+
+  /**
+   * paypal_label field in *DonationForm → Default → Primary*
+   *
+   * - **Field Type**: Text
+   * - **Placeholder**: e.g. use paypal
+   * - **API ID Path**: donation_form.default.primary.paypal_label
+   * - **Documentation**: https://prismic.io/docs/fields/text
+   */
+  paypal_label: prismic.KeyTextField;
+
+  /**
+   * paypal_link field in *DonationForm → Default → Primary*
+   *
+   * - **Field Type**: Link
+   * - **Placeholder**: *None*
+   * - **API ID Path**: donation_form.default.primary.paypal_link
+   * - **Documentation**: https://prismic.io/docs/fields/link
+   */
+  paypal_link: prismic.LinkField<string, string, unknown, prismic.FieldState, never>;
+
+  /**
+   * form_heading field in *DonationForm → Default → Primary*
+   *
+   * - **Field Type**: Text
+   * - **Placeholder**: e.g. Contact information
+   * - **API ID Path**: donation_form.default.primary.form_heading
+   * - **Documentation**: https://prismic.io/docs/fields/text
+   */
+  form_heading: prismic.KeyTextField;
+
+  /**
+   * submit_label field in *DonationForm → Default → Primary*
+   *
+   * - **Field Type**: Text
+   * - **Placeholder**: e.g. enter payment information
+   * - **API ID Path**: donation_form.default.primary.submit_label
+   * - **Documentation**: https://prismic.io/docs/fields/text
+   */
+  submit_label: prismic.KeyTextField;
+}
+
+/**
+ * Primary content in *DonationForm → Items*
+ */
+export interface DonationFormSliceDefaultItem {
+  /**
+   * amount field in *DonationForm → Items*
+   *
+   * - **Field Type**: Number
+   * - **Placeholder**: e.g. 100 — a preset the donor can pick, in whole dollars; the write-in amount is always drawn
+   * - **API ID Path**: donation_form.items[].amount
+   * - **Documentation**: https://prismic.io/docs/fields/number
+   */
+  amount: prismic.NumberField;
+}
+
+/**
+ * Default variation for DonationForm Slice
+ *
+ * - **API ID**: `default`
+ * - **Description**: A display heading, a labelled intro with the PayPal alternative, and the donation form card
+ * - **Documentation**: https://prismic.io/docs/slices
+ */
+export type DonationFormSliceDefault = prismic.SharedSliceVariation<
+  "default",
+  Simplify<DonationFormSliceDefaultPrimary>,
+  Simplify<DonationFormSliceDefaultItem>
+>;
+
+/**
+ * Slice variation for *DonationForm*
+ */
+type DonationFormSliceVariation = DonationFormSliceDefault;
+
+/**
+ * DonationForm Shared Slice
+ *
+ * - **API ID**: `donation_form`
+ * - **Description**: The donation page: an intro column beside the donation form
+ * - **Documentation**: https://prismic.io/docs/slices
+ */
+export type DonationFormSlice = prismic.SharedSlice<"donation_form", DonationFormSliceVariation>;
 
 /**
  * Primary content in *HeartHero → Default → Primary*
@@ -1789,6 +1907,11 @@ declare module "@prismicio/client" {
       CtaBannerSliceDefault,
       CtaBannerSliceOnDark,
       CtaBannerSliceOnCream,
+      DonationFormSlice,
+      DonationFormSliceDefaultPrimary,
+      DonationFormSliceDefaultItem,
+      DonationFormSliceVariation,
+      DonationFormSliceDefault,
       HeartHeroSlice,
       HeartHeroSliceDefaultPrimary,
       HeartHeroSliceDefaultItem,

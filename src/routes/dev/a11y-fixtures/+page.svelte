@@ -28,6 +28,7 @@
   import TextColumns from "$lib/slices/TextColumns/index.svelte";
   import Testimonial from "$lib/slices/Testimonial/index.svelte";
   import CtaBanner from "$lib/slices/CtaBanner/index.svelte";
+  import DonationForm from "$lib/slices/DonationForm/index.svelte";
   // Aliased: `Accordion` above is the primitive ($lib/components/Accordion.svelte).
   import AccordionSlice from "$lib/slices/Accordion/index.svelte";
   import type { ComponentProps } from "svelte";
@@ -514,6 +515,35 @@
     },
   } as unknown as Content.PersonGridSlice;
 
+  // The Donation page. Its heading is the page's h1 (the slice IS the page),
+  // so the fixture leaves it empty — this page already has an h1 — and axe
+  // audits the form itself: the labels, the placeholders, the radios, the
+  // select and the two buttons.
+  const donationFormFixture = {
+    slice_type: "donation_form",
+    variation: "default",
+    primary: {
+      heading: "",
+      eyebrow: "help that lasts",
+      body: [
+        {
+          type: "paragraph",
+          text: "Your contribution allows us to provide families access to resources that can alleviate financial stress.",
+          spans: [],
+        },
+      ],
+      paypal_label: "use paypal",
+      paypal_link: {
+        link_type: "Web",
+        url: "https://www.paypal.com/donate/?hosted_button_id=4VVJZ6HKP6RRJ",
+        target: "_blank",
+      },
+      form_heading: "Contact information",
+      submit_label: "enter payment information",
+    },
+    items: [{ amount: 100 }, { amount: 50 }, { amount: 25 }],
+  } as unknown as Content.DonationFormSlice;
+
   // Who We Are masthead. Its title is an h1 — the ONLY slice that renders one,
   // since the [uid] route renders nothing but the slice zone. The fixture is
   // deliberately title-LESS: this page already has its own h1, and a second
@@ -789,6 +819,7 @@
   <StatementPanel slice={statementPanelFixture} />
   <PersonGrid slice={personGridFixture} />
   <PersonGrid slice={personGridNoHeadingFixture} />
+  <DonationForm slice={donationFormFixture} />
 </div>
 
 <!-- Renders nothing at rest (overlay only appears mid-navigation, aria-hidden);

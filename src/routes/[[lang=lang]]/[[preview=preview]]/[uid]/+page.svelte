@@ -5,4 +5,6 @@
   let { data } = $props();
 </script>
 
-<SliceZone slices={data.page.data.slices} {components} />
+<!-- `context` reaches every slice; DonationForm reads the locale from it
+     for its field labels. -->
+<SliceZone slices={data.page.data.slices} {components} context={{ lang: data.lang }} />
