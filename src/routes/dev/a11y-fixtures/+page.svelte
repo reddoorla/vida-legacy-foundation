@@ -12,6 +12,7 @@
   import RichTextBody from "$lib/components/RichTextBody.svelte";
   import Slider from "$lib/components/Slider.svelte";
   import CountUp from "$lib/components/CountUp.svelte";
+  import HeartHero from "$lib/slices/HeartHero/index.svelte";
   import Hero from "$lib/slices/Hero/index.svelte";
   import MediaText from "$lib/slices/MediaText/index.svelte";
   import SectionGrid from "$lib/slices/SectionGrid/index.svelte";
@@ -72,6 +73,12 @@
   // Prismic slice fixtures. Images use the inline pixel (hermetic — no
   // external hosts). Headings are h2 (slice sections) / h3 (items) so the page
   // outline stays valid beneath the page <h1>.
+  const heartHeroFixture = {
+    slice_type: "heart_hero",
+    variation: "default",
+    primary: { image: heroImage },
+    items: [],
+  } as unknown as Content.HeartHeroSlice;
   const heroSliceFixture = {
     slice_type: "hero",
     variation: "default",
@@ -384,6 +391,7 @@
 
   <!-- Prismic slices — each renders its own <section> + heading; axe
        audits the produced markup (contrast, alt text, heading order). -->
+  <HeartHero slice={heartHeroFixture} />
   <Hero slice={heroSliceFixture} />
   <MediaText slice={mediaTextFixture} />
   <SectionGrid slice={sectionGridFixture} />

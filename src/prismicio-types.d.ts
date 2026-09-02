@@ -71,6 +71,7 @@ type PageDocumentDataSlicesSlice =
   | TextColumnsSlice
   | AccordionSlice
   | RichTextSlice
+  | HeartHeroSlice
   | HeroSlice
   | MediaTextSlice
   | SectionGridSlice
@@ -372,6 +373,48 @@ export interface HeroSliceDefaultPrimary {
     never
   >;
 }
+
+/**
+ * Primary content in *HeartHero -> Default*
+ */
+export interface HeartHeroSliceDefaultPrimary {
+  /**
+   * image field in *HeartHero -> Default*
+   *
+   * - **Field Type**: Image
+   * - **Placeholder**: *None*
+   * - **API ID Path**: heart_hero.default.primary.image
+   * - **Documentation**: https://prismic.io/docs/fields/image
+   */
+  image: prismic.ImageField<never>;
+}
+
+/**
+ * Default variation for HeartHero Slice
+ *
+ * - **API ID**: `default`
+ * - **Description**: Heart-masked photo centred on the brand green ground
+ * - **Documentation**: https://prismic.io/docs/slices
+ */
+export type HeartHeroSliceDefault = prismic.SharedSliceVariation<
+  "default",
+  Simplify<HeartHeroSliceDefaultPrimary>,
+  never
+>;
+
+/**
+ * Slice variation for *HeartHero*
+ */
+type HeartHeroSliceVariation = HeartHeroSliceDefault;
+
+/**
+ * HeartHero Shared Slice
+ *
+ * - **API ID**: `heart_hero`
+ * - **Description**: Full-bleed brand-green hero with a heart-masked photo
+ * - **Documentation**: https://prismic.io/docs/slices
+ */
+export type HeartHeroSlice = prismic.SharedSlice<"heart_hero", HeartHeroSliceVariation>;
 
 /**
  * Default variation for Hero Slice
@@ -943,6 +986,10 @@ declare module "@prismicio/client" {
       CtaBannerSliceDefaultPrimary,
       CtaBannerSliceVariation,
       CtaBannerSliceDefault,
+      HeartHeroSlice,
+      HeartHeroSliceDefaultPrimary,
+      HeartHeroSliceVariation,
+      HeartHeroSliceDefault,
       HeroSlice,
       HeroSliceDefaultPrimary,
       HeroSliceVariation,
