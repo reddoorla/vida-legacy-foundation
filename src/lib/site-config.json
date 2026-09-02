@@ -3,11 +3,13 @@
     "items": [
       {
         "label": "Who We Are",
-        "href": ""
+        "href": "",
+        "page": "about"
       },
       {
         "label": "Donate",
-        "href": "https://secure.lglforms.com/form_engine/s/1DAy4mOf7OlVR4Ke-4h2gA"
+        "href": "https://secure.lglforms.com/form_engine/s/1DAy4mOf7OlVR4Ke-4h2gA",
+        "page": "donate"
       },
       {
         "label": "Contact Us",
@@ -40,11 +42,13 @@
       {
         "items": [
           {
-            "text": "Who we are"
+            "text": "Who we are",
+            "page": "about"
           },
           {
             "text": "Donate",
-            "href": "https://secure.lglforms.com/form_engine/s/1DAy4mOf7OlVR4Ke-4h2gA"
+            "href": "https://secure.lglforms.com/form_engine/s/1DAy4mOf7OlVR4Ke-4h2gA",
+            "page": "donate"
           },
           {
             "text": "Contact us"
@@ -75,11 +79,13 @@
         "items": [
           {
             "label": "Quiénes Somos",
-            "href": ""
+            "href": "",
+            "page": "about"
           },
           {
             "label": "Donar",
-            "href": "https://secure.lglforms.com/form_engine/s/1DAy4mOf7OlVR4Ke-4h2gA"
+            "href": "https://secure.lglforms.com/form_engine/s/1DAy4mOf7OlVR4Ke-4h2gA",
+            "page": "donate"
           },
           {
             "label": "Contáctenos",
@@ -112,11 +118,13 @@
           {
             "items": [
               {
-                "text": "Quiénes somos"
+                "text": "Quiénes somos",
+                "page": "about"
               },
               {
                 "text": "Donar",
-                "href": "https://secure.lglforms.com/form_engine/s/1DAy4mOf7OlVR4Ke-4h2gA"
+                "href": "https://secure.lglforms.com/form_engine/s/1DAy4mOf7OlVR4Ke-4h2gA",
+                "page": "donate"
               },
               {
                 "text": "Contacto"

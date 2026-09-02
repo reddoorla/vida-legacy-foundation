@@ -24,7 +24,7 @@
   // Site chrome from src/lib/site-config.json (empty stub → logo-only Nav +
   // placeholder Footer), in the page's locale. A route's own page data takes
   // precedence in each chrome component.
-  const siteConfig = $derived(loadSiteConfig(lang));
+  const siteConfig = $derived(loadSiteConfig(lang, data.publishedPages));
 
   // hreflang needs absolute URLs; loaders hand over root-relative paths.
   const alternates = $derived(

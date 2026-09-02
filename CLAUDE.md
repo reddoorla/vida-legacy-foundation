@@ -109,12 +109,17 @@ What is NOT done, in the order it blocks things:
    `/contact` route (an unstyled skeleton — the recorded decision is a contact
    _modal_, which has no comp yet), and `Become a Donor` points at the
    operator's noted registry URL, which the client has not confirmed.
-3. **`Who we are` has no href yet, and that is deliberate.** Prerendering
-   loud-fails, and the crawler follows every internal link it renders — so a
-   `/about` href in the footer or nav 404s the build until that Prismic page
-   exists and is published. The footer item and the nav entry both ship
-   href-less (the footer renders a `<p>`, the menu a `<span>`); adding
-   `"href": "/about"` to both is the whole change once the page is live.
+3. **`Who we are` and `Donate` name pages that are not live yet.**
+   Prerendering loud-fails, and the crawler follows every internal link it
+   renders — so a hard-coded `/about` href in the chrome 404s the build until
+   that Prismic page is published. Chrome items therefore carry a page
+   reference (`"page": "about"`, `"page": "donate"` in `site-config.json`)
+   instead of a path: the root layout lists the page documents published in
+   the request's locale, and `loadSiteConfig(lang, publishedUids)` links a
+   reference only when its page is live, falling back to the item's `href`
+   (Donate → the LGL form) or to no link at all (`Who we are` renders a `<p>`
+   in the footer and a `<span>` in the menu). Publishing the page is the
+   whole change; no code follows. A previewed release sees its own links.
 4. `DEFAULT_OG_IMAGE` unset — every share is imageless. Needs a 1200×630
    `static/og-default.png`.
 5. Netlify site + `FORMS_INGEST_URL` / `FORMS_INGEST_TOKEN` (docs/NEW-SITE.md).
