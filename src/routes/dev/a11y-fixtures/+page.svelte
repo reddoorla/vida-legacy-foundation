@@ -19,6 +19,7 @@
   import SectionGrid from "$lib/slices/SectionGrid/index.svelte";
   import StatsBand from "$lib/slices/StatsBand/index.svelte";
   import IconColumns from "$lib/slices/IconColumns/index.svelte";
+  import ImageBand from "$lib/slices/ImageBand/index.svelte";
   import LeadText from "$lib/slices/LeadText/index.svelte";
   import TextColumns from "$lib/slices/TextColumns/index.svelte";
   import Testimonial from "$lib/slices/Testimonial/index.svelte";
@@ -435,6 +436,16 @@
     ],
   } as unknown as Content.TestimonialSlice;
 
+  // The full-bleed photo bands that break up the homepage. No copy sits over
+  // them, so there is no scrim and no contrast rule to honour — but the alt
+  // text still gets audited, which is why the fixture carries a real one.
+  const imageBandFixture = {
+    slice_type: "image_band",
+    variation: "default",
+    primary: { image: heroImage },
+    items: [],
+  } as unknown as Content.ImageBandSlice;
+
   const accordionFixture: ComponentProps<typeof AccordionSlice>["slice"] = {
     slice_type: "accordion",
     variation: "default",
@@ -671,6 +682,7 @@
   <LeadText slice={leadTextStatementFixture} />
   <CtaBanner slice={ctaBannerOnCreamFixture} />
   <Testimonial slice={testimonialOnCreamFixture} />
+  <ImageBand slice={imageBandFixture} />
 </div>
 
 <!-- Renders nothing at rest (overlay only appears mid-navigation, aria-hidden);
