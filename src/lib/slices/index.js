@@ -4,6 +4,7 @@ import Accordion from "./Accordion/index.svelte";
 import CtaBanner from "./CtaBanner/index.svelte";
 import HeartHero from "./HeartHero/index.svelte";
 import Hero from "./Hero/index.svelte";
+import IconColumns from "./IconColumns/index.svelte";
 import LeadText from "./LeadText/index.svelte";
 import MediaText from "./MediaText/index.svelte";
 import RichText from "./RichText/index.svelte";
@@ -16,6 +17,7 @@ export const components = {
   cta_banner: CtaBanner,
   heart_hero: HeartHero,
   hero: Hero,
+  icon_columns: IconColumns,
   lead_text: LeadText,
   media_text: MediaText,
   rich_text: RichText,

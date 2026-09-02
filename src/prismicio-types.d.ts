@@ -67,6 +67,7 @@ type ContentRelationshipFieldWithData<
 }[Exclude<TCustomType[number], string>["id"]];
 
 type PageDocumentDataSlicesSlice =
+  | IconColumnsSlice
   | LeadTextSlice
   | TextColumnsSlice
   | AccordionSlice
@@ -489,6 +490,59 @@ type HeroSliceVariation = HeroSliceDefault;
 export type HeroSlice = prismic.SharedSlice<"hero", HeroSliceVariation>;
 
 /**
+ * Primary content in *IconColumns → Default → Primary*
+ */
+export interface IconColumnsSliceDefaultPrimary {
+  /** eyebrow field — icon_columns.default.primary.eyebrow */
+  eyebrow: prismic.KeyTextField;
+
+  /** body field — icon_columns.default.primary.body */
+  body: prismic.RichTextField;
+
+  /** image field — icon_columns.default.primary.image */
+  image: prismic.ImageField<never>;
+}
+
+/**
+ * Primary content in *IconColumns → Default → Items*
+ */
+export interface IconColumnsSliceDefaultItem {
+  /** icon field — icon_columns.default.items[].icon */
+  icon: prismic.ImageField<never>;
+
+  /** title field — icon_columns.default.items[].title */
+  title: prismic.KeyTextField;
+
+  /** description field — icon_columns.default.items[].description */
+  description: prismic.KeyTextField;
+}
+
+/**
+ * Default variation for IconColumns Slice
+ *
+ * - **API ID**: `default`
+ * - **Documentation**: https://prismic.io/docs/slices
+ */
+export type IconColumnsSliceDefault = prismic.SharedSliceVariation<
+  "default",
+  Simplify<IconColumnsSliceDefaultPrimary>,
+  Simplify<IconColumnsSliceDefaultItem>
+>;
+
+/**
+ * Slice variation for *IconColumns*
+ */
+type IconColumnsSliceVariation = IconColumnsSliceDefault;
+
+/**
+ * IconColumns Shared Slice
+ *
+ * - **API ID**: `icon_columns`
+ * - **Documentation**: https://prismic.io/docs/slices
+ */
+export type IconColumnsSlice = prismic.SharedSlice<"icon_columns", IconColumnsSliceVariation>;
+
+/**
  * Primary content in *LeadText → Default → Primary*
  */
 export interface LeadTextSliceDefaultPrimary {
@@ -832,7 +886,37 @@ export type SectionGridSliceDefault = prismic.SharedSliceVariation<
 /**
  * Slice variation for *SectionGrid*
  */
-type SectionGridSliceVariation = SectionGridSliceDefault;
+/**
+ * Primary content in *SectionGrid → On Dark → Primary*
+ */
+export interface SectionGridSliceOnDarkPrimary {
+  /** heading field — section_grid.onDark.primary.heading */
+  heading: prismic.RichTextField;
+
+  /** outro field — section_grid.onDark.primary.outro */
+  outro: prismic.RichTextField;
+
+  /** cta_label field — section_grid.onDark.primary.cta_label */
+  cta_label: prismic.KeyTextField;
+
+  /** cta_link field — section_grid.onDark.primary.cta_link */
+  cta_link: prismic.LinkField;
+}
+
+/**
+ * On Dark variation for SectionGrid Slice
+ *
+ * - **API ID**: `onDark`
+ * - **Description**: A grid of text-only cards on the dark green ground, with an optional closing note and CTA
+ * - **Documentation**: https://prismic.io/docs/slices
+ */
+export type SectionGridSliceOnDark = prismic.SharedSliceVariation<
+  "onDark",
+  Simplify<SectionGridSliceOnDarkPrimary>,
+  Simplify<SectionGridSliceDefaultItem>
+>;
+
+type SectionGridSliceVariation = SectionGridSliceDefault | SectionGridSliceOnDark;
 
 /**
  * SectionGrid Shared Slice
@@ -1078,6 +1162,11 @@ declare module "@prismicio/client" {
       HeroSliceDefaultPrimary,
       HeroSliceVariation,
       HeroSliceDefault,
+      IconColumnsSlice,
+      IconColumnsSliceDefaultPrimary,
+      IconColumnsSliceDefaultItem,
+      IconColumnsSliceVariation,
+      IconColumnsSliceDefault,
       LeadTextSlice,
       LeadTextSliceDefaultPrimary,
       LeadTextSliceOnDarkPrimary,
@@ -1097,6 +1186,8 @@ declare module "@prismicio/client" {
       SectionGridSlice,
       SectionGridSliceDefaultPrimary,
       SectionGridSliceDefaultItem,
+      SectionGridSliceOnDarkPrimary,
+      SectionGridSliceOnDark,
       SectionGridSliceVariation,
       SectionGridSliceDefault,
       TestimonialSlice,

@@ -17,6 +17,7 @@
   import Hero from "$lib/slices/Hero/index.svelte";
   import MediaText from "$lib/slices/MediaText/index.svelte";
   import SectionGrid from "$lib/slices/SectionGrid/index.svelte";
+  import IconColumns from "$lib/slices/IconColumns/index.svelte";
   import LeadText from "$lib/slices/LeadText/index.svelte";
   import TextColumns from "$lib/slices/TextColumns/index.svelte";
   import Testimonial from "$lib/slices/Testimonial/index.svelte";
@@ -167,6 +168,90 @@
       body: rtx("They needed an identity on a tight timeline to communicate that message."),
     },
   };
+  // VLF TOSA x Vida grid: text-only cards on #172303 plus a closing CTA cell.
+  // The CTA is an EXTERNAL url on purpose — an internal /about here would be
+  // followed by the prerender crawler and 404 the build, since no such Prismic
+  // page exists yet.
+  const sectionGridOnDarkFixture = {
+    slice_type: "section_grid",
+    variation: "onDark",
+    primary: {
+      heading: [],
+      outro: [
+        {
+          type: "paragraph",
+          text: "Together, TOSA and Vida Legacy Foundation provide ongoing support for families impacted by organ donation.",
+          spans: [],
+        },
+      ],
+      cta_label: "Who we are",
+      cta_link: { link_type: "Web", url: "https://example.com/about" },
+    },
+    items: [
+      {
+        item_heading: [{ type: "heading3", text: "Independent but Connected", spans: [] }],
+        item_body: [
+          { type: "paragraph", text: "A separate 501(c)(3) created by TOSA.", spans: [] },
+        ],
+      },
+      {
+        item_heading: [{ type: "heading3", text: "Complementary Missions", spans: [] }],
+        item_body: [
+          {
+            type: "paragraph",
+            text: "TOSA handles organ procurement; VLF supports families.",
+            spans: [],
+          },
+        ],
+      },
+      {
+        item_heading: [{ type: "heading3", text: "Local Impact", spans: [] }],
+        item_body: [
+          {
+            type: "paragraph",
+            text: "Philanthropic support stays in Central and South Texas.",
+            spans: [],
+          },
+        ],
+      },
+    ],
+  } as unknown as Content.SectionGridSlice;
+
+  // VLF "A companion on the journey": sticky intro + icon card + photo. Locks
+  // the decorative-icon markup and the 7.84 / 15.18 pairings on #172303.
+  const iconColumnsFixture = {
+    slice_type: "icon_columns",
+    variation: "default",
+    primary: {
+      eyebrow: "A companion on the journey",
+      body: [
+        {
+          type: "paragraph",
+          text: "Vida Legacy Foundation leads the way in organ donation after-care.",
+          spans: [],
+        },
+      ],
+      image: heroImage,
+    },
+    items: [
+      {
+        icon: { url: "/icons/relief.svg", alt: "", dimensions: { width: 81, height: 82 } },
+        title: "Grants for recovery",
+        description: "Families find relief with our grants making recovery stress-free.",
+      },
+      {
+        icon: { url: "/icons/brain.svg", alt: "", dimensions: { width: 133, height: 133 } },
+        title: "Access to education",
+        description: "We equip families to make better choices.",
+      },
+      {
+        icon: { url: "/icons/community.svg", alt: "", dimensions: { width: 100, height: 75 } },
+        title: "Compassionate support",
+        description: "We provide support through community and compassion.",
+      },
+    ],
+  } as unknown as Content.IconColumnsSlice;
+
   // The VLF mission statement: onDark ground with a `highlight` label on the
   // opening phrase. Locks the label styling and the 11.35:1 / 5.86:1 pairings
   // under the axe gate.
@@ -457,6 +542,8 @@
   <SectionGrid slice={sectionGridFixture} />
   <LeadText slice={leadTextFixture} />
   <LeadText slice={leadTextOnDarkFixture} />
+  <IconColumns slice={iconColumnsFixture} />
+  <SectionGrid slice={sectionGridOnDarkFixture} />
   <TextColumns slice={textColumnsFixture} />
   <AccordionSlice slice={accordionFixture} />
   <Testimonial slice={testimonialFixture} />

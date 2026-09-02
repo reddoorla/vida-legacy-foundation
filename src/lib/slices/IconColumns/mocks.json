@@ -1,0 +1,135 @@
+[
+  {
+    "__TYPE__": "SharedSliceContent",
+    "variation": "default",
+    "primary": {
+      "eyebrow": {
+        "__TYPE__": "FieldContent",
+        "type": "Text",
+        "value": "A companion on the journey"
+      },
+      "body": {
+        "__TYPE__": "StructuredTextContent",
+        "value": [
+          {
+            "type": "paragraph",
+            "content": {
+              "text": "Vida Legacy Foundation leads the way in organ donation after-care. Our resources are designated to ease the financial burdens of donors, recipients, and their loved ones so they can feel hopeful about the future.",
+              "spans": []
+            }
+          }
+        ]
+      },
+      "image": {
+        "__TYPE__": "ImageContent",
+        "url": "/dev/placeholder-wide.webp",
+        "origin": {
+          "id": "main",
+          "url": "/dev/placeholder-wide.webp",
+          "width": 1280,
+          "height": 853
+        },
+        "width": 1280,
+        "height": 853,
+        "edit": {
+          "background": "transparent",
+          "zoom": 1,
+          "crop": { "x": 0, "y": 0 },
+          "name": "focuspoint"
+        },
+        "credits": null,
+        "alt": "A child in a hospital bed smiling at a clinician",
+        "thumbnails": {}
+      }
+    },
+    "items": [
+      {
+        "__TYPE__": "GroupItemContent",
+        "value": [
+          [
+            "icon",
+            {
+              "__TYPE__": "ImageContent",
+              "url": "/icons/relief.svg",
+              "origin": { "id": "main", "url": "/icons/relief.svg", "width": 81, "height": 82 },
+              "width": 81,
+              "height": 82,
+              "edit": { "background": "transparent", "zoom": 1, "crop": { "x": 0, "y": 0 } },
+              "credits": null,
+              "alt": "",
+              "thumbnails": {}
+            }
+          ],
+          ["title", { "__TYPE__": "FieldContent", "type": "Text", "value": "Grants for recovery" }],
+          [
+            "description",
+            {
+              "__TYPE__": "FieldContent",
+              "type": "Text",
+              "value": "Families find relief with our grants making recovery stress-free for everyone."
+            }
+          ]
+        ]
+      },
+      {
+        "__TYPE__": "GroupItemContent",
+        "value": [
+          [
+            "icon",
+            {
+              "__TYPE__": "ImageContent",
+              "url": "/icons/brain.svg",
+              "origin": { "id": "main", "url": "/icons/brain.svg", "width": 133, "height": 133 },
+              "width": 133,
+              "height": 133,
+              "edit": { "background": "transparent", "zoom": 1, "crop": { "x": 0, "y": 0 } },
+              "credits": null,
+              "alt": "",
+              "thumbnails": {}
+            }
+          ],
+          ["title", { "__TYPE__": "FieldContent", "type": "Text", "value": "Access to education" }],
+          [
+            "description",
+            {
+              "__TYPE__": "FieldContent",
+              "type": "Text",
+              "value": "We equip families to make better choices with access to our educational resources."
+            }
+          ]
+        ]
+      },
+      {
+        "__TYPE__": "GroupItemContent",
+        "value": [
+          [
+            "icon",
+            {
+              "__TYPE__": "ImageContent",
+              "url": "/icons/community.svg",
+              "origin": { "id": "main", "url": "/icons/community.svg", "width": 100, "height": 75 },
+              "width": 100,
+              "height": 75,
+              "edit": { "background": "transparent", "zoom": 1, "crop": { "x": 0, "y": 0 } },
+              "credits": null,
+              "alt": "",
+              "thumbnails": {}
+            }
+          ],
+          [
+            "title",
+            { "__TYPE__": "FieldContent", "type": "Text", "value": "Compassionate support" }
+          ],
+          [
+            "description",
+            {
+              "__TYPE__": "FieldContent",
+              "type": "Text",
+              "value": "We provide support through community and compassion."
+            }
+          ]
+        ]
+      }
+    ]
+  }
+]

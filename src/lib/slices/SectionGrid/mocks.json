@@ -232,5 +232,216 @@
         ]
       }
     ]
+  },
+  {
+    "__TYPE__": "SharedSliceContent",
+    "variation": "onDark",
+    "primary": {
+      "heading": {
+        "__TYPE__": "StructuredTextContent",
+        "value": []
+      },
+      "outro": {
+        "__TYPE__": "StructuredTextContent",
+        "value": [
+          {
+            "type": "paragraph",
+            "content": {
+              "text": "Together, TOSA and Vida Legacy Foundation provide ongoing support for families impacted by organ donation through healing, connection, and meaningful community engagement.",
+              "spans": []
+            }
+          }
+        ]
+      },
+      "cta_label": {
+        "__TYPE__": "FieldContent",
+        "type": "Text",
+        "value": "Who we are"
+      },
+      "cta_link": {
+        "__TYPE__": "LinkContent",
+        "value": {
+          "__TYPE__": "ExternalLink",
+          "url": "https://example.com/about"
+        }
+      }
+    },
+    "items": [
+      {
+        "__TYPE__": "GroupItemContent",
+        "value": [
+          [
+            "item_heading",
+            {
+              "__TYPE__": "StructuredTextContent",
+              "value": [
+                {
+                  "type": "heading3",
+                  "content": {
+                    "text": "Independent but Connected",
+                    "spans": []
+                  }
+                }
+              ]
+            }
+          ],
+          [
+            "item_body",
+            {
+              "__TYPE__": "StructuredTextContent",
+              "value": [
+                {
+                  "type": "paragraph",
+                  "content": {
+                    "text": "Vida Legacy Foundation is a separate 501(c)(3) created by TOSA, with its own governance and mission.",
+                    "spans": []
+                  }
+                }
+              ]
+            }
+          ]
+        ]
+      },
+      {
+        "__TYPE__": "GroupItemContent",
+        "value": [
+          [
+            "item_heading",
+            {
+              "__TYPE__": "StructuredTextContent",
+              "value": [
+                {
+                  "type": "heading3",
+                  "content": {
+                    "text": "Complementary Missions",
+                    "spans": []
+                  }
+                }
+              ]
+            }
+          ],
+          [
+            "item_body",
+            {
+              "__TYPE__": "StructuredTextContent",
+              "value": [
+                {
+                  "type": "paragraph",
+                  "content": {
+                    "text": "TOSA handles organ procurement; Vida Legacy Foundation provides family and community support through education and outreach.",
+                    "spans": []
+                  }
+                }
+              ]
+            }
+          ]
+        ]
+      },
+      {
+        "__TYPE__": "GroupItemContent",
+        "value": [
+          [
+            "item_heading",
+            {
+              "__TYPE__": "StructuredTextContent",
+              "value": [
+                {
+                  "type": "heading3",
+                  "content": {
+                    "text": "Local Impact",
+                    "spans": []
+                  }
+                }
+              ]
+            }
+          ],
+          [
+            "item_body",
+            {
+              "__TYPE__": "StructuredTextContent",
+              "value": [
+                {
+                  "type": "paragraph",
+                  "content": {
+                    "text": "The Foundation ensures philanthropic support remains in Central and South Texas to benefit our region.",
+                    "spans": []
+                  }
+                }
+              ]
+            }
+          ]
+        ]
+      },
+      {
+        "__TYPE__": "GroupItemContent",
+        "value": [
+          [
+            "item_heading",
+            {
+              "__TYPE__": "StructuredTextContent",
+              "value": [
+                {
+                  "type": "heading3",
+                  "content": {
+                    "text": "Filling the Gaps",
+                    "spans": []
+                  }
+                }
+              ]
+            }
+          ],
+          [
+            "item_body",
+            {
+              "__TYPE__": "StructuredTextContent",
+              "value": [
+                {
+                  "type": "paragraph",
+                  "content": {
+                    "text": "Addresses unmet needs in post-transplant support, donor family care, and community education.",
+                    "spans": []
+                  }
+                }
+              ]
+            }
+          ]
+        ]
+      },
+      {
+        "__TYPE__": "GroupItemContent",
+        "value": [
+          [
+            "item_heading",
+            {
+              "__TYPE__": "StructuredTextContent",
+              "value": [
+                {
+                  "type": "heading3",
+                  "content": {
+                    "text": "Complete Circle of Care",
+                    "spans": []
+                  }
+                }
+              ]
+            }
+          ],
+          [
+            "item_body",
+            {
+              "__TYPE__": "StructuredTextContent",
+              "value": [
+                {
+                  "type": "paragraph",
+                  "content": {
+                    "text": "Together, the two organizations support families from the moment they decide about organ donation through the healing journey.",
+                    "spans": []
+                  }
+                }
+              ]
+            }
+          ]
+        ]
+      }
+    ]
   }
 ]
