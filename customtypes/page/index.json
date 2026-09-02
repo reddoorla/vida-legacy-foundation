@@ -53,6 +53,27 @@
             },
             "cta_banner": {
               "type": "SharedSlice"
+            },
+            "heart_hero": {
+              "type": "SharedSlice"
+            },
+            "icon_columns": {
+              "type": "SharedSlice"
+            },
+            "stats_band": {
+              "type": "SharedSlice"
+            },
+            "image_band": {
+              "type": "SharedSlice"
+            },
+            "page_masthead": {
+              "type": "SharedSlice"
+            },
+            "statement_panel": {
+              "type": "SharedSlice"
+            },
+            "person_grid": {
+              "type": "SharedSlice"
             }
           }
         }

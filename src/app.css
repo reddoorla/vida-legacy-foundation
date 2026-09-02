@@ -69,17 +69,16 @@
      static/fonts (preload the body face in app.html) or load a kit, then
      point these at the loaded family names. Until then the system stack
      applies. `font-heading` / `font-body` utilities come from these tokens. */
-  /* Pragmatica via Adobe Fonts — the licensed stand-in for the comps'
-     Helvetica Neue Extended/Light, which Reddoor has no web license for.
-     The Typekit <link> goes in app.html once the kit id exists; until then the
-     fallback stack renders and nothing breaks. */
+  /* Pragmatica via Adobe Fonts (shared kit noj4tji, see app.html) — the
+     licensed stand-in for the comps' Helvetica Neue Extended/Light, which
+     Reddoor has no web license for. The kit carries pragmatica-extended in
+     every weight, so the comps' Light (300) headings render as drawn — see the
+     base `h1`–`h6` rule below. */
   --font-heading: "pragmatica-extended", ui-sans-serif, system-ui, sans-serif;
   --font-body: "pragmatica", ui-sans-serif, system-ui, sans-serif;
-  /* The comps specify "Area Normal" Bold for buttons — a Blaze Type family that
-     is not on Adobe Fonts and not in kit alh8out. Substituted with pragmatica
-     700: buttons are 10px uppercase with 1px tracking, where the family
-     difference is not legible. Revisit only if the brand licenses Area Normal. */
-  --font-button: "pragmatica", ui-sans-serif, system-ui, sans-serif;
+  /* The comps' button face, Area Normal Bold (10px uppercase, 1px tracking).
+     The kit serves it at 600 and 700. */
+  --font-button: "area-normal", "pragmatica", ui-sans-serif, system-ui, sans-serif;
 
   --transition-in-expo: cubic-bezier(0.95, 0.05, 0.795, 0.035);
   --transition-out-expo: cubic-bezier(0.19, 1, 0.22, 1);
@@ -264,6 +263,8 @@ main > section.hero-band:first-child {
 
   body {
     font-family: var(--font-body);
+    /* Figma "Body 1": Pragmatica Light 16/24. */
+    font-weight: 300;
     max-width: 100vw;
     overflow-x: clip;
     overflow-y: auto;
@@ -284,7 +285,11 @@ main > section.hero-band:first-child {
     width: 0;
   }
 
-  /* Type scale — define per project (sizes, leading, responsive variants). */
+  /* Type scale — the Figma text styles (get_variable_defs on both page
+     frames): H1 60 / H2 36 / H3 24 are Pragmatica Extended LIGHT, H4 18 and
+     H5 12 are Pragmatica Extended BOOK (the tracked uppercase labels). Sizes
+     stay per slice; only the family and weight are global. A `font-*` weight
+     utility on the element still wins. */
   h1,
   h2,
   h3,
@@ -292,6 +297,25 @@ main > section.hero-band:first-child {
   h5,
   h6 {
     font-family: var(--font-heading);
+  }
+
+  h1,
+  h2,
+  h3 {
+    font-weight: 300;
+  }
+
+  h4,
+  h5,
+  h6 {
+    font-weight: 400;
+  }
+
+  /* Figma "Button": Area Normal Bold 10/1.5, 1px tracking. The kit serves
+     area-normal at 600 and 700 only, so the weight has to be explicit — with
+     the body at 300 the browser would otherwise settle on 600. */
+  .font-button {
+    font-weight: 700;
   }
 
   /* Respect users who ask for less motion: neutralize CSS transitions/animations

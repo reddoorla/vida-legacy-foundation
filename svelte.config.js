@@ -84,6 +84,17 @@ const config = {
           // Little Green Light's JS embed variant of the donation form.
           "https://secure.lglforms.com",
         ],
+        // Event-handler ATTRIBUTES fall under script-src-attr, which a nonce
+        // never covers. Svelte 5's SSR emits exactly one on every <img> that
+        // takes an attribute spread (PrismicImage, svelte-img):
+        //   onload="this.__e=event" onerror="this.__e=event"
+        // — its replay shim for a load/error that fires before hydration.
+        // Nothing here relies on the replay (Img checks `complete` itself),
+        // but the block logs a console error on every page with such an
+        // image, and the smoke suite fails on console errors. 'unsafe-hashes'
+        // allows that one string by its SHA-256 and nothing else:
+        //   printf '%s' 'this.__e=event' | openssl dgst -sha256 -binary | base64
+        "script-src-attr": ["unsafe-hashes", "sha256-7dQwUgLau1NFCCGjfn9FsYptB6ZtWxJin6VohGIu20I="],
         // Google Fonts stylesheet host (paired with fonts.gstatic.com under
         // font-src). Self-hosted fonts need nothing extra.
         //
