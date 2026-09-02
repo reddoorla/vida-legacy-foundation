@@ -5,10 +5,11 @@
     <link rel="icon" type="image/png" href="%sveltekit.assets%/favicon.png" />
     <link rel="apple-touch-icon" href="%sveltekit.assets%/favicon.png" />
     <meta name="viewport" content="width=device-width" />
-    <!-- Adobe Fonts: Pragmatica + Pragmatica Extended, the licensed stand-in for
-         the comps' Helvetica Neue (kit alh8out). NOT the fleet's shared kit
-         noj4tji — that one carries `pragmatica` but NOT `pragmatica-extended`,
-         which --font-heading needs.
+    <!-- Adobe Fonts, the fleet's shared kit noj4tji: Pragmatica + Pragmatica
+         Extended (every cut, Light included — the licensed stand-in for the
+         comps' Helvetica Neue) and Area Normal for buttons. The site started on
+         kit alh8out because noj4tji had no pragmatica-extended; all of
+         Pragmatica was added to the shared project on 2026-09-02.
 
          Loaded as a plain stylesheet on purpose. The fleet's usual trick —
          media="print" plus onload="this.media='all'" — is an inline event
@@ -18,7 +19,7 @@
          fonts fetched, never applied, no console error on the happy path. -->
     <link rel="preconnect" href="https://use.typekit.net" crossorigin />
     <link rel="preconnect" href="https://p.typekit.net" crossorigin />
-    <link rel="stylesheet" href="https://use.typekit.net/alh8out.css" />
+    <link rel="stylesheet" href="https://use.typekit.net/noj4tji.css" />
     %sveltekit.head%
   </head>
   <body data-sveltekit-preload-data="hover">

@@ -128,7 +128,7 @@
 
 {#snippet label(text: string, interactive: boolean)}
   <span
-    class="menu-label text-background font-heading leading-[1.35] {interactive
+    class="menu-label text-background font-heading font-light leading-[1.35] {interactive
       ? 'group-hover:text-green group-focus-visible:text-green motion-safe:transition-colors'
       : ''}"
   >

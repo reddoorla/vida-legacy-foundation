@@ -179,25 +179,34 @@ genuinely covered. But the gate only sees rendered routes. Do not assign
 `--color-green` or `--color-coral` to text in a slice and assume review will
 catch it.
 
-## Fonts — kit `alh8out`, and a weight that does not exist
+## Fonts — the shared kit `noj4tji`
 
-Wired in `src/app.html`. **Not** the fleet's shared kit `noj4tji`: that one has
-`pragmatica` but no `pragmatica-extended`, which `--font-heading` needs.
+Wired in `src/app.html`. The site started on kit `alh8out` because the fleet's
+shared kit had `pragmatica` but no `pragmatica-extended`; **all of Pragmatica
+plus Area Normal were added to `noj4tji` on 2026-09-02**, so it is on the
+shared kit now. What it serves (measured from the kit CSS):
 
-> **`pragmatica-extended` ships only weights 400 and 700. There is no Light
-> (300).** The design spec is Pragmatica Extended _Light_, so headings currently
-> render heavier than the comps. Fixing it is an Adobe Fonts kit change, not a
-> code change.
+| family                | weights                                |
+| --------------------- | -------------------------------------- |
+| `pragmatica-extended` | 200–900 incl. **300 Light**, + italics |
+| `pragmatica`          | 200, 300, 400, 700, 900, + italics     |
+| `area-normal`         | 600, 700                               |
 
-> **Buttons specify a third family that is not in the kit: `Area Normal`
-> Bold 10/700** (a Blaze Type face, not on Adobe Fonts). `--font-button` is
-> pragmatica 700 instead — at 10px uppercase with 1px tracking the family
-> difference is not legible. Revisit only if the brand licenses Area Normal.
+So the comps' _Pragmatica Extended Light_ headings render as drawn — the base
+`h1`–`h6` rule in `app.css` sets `font-weight: 300` — and `--font-button` is
+the real _Area Normal_ Bold. If you add a display-size text that is not a
+heading element (the nav menu's entries, a stat figure), give it `font-light`
+yourself.
+
+Adding more families to the kit costs almost nothing client-side: browsers
+fetch a `@font-face` file only when text actually uses that family and weight,
+so an unused face is a few hundred bytes of kit CSS, not a download. The kit
+CSS itself is ~50 KB for the whole fleet's list.
 
 Verifying a weight, if you touch this: `document.fonts.check('300 16px
-"pragmatica-extended"')` returns **`true`** even though 300 does not exist — it
-matches at family level after fallback. Iterate `[...document.fonts]` and read
-each face's `.weight` / `.status` instead.
+"pragmatica-extended"')` returns **`true`** even when a weight does not exist —
+it matches at family level after fallback. Iterate `[...document.fonts]` and
+read each face's `.weight` / `.status` instead.
 
 ## Two CSP traps, both silent
 
