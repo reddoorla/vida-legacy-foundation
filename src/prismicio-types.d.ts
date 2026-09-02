@@ -387,6 +387,51 @@ export interface HeartHeroSliceDefaultPrimary {
    * - **Documentation**: https://prismic.io/docs/fields/image
    */
   image: prismic.ImageField<never>;
+
+  /**
+   * eyebrow field in *HeartHero -> Default*
+   *
+   * - **Field Type**: Text
+   * - **Placeholder**: Connecting Hope and Support
+   * - **API ID Path**: heart_hero.default.primary.eyebrow
+   * - **Documentation**: https://prismic.io/docs/fields/text
+   */
+  eyebrow: prismic.KeyTextField;
+
+  /**
+   * heading field in *HeartHero -> Default*
+   *
+   * - **Field Type**: Rich Text
+   * - **Placeholder**: *None*
+   * - **API ID Path**: heart_hero.default.primary.heading
+   * - **Documentation**: https://prismic.io/docs/fields/rich-text
+   */
+  heading: prismic.RichTextField;
+}
+
+/**
+ * Item in *HeartHero -> Default -> Items*
+ */
+export interface HeartHeroSliceDefaultItem {
+  /**
+   * cta_label field in *HeartHero -> Default -> Items*
+   *
+   * - **Field Type**: Text
+   * - **Placeholder**: *None*
+   * - **API ID Path**: heart_hero.default.items[].cta_label
+   * - **Documentation**: https://prismic.io/docs/fields/text
+   */
+  cta_label: prismic.KeyTextField;
+
+  /**
+   * cta_link field in *HeartHero -> Default -> Items*
+   *
+   * - **Field Type**: Link
+   * - **Placeholder**: *None*
+   * - **API ID Path**: heart_hero.default.items[].cta_link
+   * - **Documentation**: https://prismic.io/docs/fields/link
+   */
+  cta_link: prismic.LinkField;
 }
 
 /**
@@ -399,7 +444,7 @@ export interface HeartHeroSliceDefaultPrimary {
 export type HeartHeroSliceDefault = prismic.SharedSliceVariation<
   "default",
   Simplify<HeartHeroSliceDefaultPrimary>,
-  never
+  Simplify<HeartHeroSliceDefaultItem>
 >;
 
 /**
@@ -484,7 +529,45 @@ export type LeadTextSliceDefault = prismic.SharedSliceVariation<
 /**
  * Slice variation for *LeadText*
  */
-type LeadTextSliceVariation = LeadTextSliceDefault;
+/**
+ * Primary content in *LeadText -> On Dark*
+ */
+export interface LeadTextSliceOnDarkPrimary {
+  /**
+   * eyebrow field in *LeadText -> On Dark*
+   *
+   * - **Field Type**: Text
+   * - **Placeholder**: e.g. Our Mission
+   * - **API ID Path**: lead_text.onDark.primary.eyebrow
+   * - **Documentation**: https://prismic.io/docs/fields/text
+   */
+  eyebrow: prismic.KeyTextField;
+
+  /**
+   * body field in *LeadText -> On Dark*
+   *
+   * - **Field Type**: Rich Text
+   * - **Placeholder**: *None*
+   * - **API ID Path**: lead_text.onDark.primary.body
+   * - **Documentation**: https://prismic.io/docs/fields/rich-text
+   */
+  body: prismic.RichTextField;
+}
+
+/**
+ * On Dark variation for LeadText Slice
+ *
+ * - **API ID**: `onDark`
+ * - **Description**: A large lead statement on the dark green ground, with an optional highlighted opening phrase
+ * - **Documentation**: https://prismic.io/docs/slices
+ */
+export type LeadTextSliceOnDark = prismic.SharedSliceVariation<
+  "onDark",
+  Simplify<LeadTextSliceOnDarkPrimary>,
+  never
+>;
+
+type LeadTextSliceVariation = LeadTextSliceDefault | LeadTextSliceOnDark;
 
 /**
  * LeadText Shared Slice
@@ -988,6 +1071,7 @@ declare module "@prismicio/client" {
       CtaBannerSliceDefault,
       HeartHeroSlice,
       HeartHeroSliceDefaultPrimary,
+      HeartHeroSliceDefaultItem,
       HeartHeroSliceVariation,
       HeartHeroSliceDefault,
       HeroSlice,
@@ -996,6 +1080,8 @@ declare module "@prismicio/client" {
       HeroSliceDefault,
       LeadTextSlice,
       LeadTextSliceDefaultPrimary,
+      LeadTextSliceOnDarkPrimary,
+      LeadTextSliceOnDark,
       LeadTextSliceVariation,
       LeadTextSliceDefault,
       MediaTextSlice,

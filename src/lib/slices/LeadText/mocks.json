@@ -27,5 +27,36 @@
         "value": []
       }
     ]
+  },
+  {
+    "__TYPE__": "SharedSliceContent",
+    "variation": "onDark",
+    "primary": {
+      "eyebrow": {
+        "__TYPE__": "FieldContent",
+        "type": "Text",
+        "value": ""
+      },
+      "body": {
+        "__TYPE__": "StructuredTextContent",
+        "value": [
+          {
+            "type": "paragraph",
+            "content": {
+              "text": "Vida Legacy Foundation is dedicated to honoring the gift of life through education, outreach, and compassionate support for South Texas families affected by organ donation. We strive to ensure organ donation is understood, valued, and embraced while connecting families to meaningful resources and community.",
+              "spans": [
+                {
+                  "type": "label",
+                  "start": 0,
+                  "end": 64,
+                  "data": "highlight"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "items": []
   }
 ]
