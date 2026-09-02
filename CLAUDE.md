@@ -104,11 +104,12 @@ What is NOT done, in the order it blocks things:
 1. **The site has no real content.** The homepage slices exist and the mocks
    render, but the `home` document's slice zone is still empty — filling it is
    a Prismic authoring job, not a code one.
-2. `src/lib/site-config.json` **footer and nav are both populated.** Two of
-   the nav's targets are provisional: `Contact Us` points at the template's
-   `/contact` route (an unstyled skeleton — the recorded decision is a contact
-   _modal_, which has no comp yet), and `Become a Donor` points at the
-   operator's noted registry URL, which the client has not confirmed.
+2. `src/lib/site-config.json` **footer and nav are both populated.** One
+   nav target is provisional: `Become a Donor` points at the operator's noted
+   registry URL, which the client has not confirmed. `Contact Us` keeps its
+   `/contact` href on purpose — the layout intercepts that link into the
+   contact modal (below), and the route stays as the no-JS fallback and the
+   crawler's target.
 3. **`Who we are` and `Donate` name pages that are not live yet.**
    Prerendering loud-fails, and the crawler follows every internal link it
    renders — so a hard-coded `/about` href in the chrome 404s the build until
@@ -352,6 +353,28 @@ renderable in the fixtures and the simulator.
 Two things the comp draws that the slice does not: the reCAPTCHA (it belongs
 to the backend) and a 100px-fixed schedule dropdown ("Quarterly" and
 "Trimestral" overflow it; the width follows the longest option).
+
+## The contact modal is the contact page, and vice versa
+
+`ContactModal` (mounted once by the root layout) is the fleet's appointment
+modal pattern in the donation page's vocabulary: Modal's native `<dialog>`,
+a form that posts to the contact route's own action (`/contact` or
+`/es/contact`, so the ingest payload and the anti-bot screen are the route's),
+the timing token stamped at open time because a layout-mounted modal has no
+server load, the action's own failure copy shown with the typed values kept,
+and focus moved to the confirmation. **Any link to the contact route opens
+it** — the layout cancels that navigation in `beforeNavigate` and opens the
+dialog instead (a document click listener would race Kit's own) — so the
+nav, a footer row or a Prismic link field reach it with a plain href, and
+without scripts that href is the contact page, which renders the same panel
+in-flow
+(`inline`, `headingLevel={1}`, the route's `formTs`). The fixtures page mounts
+it `inline` too, because the real dialog is not in the DOM until opened.
+
+The vocabulary itself is app.css `.vlf-label` / `.vlf-field` /
+`.vlf-field--area` / `.vlf-pill`, shared with `DonationForm`, with the
+contrast measured there. A new form on this site uses those classes, not
+`Field.svelte`.
 
 ## The footer is chrome, not a slice
 

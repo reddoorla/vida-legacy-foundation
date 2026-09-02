@@ -14,6 +14,9 @@
     closeClass?: string;
     /** Padding wrapper around the content. Override with "p-0" to pay your own. */
     bodyClass?: string;
+    /** id of the element that names the dialog (its heading) — without one a
+     *  screen reader announces an anonymous dialog. */
+    labelledby?: string;
     children?: Snippet;
   }
 
@@ -24,6 +27,7 @@
     dialogClass = "max-w-lg",
     closeClass = "text-dark/60 hover:text-dark",
     bodyClass = "p-8",
+    labelledby,
     children,
   }: ModalProps = $props();
 
@@ -54,6 +58,7 @@
   bind:this={dialogEl}
   onclose={close}
   onclick={handleBackdropClick}
+  aria-labelledby={labelledby}
   class="bg-transparent p-0 w-full mx-4 backdrop:bg-black/50 backdrop:backdrop-blur-sm open:animate-[fade-in_200ms_ease-out] {dialogClass}"
 >
   <div

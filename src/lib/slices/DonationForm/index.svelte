@@ -112,11 +112,8 @@
   // Boolean in Prismic is the whole switch — no code follows.
   const showForm = $derived(slice.primary.show_form === true);
 
-  // The design's button couple on cream — #9cbf5b + #263b02, 5.86:1. The
-  // arrow is the comp's own glyph in the dark green (static/icons/
-  // arrow-right-dark.svg): the green one PersonGrid uses would vanish here.
-  const pill =
-    "bg-green text-green-btn font-button inline-flex h-10 w-fit items-center justify-center gap-2.5 rounded-full px-3.75 text-[10px] tracking-[1px] uppercase";
+  // The design's button: app.css .vlf-pill, shared with the contact modal.
+  const pill = "vlf-pill";
 
   // No handler is wired yet (see the comment on the form). A submit stays on
   // the page and says so — rather than what a handler-less form does on its
@@ -259,7 +256,7 @@
           </h2>
 
           <fieldset class="flex min-w-0 flex-col gap-[5px]">
-            <legend class="label mb-[5px] p-0">
+            <legend class="vlf-label mb-[5px] p-0">
               {copy.name}<span aria-hidden="true">*</span><span class="sr-only">
                 {copy.required}</span
               >
@@ -268,7 +265,7 @@
               <div class="min-w-0 flex-1">
                 <label class="sr-only" for={id("first-name")}>{copy.firstName}</label>
                 <input
-                  class="field"
+                  class="vlf-field"
                   id={id("first-name")}
                   name="first_name"
                   type="text"
@@ -280,7 +277,7 @@
               <div class="min-w-0 flex-1">
                 <label class="sr-only" for={id("last-name")}>{copy.lastName}</label>
                 <input
-                  class="field"
+                  class="vlf-field"
                   id={id("last-name")}
                   name="last_name"
                   type="text"
@@ -293,13 +290,13 @@
           </fieldset>
 
           <div class="flex flex-col gap-[5px]">
-            <label class="label" for={id("email")}>
+            <label class="vlf-label" for={id("email")}>
               {copy.email}<span aria-hidden="true">*</span><span class="sr-only">
                 {copy.required}</span
               >
             </label>
             <input
-              class="field"
+              class="vlf-field"
               id={id("email")}
               name="email"
               type="email"
@@ -310,11 +307,11 @@
           </div>
 
           <fieldset class="flex min-w-0 flex-col gap-[5px]">
-            <legend class="label mb-[5px] p-0">{copy.address}</legend>
+            <legend class="vlf-label mb-[5px] p-0">{copy.address}</legend>
             <div>
               <label class="sr-only" for={id("address-1")}>{copy.address1}</label>
               <input
-                class="field"
+                class="vlf-field"
                 id={id("address-1")}
                 name="address_line1"
                 type="text"
@@ -325,7 +322,7 @@
             <div>
               <label class="sr-only" for={id("address-2")}>{copy.address2}</label>
               <input
-                class="field"
+                class="vlf-field"
                 id={id("address-2")}
                 name="address_line2"
                 type="text"
@@ -337,7 +334,7 @@
               <div class="min-w-0 flex-1">
                 <label class="sr-only" for={id("city")}>{copy.city}</label>
                 <input
-                  class="field"
+                  class="vlf-field"
                   id={id("city")}
                   name="city"
                   type="text"
@@ -348,7 +345,7 @@
               <div class="min-w-0 flex-1">
                 <label class="sr-only" for={id("state")}>{copy.state}</label>
                 <input
-                  class="field"
+                  class="vlf-field"
                   id={id("state")}
                   name="state"
                   type="text"
@@ -359,7 +356,7 @@
               <div class="min-w-0 flex-1">
                 <label class="sr-only" for={id("zip")}>{copy.zip}</label>
                 <input
-                  class="field"
+                  class="vlf-field"
                   id={id("zip")}
                   name="postal_code"
                   type="text"
@@ -371,9 +368,9 @@
           </fieldset>
 
           <div class="flex flex-col gap-[5px]">
-            <label class="label" for={id("phone")}>{copy.phone}</label>
+            <label class="vlf-label" for={id("phone")}>{copy.phone}</label>
             <input
-              class="field"
+              class="vlf-field"
               id={id("phone")}
               name="phone"
               type="tel"
@@ -383,9 +380,9 @@
           </div>
 
           <fieldset class="flex min-w-0 flex-col">
-            <legend class="label mb-[5px] p-0">{copy.amount}</legend>
+            <legend class="vlf-label mb-[5px] p-0">{copy.amount}</legend>
             {#each presets as amount (amount)}
-              <label class="label flex w-fit items-center gap-2.5 py-[5px]">
+              <label class="vlf-label flex w-fit items-center gap-2.5 py-[5px]">
                 <input
                   class="radio"
                   type="radio"
@@ -409,7 +406,7 @@
               <!-- Focusing the write-in picks its radio, so a donor who types an
                  amount never has to notice the radio at all. -->
               <input
-                class="field field-inline"
+                class="vlf-field write-in"
                 id={id("custom-amount")}
                 name="custom_amount"
                 type="text"
@@ -422,7 +419,7 @@
           </fieldset>
 
           <div class="flex flex-col items-start gap-[5px] pb-2.5">
-            <label class="label" for={id("schedule")}>{copy.schedule}</label>
+            <label class="vlf-label" for={id("schedule")}>{copy.schedule}</label>
             <select class="select" id={id("schedule")} name="schedule">
               {#each copy.schedules as [value, label] (value)}
                 <option {value}>{label}</option>
@@ -463,50 +460,13 @@
     background-color: var(--color-background);
   }
 
-  /* The comp's field label: Pragmatica Extended Book 10/1.5, tracked 1.5px. */
-  .label {
-    font-family: var(--font-heading);
-    font-size: 10px;
-    line-height: 1.5;
-    letter-spacing: 1.5px;
-    text-transform: uppercase;
-  }
-
-  /* An underlined field. The typed value is two points larger than the
-     placeholder and not tracked or uppercased — a name or an e-mail address
-     is not a label — on a fixed line height so the row does not jump when
-     typing starts. */
-  .field {
-    width: 100%;
-    min-width: 0;
-    border: 0;
-    border-bottom: 1px solid var(--color-green-btn);
-    border-radius: 0;
-    background: transparent;
-    padding: 10px 0;
-    font-family: var(--font-heading);
-    font-size: 12px;
-    line-height: 15px;
-    color: var(--color-green-btn);
-  }
-  .field::placeholder {
-    color: var(--color-green-mid-aa);
-    opacity: 1;
-    font-size: 10px;
-    letter-spacing: 1.5px;
-    text-transform: uppercase;
-  }
-  /* The write-in amount: the comp's 255px underline, not the row. Sized
-     here because the scoped .field width outranks a utility class. */
-  .field-inline {
+  /* The write-in amount: the comp's 255px underline, not the row. The field
+     vocabulary itself (.vlf-label, .vlf-field) lives in app.css, shared with
+     the contact modal. */
+  .write-in {
     width: 255px;
     max-width: 100%;
     padding: 0 0 4px;
-  }
-  .field:focus-visible {
-    outline: 2px solid var(--color-green-btn);
-    outline-offset: 4px;
-    border-radius: 2px;
   }
 
   /* The comp's radio: an 18px cream disc with a hairline, a 13px dot when

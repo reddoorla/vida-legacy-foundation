@@ -237,6 +237,80 @@ main > section.hero-band:first-child {
   margin-top: 1em;
 }
 
+/* The form vocabulary of the donation page (Figma 5328:1932), shared by the
+   DonationForm slice and the contact modal so the two forms are one design.
+   Contrast is measured on the cream ground, where both live:
+     .vlf-label, typed values   #263b02  11.35:1
+     placeholders               #507b01   4.65:1 — the -aa green; the comp's
+                                #527e01 at 10px is 4.47:1 and misses AA
+     .vlf-pill                  #263b02 on #9cbf5b, 5.86:1 both ways
+     .vlf-field--area border    #527e01, a component boundary (3:1), 4.47 */
+.vlf-label {
+  font-family: var(--font-heading);
+  font-size: 10px;
+  line-height: 1.5;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+}
+
+/* An underlined field. The typed value is two points larger than the
+   placeholder and not tracked or uppercased — a name is not a label — on a
+   fixed line height so the row does not jump when typing starts. */
+.vlf-field {
+  width: 100%;
+  min-width: 0;
+  border: 0;
+  border-bottom: 1px solid var(--color-green-btn);
+  border-radius: 0;
+  background: transparent;
+  padding: 10px 0;
+  font-family: var(--font-heading);
+  font-size: 12px;
+  line-height: 15px;
+  color: var(--color-green-btn);
+}
+.vlf-field::placeholder {
+  color: var(--color-green-mid-aa);
+  opacity: 1;
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+}
+.vlf-field:focus-visible {
+  outline: 2px solid var(--color-green-btn);
+  outline-offset: 4px;
+  border-radius: 2px;
+}
+/* A multi-line field: the same voice in a box, because an underline cannot
+   hold four lines. The border is the schedule dropdown's. */
+.vlf-field--area {
+  border: 1px solid var(--color-green-mid);
+  border-radius: 2px;
+  padding: 10px;
+  resize: vertical;
+}
+
+/* The design's button: the green pill with dark text, Area Normal Bold
+   10/1.5 tracked 1px. Pair it with static/icons/arrow-right-dark.svg. */
+.vlf-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  height: 40px;
+  width: fit-content;
+  padding: 0 15px;
+  border-radius: 9999px;
+  background-color: var(--color-green);
+  color: var(--color-green-btn);
+  font-family: var(--font-button);
+  font-weight: 700;
+  font-size: 10px;
+  line-height: 1.5;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
 /* Blur-up companion to $lib/components/Img.svelte. Outside @layer base so it
    wins over utility resets without needing !important. */
 .progressive-img {
