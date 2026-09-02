@@ -123,17 +123,24 @@ What is NOT done, in the order it blocks things:
 4. `DEFAULT_OG_IMAGE` unset — every share is imageless. Needs a 1200×630
    `static/og-default.png`.
 5. Netlify site + `FORMS_INGEST_URL` / `FORMS_INGEST_TOKEN` (docs/NEW-SITE.md).
-6. **The donation form has no backend.** `DonationForm` (Figma `5328:1611`)
-   is the comp's front end only: native validation, and a submit stays on
-   the page with a status line pointing at PayPal, because a handler-less
-   form would otherwise GET-navigate the donor's details into the URL. The
-   field names are the payload keys for whatever gets wired. LGL's hosted
-   form has exactly these fields but takes no URL parameters, so the wiring
-   is a real decision — post into LGL's form engine, embed it, or a
-   PayPal/Stripe flow — not a detail. Until it is made, keep the `donate`
-   document in its own release so publishing the content release cannot
-   ship an inert form; the `Donate` chrome item falls back to LGL while
-   `/donate` is unpublished (see item 3).
+6. **The donation form ships hidden.** `DonationForm` (Figma `5328:1611`)
+   keeps the comp's form behind a `show_form` Boolean that defaults to off:
+   the donate page renders the heading and intro with two buttons out to
+   LGL's hosted form and PayPal. Flipping the Boolean in Prismic draws the
+   on-page form — which has NO backend (native validation, and a submit
+   stays on the page with a status line pointing at PayPal). Do not flip it
+   before one exists. Measured 2026-09-02 for whoever wires it: LGL's engine
+   takes a multipart POST to `/form_engine/<id>` with
+   `submission[args][field_N]` names, but carries a reCAPTCHA v2 on LGL's
+   own site key (domain-bound — a post from our page cannot satisfy it
+   unless the client turns the CAPTCHA off in LGL's form builder), a Rails
+   authenticity token (a blank cross-site post re-rendered the form rather
+   than 4xx-ing, so possibly lenient; unproven without a real submission),
+   and three required fields the comp lacks (Verify Email, Country, a
+   tribute choice with an honoree name). The route that keeps the design
+   is our form → a Netlify function → Stripe or PayPal → LGL's REST API
+   (`POST /api/v1/constituents/{id}/gifts`, API key from Settings →
+   Integration settings).
 
 ## Brand colours — two of them cannot hold text
 

@@ -17,6 +17,13 @@ const make = (primary: Record<string, unknown> = {}, items?: unknown[]) =>
         url: "https://www.paypal.com/donate/?hosted_button_id=X",
         target: "_blank",
       },
+      form_label: "donate online",
+      form_link: {
+        link_type: "Web",
+        url: "https://secure.lglforms.com/form_engine/s/1DAy4mOf7OlVR4Ke-4h2gA",
+      },
+      // The suite exercises the form; the links-only default has its own test.
+      show_form: true,
       form_heading: "Contact information",
       submit_label: "enter payment information",
       ...primary,
@@ -141,7 +148,40 @@ describe("DonationForm slice", () => {
     const link = container.querySelector("a[href^='https://www.paypal.com']")!;
     expect(link.textContent).toContain("use paypal");
     expect(link.getAttribute("target")).toBe("_blank");
-    expect(link.querySelector("img")?.getAttribute("aria-hidden")).toBe("true");
+    const arrow = link.querySelector("img");
+    expect(arrow?.getAttribute("aria-hidden")).toBe("true");
+    // The dark glyph: the site's green arrow is invisible on the green pill.
+    expect(arrow?.getAttribute("src")).toBe("/icons/arrow-right-dark.svg");
+  });
+
+  it("links out by default: no form, the hosted form and PayPal as buttons", () => {
+    // show_form ships false (the model default) and an older document has no
+    // such field at all — both must land on the links, never on a form with
+    // nothing behind it.
+    for (const primary of [{ show_form: false }, { show_form: undefined }]) {
+      const { container } = render(DonationForm, { props: { slice: make(primary) } });
+      expect(container.querySelector("form")).toBeNull();
+      expect(container.querySelector("h1")?.textContent?.trim()).toBe("Make a Donation");
+      const links = [...container.querySelectorAll("a")].map((a) => [
+        a.textContent?.trim(),
+        a.getAttribute("href"),
+      ]);
+      expect(links).toEqual([
+        ["donate online", "https://secure.lglforms.com/form_engine/s/1DAy4mOf7OlVR4Ke-4h2gA"],
+        ["use paypal", "https://www.paypal.com/donate/?hosted_button_id=X"],
+      ]);
+    }
+  });
+
+  it("reads presets the editor stored as strings", () => {
+    // Prismic's editor shape holds Number fields as strings until publish
+    // (the CLAUDE.md trap); the API is meant to coerce, but a string must
+    // not silently empty the amount list.
+    const { container } = render(DonationForm, {
+      props: { slice: make({}, [{ amount: "100" }, { amount: "50" }]) },
+    });
+    const radios = [...container.querySelectorAll<HTMLInputElement>("input[name='amount']")];
+    expect(radios.map((r) => r.value)).toEqual(["100", "50", "custom"]);
   });
 
   it("draws only the write-in when no presets are authored", () => {

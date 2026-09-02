@@ -90,8 +90,8 @@
 
   const presets = $derived(
     (slice.items ?? [])
-      .map((item) => item.amount)
-      .filter((n): n is number => typeof n === "number" && n > 0),
+      .map((item) => Number(item.amount))
+      .filter((n) => Number.isFinite(n) && n > 0),
   );
   // Which amount row is picked: a preset's value, or "custom" for the
   // write-in. The comp shows the first preset selected — the INITIAL preset,
@@ -104,6 +104,19 @@
   const hasPaypal = $derived(
     isFilled.link(slice.primary.paypal_link) && !!slice.primary.paypal_label,
   );
+  const hasFormLink = $derived(
+    isFilled.link(slice.primary.form_link) && !!slice.primary.form_label,
+  );
+  // The on-page form is opt-in and ships OFF: until it has a backend, the
+  // page links out to the hosted form and PayPal instead. Flipping the
+  // Boolean in Prismic is the whole switch — no code follows.
+  const showForm = $derived(slice.primary.show_form === true);
+
+  // The design's button couple on cream — #9cbf5b + #263b02, 5.86:1. The
+  // arrow is the comp's own glyph in the dark green (static/icons/
+  // arrow-right-dark.svg): the green one PersonGrid uses would vanish here.
+  const pill =
+    "bg-green text-green-btn font-button inline-flex h-10 w-fit items-center justify-center gap-2.5 rounded-full px-3.75 text-[10px] tracking-[1px] uppercase";
 
   // No handler is wired yet (see the comment on the form). A submit stays on
   // the page and says so — rather than what a handler-less form does on its
@@ -130,7 +143,9 @@
     select border #527e01 — a component boundary needs 3:1; 4.47 clears it
     buttons — the design's couple, #9cbf5b + #263b02, 5.86:1
 
-  THE BACKEND IS NOT WIRED. This is the comp's front end: native validation,
+  THE BACKEND IS NOT WIRED, so the form ships behind `show_form`, off: the
+  page links out to the hosted form and PayPal until a handler exists (the
+  options are in CLAUDE.md). With it on, this is the comp's front end: native validation,
   and a submit stays on the page with a status line pointing at PayPal. The
   field names are the payload keys for the eventual handler. The comp's
   reCAPTCHA belongs to that handler and is not drawn.
@@ -147,249 +162,294 @@
     </h1>
   {/if}
 
-  <div
-    class="flex flex-col gap-[30px] md:flex-row md:items-start {hasHeading ? 'mt-15 md:mt-25' : ''}"
-  >
-    <div class="text-green-btn flex flex-col gap-5 md:w-[297.5px] md:shrink-0 md:py-5">
+  {#if !showForm}
+    <!-- Links out — the interim page while the form has no backend: the
+         comp's eyebrow and intro, then the hosted form and PayPal as two
+         buttons, in the column the form card would occupy (the CtaBanner
+         onCream idiom: a statement and its buttons, right-aligned). -->
+    <div
+      class="text-green-btn flex flex-col items-start gap-5 md:ml-auto md:w-[74.4%] {hasHeading
+        ? 'mt-15 md:mt-25'
+        : ''}"
+    >
       {#if slice.primary.eyebrow}
         <h2 class="font-heading text-lg font-normal tracking-[1.5px] uppercase">
           {slice.primary.eyebrow}
         </h2>
       {/if}
       {#if isFilled.richText(slice.primary.body)}
-        <div class="richtext-block text-base leading-6">
+        <div class="richtext-block max-w-[578px] text-base leading-6">
           <RichTextBody field={slice.primary.body} />
         </div>
       {/if}
-      {#if hasPaypal}
-        <PrismicLink
-          field={slice.primary.paypal_link}
-          class="bg-green text-green-btn font-button inline-flex h-10 w-fit items-center justify-center gap-2.5 rounded-full px-3.75 text-[10px] tracking-[1px] uppercase"
-        >
-          {slice.primary.paypal_label}
-          <img
-            src="/icons/arrow-right.svg"
-            alt=""
-            aria-hidden="true"
-            class="h-3.5 w-2.5 -rotate-90"
-          />
-        </PrismicLink>
+      {#if hasFormLink || hasPaypal}
+        <div class="flex flex-wrap gap-2.5">
+          {#if hasFormLink}
+            <PrismicLink field={slice.primary.form_link} class={pill}>
+              {slice.primary.form_label}
+              <img
+                src="/icons/arrow-right-dark.svg"
+                alt=""
+                aria-hidden="true"
+                class="h-3.5 w-2.5 -rotate-90"
+              />
+            </PrismicLink>
+          {/if}
+          {#if hasPaypal}
+            <PrismicLink field={slice.primary.paypal_link} class={pill}>
+              {slice.primary.paypal_label}
+              <img
+                src="/icons/arrow-right-dark.svg"
+                alt=""
+                aria-hidden="true"
+                class="h-3.5 w-2.5 -rotate-90"
+              />
+            </PrismicLink>
+          {/if}
+        </div>
       {/if}
     </div>
-
-    <form
-      class="panel relative min-w-0 flex-1 overflow-hidden rounded-[20px] p-6 md:p-10"
-      aria-labelledby={id("form-heading")}
-      {onsubmit}
+  {:else}
+    <div
+      class="flex flex-col gap-[30px] md:flex-row md:items-start {hasHeading
+        ? 'mt-15 md:mt-25'
+        : ''}"
     >
-      <div
-        aria-hidden="true"
-        class="pointer-events-none absolute inset-0 bg-cover bg-center opacity-25 mix-blend-difference"
-        style="background-image: url('/texture-grain.webp')"
-      ></div>
-
-      <div class="text-green-btn relative flex flex-col gap-[30px]">
-        <h2
-          id={id("form-heading")}
-          class="font-heading text-lg font-normal tracking-[1.5px] uppercase"
-        >
-          {slice.primary.form_heading || copy.formHeading}
-        </h2>
-
-        <fieldset class="flex min-w-0 flex-col gap-[5px]">
-          <legend class="label mb-[5px] p-0">
-            {copy.name}<span aria-hidden="true">*</span><span class="sr-only">
-              {copy.required}</span
-            >
-          </legend>
-          <div class="flex flex-col gap-[5px] md:flex-row md:gap-[30px]">
-            <div class="min-w-0 flex-1">
-              <label class="sr-only" for={id("first-name")}>{copy.firstName}</label>
-              <input
-                class="field"
-                id={id("first-name")}
-                name="first_name"
-                type="text"
-                autocomplete="given-name"
-                required
-                placeholder={copy.firstName}
-              />
-            </div>
-            <div class="min-w-0 flex-1">
-              <label class="sr-only" for={id("last-name")}>{copy.lastName}</label>
-              <input
-                class="field"
-                id={id("last-name")}
-                name="last_name"
-                type="text"
-                autocomplete="family-name"
-                required
-                placeholder={copy.lastName}
-              />
-            </div>
+      <div class="text-green-btn flex flex-col gap-5 md:w-[297.5px] md:shrink-0 md:py-5">
+        {#if slice.primary.eyebrow}
+          <h2 class="font-heading text-lg font-normal tracking-[1.5px] uppercase">
+            {slice.primary.eyebrow}
+          </h2>
+        {/if}
+        {#if isFilled.richText(slice.primary.body)}
+          <div class="richtext-block text-base leading-6">
+            <RichTextBody field={slice.primary.body} />
           </div>
-        </fieldset>
-
-        <div class="flex flex-col gap-[5px]">
-          <label class="label" for={id("email")}>
-            {copy.email}<span aria-hidden="true">*</span><span class="sr-only">
-              {copy.required}</span
-            >
-          </label>
-          <input
-            class="field"
-            id={id("email")}
-            name="email"
-            type="email"
-            autocomplete="email"
-            required
-            placeholder={copy.emailHint}
-          />
-        </div>
-
-        <fieldset class="flex min-w-0 flex-col gap-[5px]">
-          <legend class="label mb-[5px] p-0">{copy.address}</legend>
-          <div>
-            <label class="sr-only" for={id("address-1")}>{copy.address1}</label>
-            <input
-              class="field"
-              id={id("address-1")}
-              name="address_line1"
-              type="text"
-              autocomplete="address-line1"
-              placeholder={copy.address1}
-            />
-          </div>
-          <div>
-            <label class="sr-only" for={id("address-2")}>{copy.address2}</label>
-            <input
-              class="field"
-              id={id("address-2")}
-              name="address_line2"
-              type="text"
-              autocomplete="address-line2"
-              placeholder={copy.address2}
-            />
-          </div>
-          <div class="flex flex-col gap-[5px] md:flex-row md:gap-[30px]">
-            <div class="min-w-0 flex-1">
-              <label class="sr-only" for={id("city")}>{copy.city}</label>
-              <input
-                class="field"
-                id={id("city")}
-                name="city"
-                type="text"
-                autocomplete="address-level2"
-                placeholder={copy.city}
-              />
-            </div>
-            <div class="min-w-0 flex-1">
-              <label class="sr-only" for={id("state")}>{copy.state}</label>
-              <input
-                class="field"
-                id={id("state")}
-                name="state"
-                type="text"
-                autocomplete="address-level1"
-                placeholder={copy.state}
-              />
-            </div>
-            <div class="min-w-0 flex-1">
-              <label class="sr-only" for={id("zip")}>{copy.zip}</label>
-              <input
-                class="field"
-                id={id("zip")}
-                name="postal_code"
-                type="text"
-                autocomplete="postal-code"
-                placeholder={copy.zip}
-              />
-            </div>
-          </div>
-        </fieldset>
-
-        <div class="flex flex-col gap-[5px]">
-          <label class="label" for={id("phone")}>{copy.phone}</label>
-          <input
-            class="field"
-            id={id("phone")}
-            name="phone"
-            type="tel"
-            autocomplete="tel"
-            placeholder={copy.phoneHint}
-          />
-        </div>
-
-        <fieldset class="flex min-w-0 flex-col">
-          <legend class="label mb-[5px] p-0">{copy.amount}</legend>
-          {#each presets as amount (amount)}
-            <label class="label flex w-fit items-center gap-2.5 py-[5px]">
-              <input
-                class="radio"
-                type="radio"
-                name="amount"
-                value={String(amount)}
-                bind:group={choice}
-              />
-              ${amount}
-            </label>
-          {/each}
-          <div class="flex items-center gap-2.5 py-[5px]">
-            <input
-              class="radio"
-              type="radio"
-              name="amount"
-              value="custom"
-              bind:group={choice}
-              aria-label={copy.otherAmount}
-            />
-            <label class="sr-only" for={id("custom-amount")}>{copy.enterAmount}</label>
-            <!-- Focusing the write-in picks its radio, so a donor who types an
-                 amount never has to notice the radio at all. -->
-            <input
-              class="field field-inline"
-              id={id("custom-amount")}
-              name="custom_amount"
-              type="text"
-              inputmode="decimal"
-              placeholder={copy.enterAmount}
-              bind:value={customAmount}
-              onfocus={() => (choice = "custom")}
-            />
-          </div>
-        </fieldset>
-
-        <div class="flex flex-col items-start gap-[5px] pb-2.5">
-          <label class="label" for={id("schedule")}>{copy.schedule}</label>
-          <select class="select" id={id("schedule")} name="schedule">
-            {#each copy.schedules as [value, label] (value)}
-              <option {value}>{label}</option>
-            {/each}
-          </select>
-        </div>
-
-        <div class="flex flex-col items-start gap-5">
-          <button
-            type="submit"
-            class="bg-green text-green-btn font-button inline-flex h-10 w-fit cursor-pointer items-center justify-center gap-2.5 rounded-full px-3.75 text-[10px] tracking-[1px] uppercase"
-          >
-            {slice.primary.submit_label || copy.submit}
+        {/if}
+        {#if hasPaypal}
+          <PrismicLink field={slice.primary.paypal_link} class={pill}>
+            {slice.primary.paypal_label}
             <img
-              src="/icons/arrow-right.svg"
+              src="/icons/arrow-right-dark.svg"
               alt=""
               aria-hidden="true"
               class="h-3.5 w-2.5 -rotate-90"
             />
-          </button>
-          <!-- Always in the DOM: a live region announces only text that
-               changes INSIDE it, not a region that appears with its text. -->
-          <p role="status" class="text-base leading-6 {submitted ? '' : 'sr-only'}">
-            {submitted ? copy.pending : ""}
-          </p>
-        </div>
+          </PrismicLink>
+        {/if}
       </div>
-    </form>
-  </div>
+
+      <form
+        class="panel relative min-w-0 flex-1 overflow-hidden rounded-[20px] p-6 md:p-10"
+        aria-labelledby={id("form-heading")}
+        {onsubmit}
+      >
+        <div
+          aria-hidden="true"
+          class="pointer-events-none absolute inset-0 bg-cover bg-center opacity-25 mix-blend-difference"
+          style="background-image: url('/texture-grain.webp')"
+        ></div>
+
+        <div class="text-green-btn relative flex flex-col gap-[30px]">
+          <h2
+            id={id("form-heading")}
+            class="font-heading text-lg font-normal tracking-[1.5px] uppercase"
+          >
+            {slice.primary.form_heading || copy.formHeading}
+          </h2>
+
+          <fieldset class="flex min-w-0 flex-col gap-[5px]">
+            <legend class="label mb-[5px] p-0">
+              {copy.name}<span aria-hidden="true">*</span><span class="sr-only">
+                {copy.required}</span
+              >
+            </legend>
+            <div class="flex flex-col gap-[5px] md:flex-row md:gap-[30px]">
+              <div class="min-w-0 flex-1">
+                <label class="sr-only" for={id("first-name")}>{copy.firstName}</label>
+                <input
+                  class="field"
+                  id={id("first-name")}
+                  name="first_name"
+                  type="text"
+                  autocomplete="given-name"
+                  required
+                  placeholder={copy.firstName}
+                />
+              </div>
+              <div class="min-w-0 flex-1">
+                <label class="sr-only" for={id("last-name")}>{copy.lastName}</label>
+                <input
+                  class="field"
+                  id={id("last-name")}
+                  name="last_name"
+                  type="text"
+                  autocomplete="family-name"
+                  required
+                  placeholder={copy.lastName}
+                />
+              </div>
+            </div>
+          </fieldset>
+
+          <div class="flex flex-col gap-[5px]">
+            <label class="label" for={id("email")}>
+              {copy.email}<span aria-hidden="true">*</span><span class="sr-only">
+                {copy.required}</span
+              >
+            </label>
+            <input
+              class="field"
+              id={id("email")}
+              name="email"
+              type="email"
+              autocomplete="email"
+              required
+              placeholder={copy.emailHint}
+            />
+          </div>
+
+          <fieldset class="flex min-w-0 flex-col gap-[5px]">
+            <legend class="label mb-[5px] p-0">{copy.address}</legend>
+            <div>
+              <label class="sr-only" for={id("address-1")}>{copy.address1}</label>
+              <input
+                class="field"
+                id={id("address-1")}
+                name="address_line1"
+                type="text"
+                autocomplete="address-line1"
+                placeholder={copy.address1}
+              />
+            </div>
+            <div>
+              <label class="sr-only" for={id("address-2")}>{copy.address2}</label>
+              <input
+                class="field"
+                id={id("address-2")}
+                name="address_line2"
+                type="text"
+                autocomplete="address-line2"
+                placeholder={copy.address2}
+              />
+            </div>
+            <div class="flex flex-col gap-[5px] md:flex-row md:gap-[30px]">
+              <div class="min-w-0 flex-1">
+                <label class="sr-only" for={id("city")}>{copy.city}</label>
+                <input
+                  class="field"
+                  id={id("city")}
+                  name="city"
+                  type="text"
+                  autocomplete="address-level2"
+                  placeholder={copy.city}
+                />
+              </div>
+              <div class="min-w-0 flex-1">
+                <label class="sr-only" for={id("state")}>{copy.state}</label>
+                <input
+                  class="field"
+                  id={id("state")}
+                  name="state"
+                  type="text"
+                  autocomplete="address-level1"
+                  placeholder={copy.state}
+                />
+              </div>
+              <div class="min-w-0 flex-1">
+                <label class="sr-only" for={id("zip")}>{copy.zip}</label>
+                <input
+                  class="field"
+                  id={id("zip")}
+                  name="postal_code"
+                  type="text"
+                  autocomplete="postal-code"
+                  placeholder={copy.zip}
+                />
+              </div>
+            </div>
+          </fieldset>
+
+          <div class="flex flex-col gap-[5px]">
+            <label class="label" for={id("phone")}>{copy.phone}</label>
+            <input
+              class="field"
+              id={id("phone")}
+              name="phone"
+              type="tel"
+              autocomplete="tel"
+              placeholder={copy.phoneHint}
+            />
+          </div>
+
+          <fieldset class="flex min-w-0 flex-col">
+            <legend class="label mb-[5px] p-0">{copy.amount}</legend>
+            {#each presets as amount (amount)}
+              <label class="label flex w-fit items-center gap-2.5 py-[5px]">
+                <input
+                  class="radio"
+                  type="radio"
+                  name="amount"
+                  value={String(amount)}
+                  bind:group={choice}
+                />
+                ${amount}
+              </label>
+            {/each}
+            <div class="flex items-center gap-2.5 py-[5px]">
+              <input
+                class="radio"
+                type="radio"
+                name="amount"
+                value="custom"
+                bind:group={choice}
+                aria-label={copy.otherAmount}
+              />
+              <label class="sr-only" for={id("custom-amount")}>{copy.enterAmount}</label>
+              <!-- Focusing the write-in picks its radio, so a donor who types an
+                 amount never has to notice the radio at all. -->
+              <input
+                class="field field-inline"
+                id={id("custom-amount")}
+                name="custom_amount"
+                type="text"
+                inputmode="decimal"
+                placeholder={copy.enterAmount}
+                bind:value={customAmount}
+                onfocus={() => (choice = "custom")}
+              />
+            </div>
+          </fieldset>
+
+          <div class="flex flex-col items-start gap-[5px] pb-2.5">
+            <label class="label" for={id("schedule")}>{copy.schedule}</label>
+            <select class="select" id={id("schedule")} name="schedule">
+              {#each copy.schedules as [value, label] (value)}
+                <option {value}>{label}</option>
+              {/each}
+            </select>
+          </div>
+
+          <div class="flex flex-col items-start gap-5">
+            <button type="submit" class="{pill} cursor-pointer">
+              {slice.primary.submit_label || copy.submit}
+              <img
+                src="/icons/arrow-right-dark.svg"
+                alt=""
+                aria-hidden="true"
+                class="h-3.5 w-2.5 -rotate-90"
+              />
+            </button>
+            <!-- Always in the DOM: a live region announces only text that
+               changes INSIDE it, not a region that appears with its text. -->
+            <p role="status" class="text-base leading-6 {submitted ? '' : 'sr-only'}">
+              {submitted ? copy.pending : ""}
+            </p>
+          </div>
+        </div>
+      </form>
+    </div>
+  {/if}
 </ContentBand>
 
 <style>
