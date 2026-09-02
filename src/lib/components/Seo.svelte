@@ -27,6 +27,11 @@
     noindex?: boolean;
     /** Structured data object(s); serialized safely into JSON-LD scripts. */
     jsonLd?: object | object[];
+    /** This page in every locale it exists in, as ABSOLUTE urls (the page
+     *  itself included). Emits one hreflang link per entry plus x-default
+     *  (the English one). Nothing is emitted for a page with no translation —
+     *  a lone self-referencing hreflang is noise. */
+    alternates?: { lang: string; href: string }[];
   }
 
   let {
@@ -40,12 +45,17 @@
     locale = SITE_LOCALE,
     noindex = false,
     jsonLd,
+    alternates,
   }: Props = $props();
 
   const canonical = $derived(canonicalUrl(url));
   const origin = $derived(typeof url === "string" ? new URL(url).origin : url.origin);
   const og = $derived(resolveOgImage(image, origin));
   const jsonLdNodes = $derived(jsonLd == null ? [] : Array.isArray(jsonLd) ? jsonLd : [jsonLd]);
+  const hreflangs = $derived(alternates && alternates.length > 1 ? alternates : []);
+  const xDefault = $derived(
+    (hreflangs.find((a) => a.lang === "en") ?? hreflangs[0])?.href ?? undefined,
+  );
 </script>
 
 <svelte:head>
@@ -54,6 +64,12 @@
     <meta name="description" content={description} />
   {/if}
   <link rel="canonical" href={canonical} />
+  {#each hreflangs as alt (alt.lang)}
+    <link rel="alternate" hreflang={alt.lang} href={alt.href} />
+  {/each}
+  {#if xDefault}
+    <link rel="alternate" hreflang="x-default" href={xDefault} />
+  {/if}
   {#if noindex}
     <meta name="robots" content="noindex" />
   {/if}

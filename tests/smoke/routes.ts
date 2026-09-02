@@ -46,4 +46,9 @@ export const smokeRoutes: SmokeRoute[] = [
         expectStatus: 404,
       }
     : { path: "/", name: "home", hydrationMarker: "footer" },
+  // The static contact route exists in both locales regardless of Prismic;
+  // "/es/contact" also proves the [[lang]] prefix routes and the Spanish
+  // chrome render without console errors.
+  { path: "/contact", name: "contact", hydrationMarker: "footer" },
+  { path: "/es/contact", name: "contact (es)", hydrationMarker: "footer" },
 ];

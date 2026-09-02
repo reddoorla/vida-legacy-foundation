@@ -3,6 +3,7 @@
 // Footer; a site fills it in, or swaps this module for a Prismic
 // `settings`-document loader behind the same exports.
 import config from "./site-config.json";
+import { DEFAULT_LANG, type Lang } from "$lib/locale";
 
 export type NavItem = { label: string; href: string; children?: NavItem[] };
 export type FooterSocial = { network: string; href?: string };
@@ -39,11 +40,21 @@ export type SiteConfig = {
     // Optional footer columns — text, link, or image rows. Absent on the stub.
     columns?: FooterColumn[];
   };
+  /** Per-locale chrome for a site with more than one language: a locale
+   *  entry replaces `nav` and/or `footer` wholesale (labels AND hrefs, so a
+   *  Spanish item can point at "/es/contact"). Absent on a single-locale
+   *  site, and never consulted for the default locale. */
+  locales?: Partial<Record<Lang, Partial<Pick<SiteConfig, "nav" | "footer">>>>;
 };
 
-/** The checked-in site config (empty on a fresh site). */
-export function loadSiteConfig(): SiteConfig {
-  return config as SiteConfig;
+/** The checked-in site config (empty on a fresh site), for a locale. The
+ *  default locale is the config itself; another locale gets its overrides
+ *  from `locales`, falling back to the default per section. */
+export function loadSiteConfig(lang: Lang = DEFAULT_LANG): SiteConfig {
+  const base = config as SiteConfig;
+  const overrides = lang === DEFAULT_LANG ? undefined : base.locales?.[lang];
+  if (!overrides) return base;
+  return { ...base, nav: overrides.nav ?? base.nav, footer: overrides.footer ?? base.footer };
 }
 
 /** Resolve the footer columns for a route: per-route page data wins, else the

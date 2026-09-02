@@ -132,6 +132,24 @@ describe("Nav — the bar", () => {
     );
   });
 
+  it("renders the language switch only when given a target", async () => {
+    const { container, rerender, getByLabelText } = render(Nav, { items, tone: "onDark" });
+    expect(container.querySelector("a[hreflang]")).toBeNull();
+
+    await rerender({
+      items,
+      tone: "onDark",
+      switchTo: { lang: "es", href: "/es/about", label: "Español", short: "ES" },
+    });
+    const link = getByLabelText("Español");
+    expect(link.getAttribute("href")).toBe("/es/about");
+    expect(link.getAttribute("hreflang")).toBe("es");
+    expect(link.getAttribute("lang")).toBe("es");
+    expect(link.textContent?.trim()).toBe("ES");
+    // Same colouring as the hamburger on that ground.
+    expect(link.className).toContain("text-background");
+  });
+
   it("exposes the menu state on the trigger", async () => {
     const { getByLabelText } = render(Nav, { items });
     const trigger = getByLabelText("Open menu");
@@ -240,6 +258,21 @@ describe("Nav — the menu", () => {
     expect(queryByRole("dialog")).not.toBeNull();
 
     await rerender({ items, pathname: "/about" });
+    expect(queryByRole("dialog")).toBeNull();
+  });
+
+  it("offers the language switch under the entries, by its full name", async () => {
+    const { getByLabelText, getByRole, queryByRole } = render(Nav, {
+      items,
+      switchTo: { lang: "es", href: "/es", label: "Español", short: "ES" },
+    });
+    await fireEvent.click(getByLabelText("Open menu"));
+    const link = Array.from(getByRole("dialog").querySelectorAll("a")).find(
+      (a) => a.getAttribute("hreflang") === "es",
+    )!;
+    expect(link.textContent?.trim()).toBe("Español");
+    expect(link.getAttribute("href")).toBe("/es");
+    await fireEvent.click(link);
     expect(queryByRole("dialog")).toBeNull();
   });
 

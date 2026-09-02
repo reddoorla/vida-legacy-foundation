@@ -1,9 +1,19 @@
 import { redirectToPreviewURL } from "@prismicio/svelte/kit";
-import { createClient } from "$lib/prismicio";
+import { createClient, linkResolver } from "$lib/prismicio";
 import type { RequestHandler } from "./$types";
 
 export const GET: RequestHandler = async ({ fetch, request, cookies }) => {
   const client = createClient({ fetch });
 
-  return await redirectToPreviewURL({ client, request, cookies });
+  // The helper takes no resolver of its own, and this client is routes-free
+  // (see $lib/prismicio), so without help every preview would land on "/".
+  // Hand it a client whose resolvePreviewURL carries the locale-aware
+  // linkResolver: an es-mx document previews at its "/es/…" URL.
+  return await redirectToPreviewURL({
+    client: {
+      resolvePreviewURL: (args) => client.resolvePreviewURL({ ...args, linkResolver }),
+    },
+    request,
+    cookies,
+  });
 };

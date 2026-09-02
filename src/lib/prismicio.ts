@@ -2,6 +2,7 @@ import * as prismic from "@prismicio/client";
 import { enableAutoPreviews, type CreateClientConfig } from "@prismicio/svelte/kit";
 import config from "../../slicemachine.config.json";
 import type { AllDocumentTypes } from "../prismicio-types";
+import { DEFAULT_LANG, langFromPrismic, pathForDoc } from "$lib/locale";
 
 export const repositoryName = import.meta.env.VITE_PRISMIC_ENVIRONMENT || config.repositoryName;
 
@@ -26,7 +27,10 @@ export const isPlaceholderRepo = repositoryName === "your-prismic-repo-name";
  */
 export const linkResolver: prismic.LinkResolverFunction = (doc) => {
   if (doc.type === "page" && doc.uid) {
-    return doc.uid === "home" ? "/" : `/${doc.uid}`;
+    // Locale-aware: an es-mx document lives under "/es". A document in a
+    // locale the site does not serve is filed under the default rather than
+    // dropped — a link to it is still a link.
+    return pathForDoc(doc.uid, langFromPrismic(doc.lang) ?? DEFAULT_LANG);
   }
   return null;
 };
