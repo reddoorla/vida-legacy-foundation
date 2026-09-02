@@ -386,6 +386,55 @@
       ],
     } as never,
   };
+  // VLF "Make a contribution": the cream closing panel. Locks the inverted
+  // button couple (#9cbf5b fill + #263b02 text, 5.86:1) and the #527e01
+  // highlight, which is 4.47:1 on cream — safe ONLY at this display scale.
+  const ctaBannerOnCreamFixture = {
+    slice_type: "cta_banner",
+    variation: "onCream",
+    primary: {
+      eyebrow: "Make a contribution",
+      heading: [
+        {
+          type: "heading2",
+          text: "We understand this journey can make families feel alone. We're there to help.",
+          spans: [{ type: "label", start: 57, end: 77, data: { label: "highlight" } }],
+        },
+      ],
+      buttonLabel: "Donate now",
+      buttonLink: { link_type: "Web", url: "https://example.com/donate" },
+    },
+    items: [],
+  } as unknown as Content.CtaBannerSlice;
+
+  // The closing quote + photo row. Data URIs, not static/dev paths: this
+  // renders through <PrismicImage>, whose asImageWidthSrcSet calls new URL()
+  // and throws "Invalid URL" on a relative path, 500ing the prerender.
+  const testimonialOnCreamFixture = {
+    slice_type: "testimonial",
+    variation: "onCream",
+    primary: {
+      quote: "The Vida Legacy Foundation made a difficult time manageable.",
+      name: "Grateful Family Member",
+    },
+    items: [
+      {
+        image: {
+          url: placeholder.hero,
+          alt: "A patient resting in a hospital bed",
+          dimensions: { width: 800, height: 533 },
+        },
+      },
+      {
+        image: {
+          url: placeholder.portrait,
+          alt: "A father carrying his son on his shoulders",
+          dimensions: { width: 320, height: 427 },
+        },
+      },
+    ],
+  } as unknown as Content.TestimonialSlice;
+
   const accordionFixture: ComponentProps<typeof AccordionSlice>["slice"] = {
     slice_type: "accordion",
     variation: "default",
@@ -620,6 +669,8 @@
   <CtaBanner slice={ctaBannerOnDarkFixture} />
   <StatsBand slice={statsBandFixture} />
   <LeadText slice={leadTextStatementFixture} />
+  <CtaBanner slice={ctaBannerOnCreamFixture} />
+  <Testimonial slice={testimonialOnCreamFixture} />
 </div>
 
 <!-- Renders nothing at rest (overlay only appears mid-navigation, aria-hidden);

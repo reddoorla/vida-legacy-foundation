@@ -98,6 +98,70 @@ describe("Testimonial slice", () => {
   });
 });
 
+const photo = (alt: string) =>
+  ({ url: "https://img.example/photo.jpg", alt, dimensions: { width: 930, height: 628 } }) as never;
+
+const makeOnCream = (primary: Record<string, unknown> = {}, items?: unknown[]) =>
+  ({
+    slice_type: "testimonial",
+    variation: "onCream",
+    primary: {
+      quote: "The Vida Legacy Foundation made a difficult time manageable.",
+      name: "Grateful Family Member",
+      ...primary,
+    },
+    items: items ?? [{ image: photo("A patient resting") }, { image: photo("A father and son") }],
+  }) as never;
+
+describe("Testimonial onCream variation", () => {
+  it("renders the quote and the photo row on the cream ground", () => {
+    const { container } = render(Testimonial, { props: { slice: makeOnCream() } });
+    const section = container.querySelector('[data-slice-type="testimonial"]');
+    expect(section?.getAttribute("data-slice-variation")).toBe("onCream");
+    // #065184 quote is 7.71:1 on #fdf5e8; #01263f attribution is 14.37:1.
+    expect(section?.className).toContain("bg-background");
+    expect(container.querySelector("blockquote")?.textContent).toContain(
+      "made a difficult time manageable",
+    );
+    expect(container.querySelectorAll("li img").length).toBe(2);
+  });
+
+  it("adds the em dash to the attribution so the CMS stores the name bare", () => {
+    const { container } = render(Testimonial, { props: { slice: makeOnCream() } });
+    expect(container.querySelector("figcaption")?.textContent?.trim()).toBe(
+      "— Grateful Family Member",
+    );
+  });
+
+  it("draws no quote marks, unlike the default variation", () => {
+    // The ::before/::after glyphs are scoped to .quote, which this variation
+    // deliberately does not use — the comp shows the quote unmarked.
+    const { container } = render(Testimonial, { props: { slice: makeOnCream() } });
+    expect(container.querySelector(".quote")).toBeNull();
+  });
+
+  it("drops unfilled images rather than rendering empty cells", () => {
+    const { container } = render(Testimonial, {
+      props: { slice: makeOnCream({}, [{ image: photo("Kept") }, { image: {} }]) },
+    });
+    expect(container.querySelectorAll("li").length).toBe(1);
+  });
+
+  it("renders the quote alone when no photos are authored", () => {
+    const { container } = render(Testimonial, { props: { slice: makeOnCream({}, []) } });
+    expect(container.querySelector("blockquote")).not.toBeNull();
+    expect(container.querySelector("ul")).toBeNull();
+  });
+
+  it("renders the photos alone when no quote is authored", () => {
+    const { container } = render(Testimonial, {
+      props: { slice: makeOnCream({ quote: null, name: null }) },
+    });
+    expect(container.querySelector("figure")).toBeNull();
+    expect(container.querySelectorAll("li img").length).toBe(2);
+  });
+});
+
 describe("resolveAvatarAlt", () => {
   it("prefers the authored alt", () => {
     expect(resolveAvatarAlt("Headshot of Dana", "Dana")).toBe("Headshot of Dana");

@@ -53,6 +53,40 @@
         }
       },
       "items": {}
+    },
+    {
+      "id": "onCream",
+      "name": "On Cream",
+      "docURL": "...",
+      "version": "initial",
+      "description": "A quote beside a row of photographs, on the cream closing panel",
+      "imageUrl": "",
+      "primary": {
+        "quote": {
+          "type": "Text",
+          "config": {
+            "label": "quote",
+            "placeholder": "Quote text — this variation draws NO quote marks"
+          }
+        },
+        "name": {
+          "type": "Text",
+          "config": {
+            "label": "name",
+            "placeholder": "e.g. Grateful Family Member — the component adds the em dash"
+          }
+        }
+      },
+      "items": {
+        "image": {
+          "type": "Image",
+          "config": {
+            "label": "image",
+            "constraint": {},
+            "thumbnails": []
+          }
+        }
+      }
     }
   ]
 }
