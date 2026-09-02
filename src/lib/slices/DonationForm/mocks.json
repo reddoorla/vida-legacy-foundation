@@ -1,0 +1,94 @@
+[
+  {
+    "__TYPE__": "SharedSliceContent",
+    "variation": "default",
+    "primary": {
+      "heading": {
+        "__TYPE__": "FieldContent",
+        "type": "Text",
+        "value": "Make a Donation"
+      },
+      "eyebrow": {
+        "__TYPE__": "FieldContent",
+        "type": "Text",
+        "value": "help that lasts"
+      },
+      "body": {
+        "__TYPE__": "StructuredTextContent",
+        "value": [
+          {
+            "type": "paragraph",
+            "content": {
+              "text": "Your contribution allows us to provide families access to resources that can alleviate financial stress, letting them focus on what truly matters—their family’s health and well-being. You can contribute via our donation form or use PayPal, whichever you prefer.",
+              "spans": []
+            }
+          }
+        ]
+      },
+      "paypal_label": {
+        "__TYPE__": "FieldContent",
+        "type": "Text",
+        "value": "use paypal"
+      },
+      "paypal_link": {
+        "key": "3c1f8a52-6b7d-4e09-9a21-5d84c0e7b613",
+        "__TYPE__": "LinkContent",
+        "value": {
+          "__TYPE__": "ExternalLink",
+          "url": "https://www.paypal.com/donate/?hosted_button_id=4VVJZ6HKP6RRJ"
+        }
+      },
+      "form_heading": {
+        "__TYPE__": "FieldContent",
+        "type": "Text",
+        "value": "Contact information"
+      },
+      "submit_label": {
+        "__TYPE__": "FieldContent",
+        "type": "Text",
+        "value": "enter payment information"
+      }
+    },
+    "items": [
+      {
+        "__TYPE__": "GroupItemContent",
+        "value": [
+          [
+            "amount",
+            {
+              "__TYPE__": "FieldContent",
+              "type": "Number",
+              "value": 100
+            }
+          ]
+        ]
+      },
+      {
+        "__TYPE__": "GroupItemContent",
+        "value": [
+          [
+            "amount",
+            {
+              "__TYPE__": "FieldContent",
+              "type": "Number",
+              "value": 50
+            }
+          ]
+        ]
+      },
+      {
+        "__TYPE__": "GroupItemContent",
+        "value": [
+          [
+            "amount",
+            {
+              "__TYPE__": "FieldContent",
+              "type": "Number",
+              "value": 25
+            }
+          ]
+        ]
+      }
+    ]
+  }
+]

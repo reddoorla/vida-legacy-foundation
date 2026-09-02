@@ -2,6 +2,7 @@
 
 import Accordion from "./Accordion/index.svelte";
 import CtaBanner from "./CtaBanner/index.svelte";
+import DonationForm from "./DonationForm/index.svelte";
 import HeartHero from "./HeartHero/index.svelte";
 import Hero from "./Hero/index.svelte";
 import IconColumns from "./IconColumns/index.svelte";
@@ -20,6 +21,7 @@ import TextColumns from "./TextColumns/index.svelte";
 export const components = {
   accordion: Accordion,
   cta_banner: CtaBanner,
+  donation_form: DonationForm,
   heart_hero: HeartHero,
   hero: Hero,
   icon_columns: IconColumns,

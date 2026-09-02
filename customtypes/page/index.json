@@ -74,6 +74,9 @@
             },
             "person_grid": {
               "type": "SharedSlice"
+            },
+            "donation_form": {
+              "type": "SharedSlice"
             }
           }
         }

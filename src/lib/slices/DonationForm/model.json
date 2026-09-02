@@ -1,0 +1,80 @@
+{
+  "id": "donation_form",
+  "type": "SharedSlice",
+  "name": "DonationForm",
+  "description": "The donation page: an intro column beside the donation form",
+  "variations": [
+    {
+      "id": "default",
+      "name": "Default",
+      "docURL": "...",
+      "version": "initial",
+      "description": "A display heading, a labelled intro with the PayPal alternative, and the donation form card",
+      "imageUrl": "",
+      "primary": {
+        "heading": {
+          "type": "Text",
+          "config": {
+            "label": "heading",
+            "placeholder": "e.g. Make a Donation — the page title; this slice renders the h1"
+          }
+        },
+        "eyebrow": {
+          "type": "Text",
+          "config": {
+            "label": "eyebrow",
+            "placeholder": "e.g. help that lasts"
+          }
+        },
+        "body": {
+          "type": "StructuredText",
+          "config": {
+            "label": "body",
+            "placeholder": "e.g. Your contribution allows us to provide families access to resources…",
+            "allowTargetBlank": true,
+            "multi": "paragraph,strong,em,hyperlink"
+          }
+        },
+        "paypal_label": {
+          "type": "Text",
+          "config": {
+            "label": "paypal_label",
+            "placeholder": "e.g. use paypal"
+          }
+        },
+        "paypal_link": {
+          "type": "Link",
+          "config": {
+            "label": "paypal_link",
+            "placeholder": "",
+            "allowTargetBlank": true,
+            "select": null
+          }
+        },
+        "form_heading": {
+          "type": "Text",
+          "config": {
+            "label": "form_heading",
+            "placeholder": "e.g. Contact information"
+          }
+        },
+        "submit_label": {
+          "type": "Text",
+          "config": {
+            "label": "submit_label",
+            "placeholder": "e.g. enter payment information"
+          }
+        }
+      },
+      "items": {
+        "amount": {
+          "type": "Number",
+          "config": {
+            "label": "amount",
+            "placeholder": "e.g. 100 — a preset the donor can pick, in whole dollars; the write-in amount is always drawn"
+          }
+        }
+      }
+    }
+  ]
+}
