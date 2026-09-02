@@ -57,6 +57,25 @@ describe("HeartHero slice", () => {
     expect(layers[1].getAttribute("style")).toContain("/texture-grain.webp");
   });
 
+  it("rests at the comp's heart size before any scroll", () => {
+    // 46.49% is the comp's 669.436/1440. If this drifts, the hero no longer
+    // opens from the composition the design specifies.
+    const { container } = render(HeartHero, { props: { slice } });
+    const mask = container.querySelector(".heart-mask");
+    expect(mask?.getAttribute("style")).toContain("--heart-size: 46.49%");
+  });
+
+  it("puts the reveal on a sticky stage, never a fixed one", () => {
+    // The regression this guards: reddoor-website's OpeningAnimation uses a
+    // `fixed` full-viewport layer, which is safe only because it is a
+    // page-level component used once. As a slice with siblings after it,
+    // `fixed` would cover every following slice and the whole fixtures page.
+    const { container } = render(HeartHero, { props: { slice } });
+    const stage = container.querySelector(".heart-hero-stage");
+    expect(stage).not.toBeNull();
+    expect(stage?.className).not.toContain("fixed");
+  });
+
   it("keeps the grain decorative and non-interactive", () => {
     const { container } = render(HeartHero, { props: { slice } });
     const grain = container.querySelector("[aria-hidden='true']");
