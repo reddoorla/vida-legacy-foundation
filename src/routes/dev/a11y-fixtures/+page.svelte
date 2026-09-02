@@ -95,8 +95,20 @@
   const heartHeroFixture = {
     slice_type: "heart_hero",
     variation: "default",
-    primary: { image: heroImage },
-    items: [],
+    primary: {
+      image: heroImage,
+      eyebrow: "Connecting Hope and Support",
+      heading: [
+        {
+          type: "heading2",
+          text: "Financial Relief and Support for Donor and Recipient Families",
+          spans: [],
+        },
+      ],
+    },
+    items: [
+      { cta_label: "Donate now", cta_link: { link_type: "Web", url: "https://example.com" } },
+    ],
   } as unknown as Content.HeartHeroSlice;
   const heroSliceFixture = {
     slice_type: "hero",

@@ -1,5 +1,6 @@
 <script lang="ts">
   import HeroBackgroundImage from "$lib/components/HeroBackgroundImage.svelte";
+  import { PrismicLink, PrismicRichText } from "@prismicio/svelte";
   import { isFilled } from "@prismicio/client";
   import type { Content } from "@prismicio/client";
   import { TEXTURE_LQIP } from "./texture-lqip";
@@ -7,6 +8,8 @@
   let { slice }: { slice: Content.HeartHeroSlice } = $props();
 
   let hasImage = $derived(isFilled.image(slice.primary.image));
+  let hasHeading = $derived(isFilled.richText(slice.primary.heading));
+  let ctas = $derived((slice.items ?? []).filter((i) => i.cta_label && isFilled.link(i.cta_link)));
 
   const TEXTURE_FULL = "/texture-grain.webp";
 
@@ -36,31 +39,28 @@
     };
   });
 
-  // Scroll-driven heart reveal, modelled on reddoor-website's OpeningAnimation:
-  // a mask that scales with scroll progress so the shape opens and reveals the
-  // photo behind it.
+  // The four Figma variants of Masthead #2 (5155:1491) ARE the animation spec:
+  //   Property 1=1        heart at rest on the green ground
+  //   Property 1=2        heart fully open, photo full-bleed
+  //   Property 1=Variant3 eyebrow + heading revealed
+  //   Property 1=Variant4 CTAs + scroll bar revealed
   //
-  // Two deliberate differences from that component:
+  // Nothing is keyframed in Figma's motion system (get_motion_context returns
+  // an empty set even recursively), so the frames carry the states and the
+  // timing between them is ours — modelled on reddoor-website's
+  // OpeningAnimation, which stages its reveal the same way through its
+  // showCompelling / showButtons thresholds.
   //
-  //  1. sticky, not fixed. OpeningAnimation is a page-level component used once
-  //     at the top of the homepage, so a `fixed` full-viewport layer is safe
-  //     there. This is a Prismic slice with siblings after it (and it renders on
-  //     the a11y fixtures page alongside every other slice) — `fixed` would
-  //     cover all of them. `sticky` inside a tall section gives the same effect,
-  //     contained.
-  //  2. a CSS mask-image, not an <svg><clipPath><path>. We have the heart as an
-  //     exported alpha PNG, not path data, and hand-authoring the path would be
-  //     redrawing an asset we already have. Scaling `mask-size` is equivalent.
-  //
-  // Figma carries NO motion data for this node — get_motion_context returns an
-  // empty set recursively — so the timing below is the reddoor precedent
-  // translated, not a spec. Tunable via the three constants.
-  const HEART_START_PCT = 46.49; // the comp's resting heart width, % of viewport
-  const HEART_END_PCT = 620; // large enough to clear the viewport corners
-  const REVEAL_THROUGH = 0.85; // fraction of the runway used for the reveal
+  // The heart's two sizes ARE specified: the mask is 669.436px wide at rest and
+  // 2696.08px in Variant4, against a 1440px band — 46.49% opening to 187.2%.
+  const HEART_START_PCT = 46.49;
+  const HEART_END_PCT = 187.2;
+  const HEART_OPEN_THROUGH = 0.55; // heart fully open this far through the runway
+  const COPY_AT = 0.6;
+  const CTAS_AT = 0.74;
 
   let sectionEl: HTMLElement | undefined = $state();
-  let heartSize = $state(HEART_START_PCT);
+  let progress = $state(0);
   let reducedMotion = $state(false);
   let frame = 0;
 
@@ -70,14 +70,9 @@
     const rect = el.getBoundingClientRect();
     const scrollable = rect.height - window.innerHeight;
     // Unmeasurable runway (rect still 0 pre-layout, or a viewport taller than
-    // the section) falls back to 0 — the CLOSED, resting heart. reddoor's
-    // OpeningAnimation falls back to fully-revealed, which is right for it
-    // because revealed is its end state; here the resting heart is the
-    // designed composition, and defaulting open flashes a full-bleed photo
-    // before the first scroll corrects it.
-    const pct = scrollable <= 0 ? 0 : Math.min(Math.max(-rect.top / scrollable, 0), 1);
-    const eased = Math.min(pct / REVEAL_THROUGH, 1);
-    heartSize = HEART_START_PCT + eased * (HEART_END_PCT - HEART_START_PCT);
+    // the section) falls back to 0 — the closed, resting heart — so the hero
+    // never flashes open before the first scroll corrects it.
+    progress = scrollable <= 0 ? 0 : Math.min(Math.max(-rect.top / scrollable, 0), 1);
   };
 
   const onScroll = () => {
@@ -93,9 +88,7 @@
     reducedMotion = mq.matches;
     const onMQ = (e: MediaQueryListEvent) => {
       reducedMotion = e.matches;
-      // Back to the comp's resting frame; the CSS drops the runway to match.
-      if (e.matches) heartSize = HEART_START_PCT;
-      else update();
+      if (!e.matches) update();
     };
     mq.addEventListener("change", onMQ);
 
@@ -113,19 +106,30 @@
     };
   });
 
-  // Reduced motion keeps the comp's static composition rather than reddoor's
-  // "jump to the final frame": here the resting heart IS the designed hero, so
-  // the end frame (a full-bleed photo) would be the wrong thing to land on.
-  let maskSize = $derived(reducedMotion ? HEART_START_PCT : heartSize);
+  // Reduced motion lands on the FINAL frame, not the first. The hero carries
+  // the page's heading and its primary calls to action; leaving a
+  // reduced-motion visitor on frame 1 would be a green field with no message
+  // and nothing to act on. This is the opposite of what the image-only version
+  // of this slice did — correct then, wrong the moment the hero gained copy.
+  let heartSize = $derived(
+    reducedMotion
+      ? HEART_END_PCT
+      : HEART_START_PCT +
+          Math.min(progress / HEART_OPEN_THROUGH, 1) * (HEART_END_PCT - HEART_START_PCT),
+  );
+  let copyIn = $derived(reducedMotion || progress >= COPY_AT);
+  let ctasIn = $derived(reducedMotion || progress >= CTAS_AT);
 </script>
 
 <!--
-  Homepage masthead. Proportions are the comp's (Figma 5249:1132, 1440x860):
-  heart 669.436 x 584 -> 46.49% of the band width, aspect 669.436/584.
+  Homepage masthead. Geometry is the comp's (Figma 5155:1491, 1440x860):
+    heart  669.436px wide at rest -> 46.49% of the band, opening to 187.2%
+    copy   left 79.67px (5.53%), bottom 224px (26.05%), width 630.333px
+    bar    100px tall (11.63%), #263b02, arrow 66.333px
 
-  The heart is the comp's own exported asset used as a CSS mask
-  (static/heart-mask.png), NOT a hand-drawn path — see "never redraw an asset"
-  in CLAUDE.md.
+  The heart and the arrow are the comp's own exported assets
+  (static/heart-mask.png, static/arrow-down.svg), NOT hand-drawn — see "never
+  redraw an asset" in CLAUDE.md.
 -->
 <section
   bind:this={sectionEl}
@@ -153,19 +157,55 @@
     </div>
 
     {#if hasImage}
-      <div class="heart-mask absolute inset-0" style="--heart-size: {maskSize}%">
+      <div class="heart-mask absolute inset-0" style="--heart-size: {heartSize}%">
         <HeroBackgroundImage image={slice.primary.image} class="h-full w-full object-cover" />
       </div>
     {/if}
+
+    <!-- Legibility scrim. NOT in the comp, which sets #fffbf4 copy straight onto
+         the photograph — contrast there depends entirely on whichever image an
+         editor uploads, and axe cannot measure text over an image. This keeps
+         the designed colours while making them safe against any photo. -->
+    <div aria-hidden="true" class="hero-scrim pointer-events-none absolute inset-0"></div>
+
+    <div class="hero-copy reveal absolute" class:is-in={copyIn}>
+      {#if slice.primary.eyebrow}
+        <p
+          class="text-light font-heading text-[clamp(0.8125rem,1.25vw,1.125rem)] tracking-[1.5px] uppercase"
+        >
+          {slice.primary.eyebrow}
+        </p>
+      {/if}
+      {#if hasHeading}
+        <div class="hero-heading text-cream font-heading">
+          <PrismicRichText field={slice.primary.heading} />
+        </div>
+      {/if}
+      {#if ctas.length}
+        <div class="reveal flex flex-wrap gap-5" class:is-in={ctasIn}>
+          {#each ctas as cta, i (i)}
+            <PrismicLink
+              field={cta.cta_link}
+              class="bg-green-btn text-green font-button inline-flex h-10 items-center justify-center rounded-full px-3.75 text-[10px] tracking-[1px] uppercase"
+            >
+              {cta.cta_label}
+            </PrismicLink>
+          {/each}
+        </div>
+      {/if}
+    </div>
+
+    <div class="hero-bar bg-green-btn absolute inset-x-0 bottom-0 flex items-center justify-center">
+      <img src="/arrow-down.svg" alt="" aria-hidden="true" class="hero-arrow" />
+    </div>
   </div>
 </section>
 
 <style>
-  /* The scroll runway. Only exists when motion is allowed — under reduced
-     motion the section collapses to the comp's static band, set in CSS rather
-     than JS so the first paint is already correct and nothing shifts. */
+  /* The scroll runway. Under reduced motion it collapses to the comp's band,
+     set in CSS rather than JS so the first paint is already correct. */
   .heart-hero {
-    min-height: 220vh;
+    min-height: 260vh;
   }
 
   .heart-hero-stage {
@@ -184,6 +224,67 @@
     /* Width drives it; height follows the mask's own 669.436/584 aspect. */
     -webkit-mask-size: var(--heart-size) auto;
     mask-size: var(--heart-size) auto;
+  }
+
+  .hero-scrim {
+    background: linear-gradient(
+      to top,
+      rgb(0 0 0 / 0.55) 0%,
+      rgb(0 0 0 / 0.28) 34%,
+      rgb(0 0 0 / 0) 62%
+    );
+  }
+
+  .hero-copy {
+    left: 5.53%;
+    right: 5.53%;
+    bottom: 26.05%;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: clamp(1.25rem, 2.8vw, 2.5rem);
+  }
+
+  @media (min-width: 768px) {
+    .hero-copy {
+      right: auto;
+      max-width: 43.8%;
+    }
+  }
+
+  .hero-heading :global(h1),
+  .hero-heading :global(h2) {
+    font-size: clamp(1.5rem, 2.78vw, 2.5rem);
+    line-height: 1.25;
+  }
+
+  .hero-bar {
+    height: 11.63%;
+    min-height: 3.5rem;
+  }
+
+  .hero-arrow {
+    width: clamp(2rem, 4.6vw, 4.146rem);
+    height: auto;
+  }
+
+  /* Staged reveal. Opacity + translate only, never display/visibility, so the
+     heading and links stay in the accessibility tree and the tab order the
+     whole time. :focus-within is the escape hatch — a keyboard user who tabs
+     to a CTA before scrolling gets it revealed rather than focusing something
+     invisible. */
+  .reveal {
+    opacity: 0;
+    transform: translateY(1.25rem);
+    transition:
+      opacity 700ms ease-out,
+      transform 700ms ease-out;
+  }
+
+  .reveal.is-in,
+  .reveal:focus-within {
+    opacity: 1;
+    transform: none;
   }
 
   .texture-full {
@@ -206,6 +307,7 @@
       height: 100%;
     }
 
+    .reveal,
     .texture-full {
       transition: none;
     }
