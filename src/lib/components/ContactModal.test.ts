@@ -1,4 +1,4 @@
-import { render, cleanup } from "@testing-library/svelte";
+import { render, cleanup, fireEvent } from "@testing-library/svelte";
 import { tick } from "svelte";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { contactModal } from "$lib/contact-modal.svelte";
@@ -34,6 +34,19 @@ vi.mock("$env/dynamic/public", () => ({ env: {} }));
 const ContactModal = (await import("./ContactModal.svelte")).default;
 
 afterEach(() => cleanup());
+
+/** The form now validates before it posts, so a submit must have something to
+ *  post. Fills the three required fields the way a visitor would. */
+async function fill(container: HTMLElement) {
+  for (const [name, value] of [
+    ["name", "Ada Lovelace"],
+    ["email", "ada@example.com"],
+    ["message", "Hello"],
+  ] as const) {
+    const el = container.querySelector<HTMLInputElement>(`[name='${name}']`)!;
+    await fireEvent.input(el, { target: { value } });
+  }
+}
 
 beforeEach(() => {
   contactModal.open = false;
@@ -120,6 +133,7 @@ describe("ContactModal", () => {
   it("shows the confirmation and moves focus to it on success", async () => {
     const { container } = render(ContactModal);
     await open();
+    await fill(container);
     container.querySelector("form")!.dispatchEvent(new Event("submit", { cancelable: true }));
     await tick();
     expect(submitResult).not.toBeNull();
@@ -134,6 +148,7 @@ describe("ContactModal", () => {
   it("shows the action's own failure copy and keeps what was typed", async () => {
     const { container } = render(ContactModal);
     await open();
+    await fill(container);
     const nameInput = container.querySelector<HTMLInputElement>("input[name='name']")!;
     nameInput.value = "Ada";
     nameInput.dispatchEvent(new Event("input"));
@@ -153,6 +168,7 @@ describe("ContactModal", () => {
   it("falls back to its own copy when the failure carries none", async () => {
     const { container } = render(ContactModal);
     await open();
+    await fill(container);
     container.querySelector("form")!.dispatchEvent(new Event("submit", { cancelable: true }));
     await tick();
     await submitResult!({ result: { type: "error", error: new Error("network") } });

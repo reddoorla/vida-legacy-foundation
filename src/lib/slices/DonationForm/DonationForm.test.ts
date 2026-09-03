@@ -125,6 +125,17 @@ describe("DonationForm slice", () => {
     const { container } = render(DonationForm, { props: { slice: make() } });
     const status = container.querySelector("[role='status']")!;
     expect(status.textContent?.trim()).toBe("");
+    // The form validates before it does anything else, so it needs something
+    // to submit.
+    for (const [name, value] of [
+      ["first_name", "Ada"],
+      ["last_name", "Lovelace"],
+      ["email", "ada@example.com"],
+    ] as const) {
+      await fireEvent.input(container.querySelector<HTMLInputElement>(`[name='${name}']`)!, {
+        target: { value },
+      });
+    }
     const event = new Event("submit", { bubbles: true, cancelable: true });
     await fireEvent(container.querySelector("form")!, event);
     expect(event.defaultPrevented).toBe(true);
@@ -189,5 +200,27 @@ describe("DonationForm slice", () => {
     const radios = [...container.querySelectorAll<HTMLInputElement>("input[name='amount']")];
     expect(radios.map((r) => r.value)).toEqual(["custom"]);
     expect(radios[0].checked).toBe(true);
+  });
+
+  it("reports its own field messages, in the page's language", async () => {
+    // Native constraint validation speaks the BROWSER's language and puts the
+    // message in a transient bubble that is not in the accessibility tree as
+    // an error. The page writes them instead.
+    const { container } = render(DonationForm, {
+      props: { slice: make(), context: { lang: "es" } },
+    });
+    await fireEvent(
+      container.querySelector("form")!,
+      new Event("submit", { bubbles: true, cancelable: true }),
+    );
+    const alerts = [...container.querySelectorAll("[role='alert']")];
+    expect(alerts.length).toBe(3);
+    expect(alerts[0].textContent?.trim()).toBe("Por favor, complete este campo.");
+    const first = container.querySelector<HTMLInputElement>("[name='first_name']")!;
+    expect(first.getAttribute("aria-invalid")).toBe("true");
+    expect(first.getAttribute("aria-describedby")).toBe(alerts[0].id);
+    // And it clears the moment the field is put right.
+    await fireEvent.input(first, { target: { value: "Ada" } });
+    expect(container.querySelectorAll("[role='alert']").length).toBe(2);
   });
 });

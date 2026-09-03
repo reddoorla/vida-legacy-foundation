@@ -1,5 +1,11 @@
 <script lang="ts">
   import RichTextBody from "$lib/components/RichTextBody.svelte";
+  import {
+    validationCopy,
+    validateForm,
+    focusFirstInvalid,
+    fieldError,
+  } from "$lib/form-validation";
   import ContentBand from "$lib/components/ContentBand.svelte";
   import { PrismicLink } from "@prismicio/svelte";
   import { isFilled, type Content } from "@prismicio/client";
@@ -15,6 +21,23 @@
   };
   let { slice, context }: Props = $props();
   const lang = $derived(context?.lang ?? DEFAULT_LANG);
+
+  const invalidCopy = $derived(validationCopy(lang));
+  let errors = $state<Record<string, string>>({});
+  let formEl = $state<HTMLFormElement | null>(null);
+
+  // `novalidate` from an effect, so it applies only where scripts run and the
+  // page can report the errors itself; without them the inputs' own
+  // constraints still guard the form.
+  $effect(() => {
+    formEl?.setAttribute("novalidate", "");
+  });
+
+  function recheck(e: Event) {
+    const el = e.currentTarget as HTMLInputElement;
+    if (!errors[el.name]) return;
+    if (!fieldError(el, invalidCopy)) errors = { ...errors, [el.name]: "" };
+  }
 
   // The field labels live in code, not in the slice model — the same split as
   // the contact page. They belong to the field SET, which is the payload the
@@ -121,9 +144,30 @@
   // URL.
   function onsubmit(event: SubmitEvent) {
     event.preventDefault();
+    const form = event.currentTarget as HTMLFormElement;
+    // The page writes its own field messages, in the page's language — the
+    // browser's are in the BROWSER's, and go in a transient bubble that is
+    // not in the accessibility tree as an error. See $lib/form-validation.
+    const found = validateForm(form, invalidCopy);
+    errors = found;
+    if (Object.keys(found).length > 0) {
+      focusFirstInvalid(form, found);
+      return;
+    }
     submitted = true;
   }
 </script>
+
+<!-- One field's error, in a real element the field points at — not the
+     browser's bubble, which is transient, one at a time, and in the browser's
+     own language. The accent red is 10.67:1 on this cream panel. -->
+{#snippet fieldMessage(name: string)}
+  {#if errors[name]}
+    <p id={id(`${name}-error`)} role="alert" class="text-accent text-sm leading-5">
+      {errors[name]}
+    </p>
+  {/if}
+{/snippet}
 
 <!--
   Figma 5328:1611 — the Donation page: "Value Prop #1" (the heading and the
@@ -247,6 +291,7 @@
       </div>
 
       <form
+        bind:this={formEl}
         class="panel relative min-w-0 flex-1 overflow-hidden rounded-[20px] p-6 md:p-10"
         aria-labelledby={id("form-heading")}
         {onsubmit}
@@ -278,11 +323,15 @@
                   class="vlf-field"
                   id={id("first-name")}
                   name="first_name"
+                  aria-invalid={errors["first_name"] ? "true" : undefined}
+                  aria-describedby={errors["first_name"] ? id("first_name-error") : undefined}
+                  oninput={recheck}
                   type="text"
                   autocomplete="given-name"
                   required
                   placeholder={copy.firstName}
                 />
+                {@render fieldMessage("first_name")}
               </div>
               <div class="min-w-0 flex-1">
                 <label class="sr-only" for={id("last-name")}>{copy.lastName}</label>
@@ -290,11 +339,15 @@
                   class="vlf-field"
                   id={id("last-name")}
                   name="last_name"
+                  aria-invalid={errors["last_name"] ? "true" : undefined}
+                  aria-describedby={errors["last_name"] ? id("last_name-error") : undefined}
+                  oninput={recheck}
                   type="text"
                   autocomplete="family-name"
                   required
                   placeholder={copy.lastName}
                 />
+                {@render fieldMessage("last_name")}
               </div>
             </div>
           </fieldset>
@@ -309,11 +362,15 @@
               class="vlf-field"
               id={id("email")}
               name="email"
+              aria-invalid={errors["email"] ? "true" : undefined}
+              aria-describedby={errors["email"] ? id("email-error") : undefined}
+              oninput={recheck}
               type="email"
               autocomplete="email"
               required
               placeholder={copy.emailHint}
             />
+            {@render fieldMessage("email")}
           </div>
 
           <fieldset class="flex min-w-0 flex-col gap-[5px]">
