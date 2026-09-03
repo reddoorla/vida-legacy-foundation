@@ -1,7 +1,23 @@
 import { render, fireEvent } from "@testing-library/svelte";
-import { describe, it, expect, beforeAll } from "vitest";
+import { describe, it, expect, beforeAll, vi } from "vitest";
 import type { Content } from "@prismicio/client";
 import PersonGrid from "./index.svelte";
+
+// jsdom has no Web Animations; Modal's entrance runs on element.animate. The
+// mock also lets the suite assert that the entrance actually starts.
+const animate = vi.fn(
+  () =>
+    ({
+      finished: Promise.resolve(),
+      cancel() {},
+      pause() {},
+      play() {},
+      currentTime: 0,
+      playState: "running",
+      onfinish: null,
+      oncancel: null,
+    }) as unknown as Animation,
+);
 
 beforeAll(() => {
   // jsdom < v26 polyfill: ensure showModal/close exist (same shim Modal.test
@@ -14,6 +30,8 @@ beforeAll(() => {
       this.open = false;
     };
   }
+  if (!Element.prototype.getAnimations) Element.prototype.getAnimations = () => [];
+  Element.prototype.animate = animate;
 });
 
 const headshot = (alt: string) => ({
@@ -132,9 +150,19 @@ describe("PersonGrid slice", () => {
     await fireEvent.click(container.querySelector("li button")!);
     // The sheet sits inside Modal's own backdrop element now.
     const panel = container.querySelector("dialog [data-backdrop] > div");
+    // And it ENTERS: the Modal is created already open, so only a global
+    // transition plays — a local one would skip the entrance (review round 3).
+    expect(animate).toHaveBeenCalled();
     expect(panel).not.toBeNull();
     expect(panel?.className).toContain("bg-green-deep!");
     expect(container.querySelector("dialog")?.textContent).toContain("Brooke Perucki bio copy.");
+    // Named by the person: on a phone the headshot is hidden, so the heading
+    // is the only thing identifying the pop-up.
+    const dialog = container.querySelector("dialog")!;
+    const named = container.querySelector(
+      `#${CSS.escape(dialog.getAttribute("aria-labelledby")!)}`,
+    );
+    expect(named?.textContent?.trim()).toBe("Brooke Perucki");
   });
 
   it("builds the mailto from a bare address", () => {

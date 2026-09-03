@@ -108,6 +108,24 @@ describe("LeadText slice", () => {
     expect(container.querySelector("section")?.className).toContain("sticky-cover");
   });
 
+  it("holds the statement at the bottom of a full screen of navy", () => {
+    // The closing cream panel rolls up over this band, so it has to BE the
+    // screen — a short band would leave the page's own ground showing above
+    // it — and the comp's line sits at the bottom edge, not the top.
+    const statement = {
+      slice_type: "lead_text",
+      variation: "statement",
+      primary: { body: [{ type: "paragraph", text: "Hope that heals.", spans: [] }] },
+      items: [],
+    } as never;
+    const { container } = render(LeadText, { props: { slice: statement } });
+    const section = container.querySelector("section")!;
+    expect(section.className).toContain("min-h-dvh");
+    expect(section.className).toContain("items-end");
+    expect(section.className).toContain("bg-dark");
+    expect(section.className).toContain("sticky-cover");
+  });
+
   it("renders no eyebrow heading in the statement variation", () => {
     const statement = {
       slice_type: "lead_text",

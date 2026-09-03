@@ -310,7 +310,11 @@ decide most of it and are invisible in a screenshot:
   and `$lib/actions/stickyCover` (on `<main>`) measures each band so a tall
   one holds by its bottom edge. `CtaBanner onCream` is a full-bleed cream
   panel on a transparent section: its rounded corners show the pinned band
-  through, whatever colour that band is.
+  through, whatever colour that band is. The homepage's closing statement
+  ("Hope that heals. Help that Lasts.") is a departure the client asked for:
+  that band is a full screen of navy (`min-h-dvh`) with the line at its BOTTOM
+  edge, so the panel rolls up over a whole screen of colour instead of over a
+  303px strip with the page's own ground showing above it.
 
 The VLF variations that sit in the comp's right-hand column (952.5 of the
 1280 grid, from x=407.5) carry a `layout` Select — `float right` (the comp,
@@ -370,6 +374,9 @@ cream `bg-background/95` bar with the default lockup; that state is measured
 from the DOM (`#main-content`'s first child), not a scroll offset, because
 HeartHero is a 260vh runway and the swap must not fire mid-hero.
 
+Below `md` the bar also leaves once the first section is past — see "Mobile is
+not the comp scaled down" below.
+
 The three lockup files in `static/` are the same shipped SVG with each
 variant's fills — `navbar-white` really does set `FOUNDATION` and the heart to
 `#FFFFFF`, not cream — not redraws.
@@ -387,16 +394,61 @@ The open menu (`5314:1679`) is `NavMenu`, extracted so the a11y fixtures can
 render it in-flow (`inline`) — the real one is not in the DOM until opened, so
 that fixture is the only thing that puts its colours in front of axe.
 
-**Switching language does not reload, and does not fade.** The toggle is a
-plain Kit link with `data-sveltekit-noscroll`, so the reader keeps their place;
-the layout's `onNavigate`wraps that one navigation (the target is`switchTo.href`) in a view transition — the browser's own crossfade of the
-whole document, 350ms in app.css, skipped where unsupported or under reduced
-motion — and an effect restamps `<html lang>`, which hooks.server.ts only
-sets per request. Every other route change goes through `TransitionOverlay`,
-which is the menu's textured dark green (not the fleet's black) and takes a
-`skip` predicate: the contact link is cancelled into the modal, and a cancelled
-navigation never fires `afterNavigate`, so without the skip the overlay stayed
-up behind the dialog for good.
+**Switching language does not reload, and does not fade.** The toggle is
+`LangToggle` — a plain Kit link with `data-sveltekit-noscroll`, so the reader
+keeps their place — and the open menu carries the same control under its
+entries (round 3: not the language's name as a text link). The layout's
+`onNavigate` wraps that one navigation (the target is `switchTo.href`) in a
+view transition — the browser's own crossfade of the whole document, 350ms in
+app.css, skipped where unsupported or under reduced motion — and an effect
+restamps `<html lang>`, which hooks.server.ts only sets per request. Nav keeps
+the menu OPEN across a switch (the new path is the one the toggle offered), so
+the entries change language under the visitor; any other route closes it. The
+toggle moves focus to its new link after a press, because the pressed side
+becomes the marked span.
+
+**Every other route change is a hard swap, and the overlay is a loading cover,
+not a page effect** (round 3: "only if we actually need it for loading").
+`TransitionOverlay` shows only if a navigation is still pending after 200ms,
+then holds at least 400ms and fades over 400 — a prerendered page usually
+lands inside the delay and nothing is shown. It is the menu's textured dark
+green (not the fleet's black) and takes a `skip` predicate: the contact link is
+cancelled into the modal, and a cancelled navigation never fires
+`afterNavigate`, so without the skip the overlay would come up and stay.
+
+## Mobile is not the comp scaled down
+
+The comps are 1440x860 landscape and every full-bleed measurement in them is a
+percentage of WIDTH. A 390x664 phone breaks four of those outright, and each
+fix is measured, not guessed (review round 3, 2026-09-03):
+
+- **The heart never opened.** `heartEndPct` (`src/lib/slices/HeartHero/heart.ts`)
+  replaces the hard-coded 187.2%: the comp's open mask is 2696x2352 on an
+  860px band, so what it really fixes is the heart at **2.735x the band's
+  height** — which is why its cleft and point sit off-screen and the photo
+  fills the frame. Held as a ratio, the comp's own band still computes 187.2%
+  and a phone gets ~534%. The stage is measured with a ResizeObserver in both
+  motion modes, since reduced motion lands on the open frame.
+- **Full-bleed photos were center-cropped AND magnified.** On a phone the
+  browser picked a 390px-wide candidate for a 390px-wide box, then
+  `object-cover` scaled it 2.8x to fill a 664px-tall one — the about
+  masthead's embrace became a forehead. `HeroBackgroundImage` takes a
+  `portrait` aspect and emits a `<picture>` whose narrow-viewport `<source>`
+  is an imgix crop at that shape around any face it finds
+  (`portraitSrcset` in `$lib/utils/image`), with one `<link rel=preload>` per
+  source carrying its own `media` so the browser preloads what it will
+  actually pick. The `<picture>` is `display: contents`, or the `<img>`'s
+  `h-full`/`absolute` would resolve against an inline box with no height.
+  Set it on a hero whose box is the viewport; leave it off a band that keeps
+  the comp's landscape shape at every width.
+- **The bar goes away below 767px** once the first section is behind you
+  (`data-hidden` on the `<nav>`): these pages are short and few, and a fixed
+  bar costs a tenth of a phone screen all the way down. Any upward scroll
+  brings it back, as does `focus-within`, so a keyboard visitor can never tab
+  to an off-screen control. Desktop is unchanged.
+- **The bio pop-up drops its headshot below md.** The visitor tapped that very
+  face on the card, and at 390px the square photo pushed the name, role and
+  bio off the screen. The comp's two-column pop-up is a desktop shape.
 
 ## The donation form's labels are code, its copy is content
 
@@ -443,7 +495,10 @@ because `::backdrop` cannot transition out, and the sheet mounts with Svelte
 `fade`/`fly` from `$lib/transitions`. Closing runs the outro first and only
 then closes the dialog and calls `onclose` — so a parent that unmounts the
 Modal on close (`PersonGrid`) does not cut the exit short. Escape is taken
-through the same path via `cancel`.
+through the same path via `cancel`. The transitions are `|global`: PersonGrid
+creates its Modal already open, and a local intro only plays when its own
+block toggles — without the modifier the bios left with an animation and
+arrived without one.
 
 ## The footer is chrome, not a slice
 

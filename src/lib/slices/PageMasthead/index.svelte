@@ -1,5 +1,6 @@
 <script lang="ts">
   import HeroBackgroundImage from "$lib/components/HeroBackgroundImage.svelte";
+  import { PORTRAIT_HERO_ASPECT } from "$lib/utils/image";
   import { isFilled, type Content } from "@prismicio/client";
 
   let { slice }: { slice: Content.PageMastheadSlice } = $props();
@@ -89,9 +90,14 @@
   <div class="page-masthead-stage relative w-full overflow-hidden" style="--opened: {opened}">
     {#if hasImage}
       <div class="masthead-window absolute inset-0">
+        <!-- portrait: on a phone the window is the whole viewport, so the
+             landscape master was center-cropped AND magnified — the comp's
+             embrace became a forehead. imgix crops around the face instead. -->
         <HeroBackgroundImage
           image={slice.primary.image}
           preload={true}
+          portrait={PORTRAIT_HERO_ASPECT}
+          portraitMedia="(max-width: 767px) and (prefers-reduced-motion: no-preference)"
           class="h-full w-full object-cover"
         />
         <!-- The comp's own gradient: tonal, not a legibility scrim. -->

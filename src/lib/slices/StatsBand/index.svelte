@@ -46,9 +46,11 @@
 
   Inside the card the comp is 40 from the eyebrow's cap to the figures' cap,
   20 between a figure, its copy and the button, and four 282.5px columns
-  30 apart. The four columns hold only while the button fits one line: at
-  lg the column is 178px against the 217px pill, so the grid goes 2x2 below
-  xl (1340) rather than wrapping the button.
+  30 apart. The four columns hold only while the button fits one line, and
+  that is true at the comp's own width and no narrower: 282.5px of column
+  against a 279px pill at 1440, 242px at Tailwind's xl. So the grid goes 2x2
+  below 1440 rather than wrapping the button — the round-1 note asked for
+  exactly that ("go to a 2x2 grid before the register button wraps").
 -->
 <section
   data-slice-type={slice.slice_type}
@@ -73,7 +75,7 @@
         {/if}
 
         {#if stats.length}
-          <div class="grid gap-[30px] sm:grid-cols-2 xl:grid-cols-4">
+          <div class="grid gap-[30px] sm:grid-cols-2 wide:grid-cols-4">
             {#each stats as stat, i (i)}
               <div class="flex flex-col items-start gap-5">
                 {#if stat.value !== null}

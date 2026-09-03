@@ -40,6 +40,12 @@
   function close() {
     openIndex = null;
   }
+
+  // The pop-up is named by the person it is about — without it a screen reader
+  // announces an anonymous dialog, and on a phone the headshot (its only other
+  // anchor) is hidden.
+  const uid = $props.id();
+  const bioNameId = `${uid}-bio-name`;
 </script>
 
 <!--
@@ -200,6 +206,7 @@
   <Modal
     {open}
     onclose={close}
+    labelledby={current.name ? bioNameId : undefined}
     dialogClass="max-w-[1200px]"
     class="bg-green-deep! relative overflow-hidden rounded-[20px]! shadow-none!"
     closeClass="text-green hover:text-background"
@@ -212,7 +219,12 @@
     ></div>
     <div class="relative flex flex-col gap-[30px] md:flex-row md:items-start">
       {#if isFilled.image(current.headshot)}
-        <div class="aspect-square w-full shrink-0 overflow-hidden rounded-[20px] md:w-[296px]">
+        <!-- Hidden on a phone: the visitor tapped this very face on the card,
+             and at 390px the square photo pushed the name, role and bio off
+             the screen. The comp's two-column pop-up is a desktop shape. -->
+        <div
+          class="hidden aspect-square w-full shrink-0 overflow-hidden rounded-[20px] md:block md:w-[296px]"
+        >
           <HeroBackgroundImage
             image={current.headshot}
             preload={false}
@@ -223,7 +235,7 @@
       <div class="flex min-w-0 flex-col gap-10 md:p-5">
         <div class="flex flex-col gap-2.5">
           {#if current.name}
-            <h2 class="t-label-lg text-green">
+            <h2 id={bioNameId} class="t-label-lg text-green">
               {current.name}
             </h2>
           {/if}

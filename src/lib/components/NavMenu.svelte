@@ -3,6 +3,7 @@
   import { fade } from "$lib/transitions";
   import type { NavItem } from "$lib/site-config";
   import { DEFAULT_LANG, localizePath, type Lang, type SwitchTarget } from "$lib/locale";
+  import LangToggle from "./LangToggle.svelte";
 
   interface Props {
     entries: NavItem[];
@@ -16,8 +17,8 @@
     inline?: boolean;
     /** The page's locale — the lockup links to that locale's home. */
     lang?: Lang;
-    /** The other locale's version of this page; rendered under the entries
-     * when present (see Nav). */
+    /** The other locale's version of this page — the toggle under the
+     * entries links to it (see LangToggle). */
     switchTo?: SwitchTarget;
   }
 
@@ -76,19 +77,26 @@
           class="h-[30px] w-auto"
         />
       </a>
-      <!-- The comp's 20px close glyph (Figma 5314:1706) in a 44px target. -->
-      <button
-        type="button"
-        class="text-green -mr-3 flex h-11 w-11 items-center justify-center"
-        aria-label="Close menu"
-        onclick={onClose}
-      >
-        <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-          <path
-            d="M17.7606 15.5001L12.1208 9.86028L17.7606 4.22048C18.0004 3.98064 18.0004 3.60016 17.7606 3.38064L16.0606 1.68064L10.0004 7.74004L3.92076 1.66044L2.22076 3.36044C1.98092 3.60028 1.98092 3.98076 2.22076 4.20028L7.86057 9.84008L2.24017 15.5003C2.00032 15.7401 2.00032 16.1206 2.24017 16.3401L3.94016 18.0401L10.0004 11.9799L16.08 18.0595L17.78 16.3595C18.0003 16.1205 18.0004 15.7399 17.7606 15.5001Z"
-          />
-        </svg>
-      </button>
+      <div class="flex items-center gap-4">
+        <!-- The bar's EN | ES toggle, in the same place the bar keeps it and in
+             its on-dark clothes. It does not close the menu: the switch is the
+             same page in the other language, crossfaded in place, and Nav
+             keeps the menu open across it so the entries change language. -->
+        <LangToggle {lang} {switchTo} tone="onDark" viewName="lang-pill-menu" />
+        <!-- The comp's 20px close glyph (Figma 5314:1706) in a 44px target. -->
+        <button
+          type="button"
+          class="text-green -mr-3 flex h-11 w-11 items-center justify-center"
+          aria-label="Close menu"
+          onclick={onClose}
+        >
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+            <path
+              d="M17.7606 15.5001L12.1208 9.86028L17.7606 4.22048C18.0004 3.98064 18.0004 3.60016 17.7606 3.38064L16.0606 1.68064L10.0004 7.74004L3.92076 1.66044L2.22076 3.36044C1.98092 3.60028 1.98092 3.98076 2.22076 4.20028L7.86057 9.84008L2.24017 15.5003C2.00032 15.7401 2.00032 16.1206 2.24017 16.3401L3.94016 18.0401L10.0004 11.9799L16.08 18.0595L17.78 16.3595C18.0003 16.1205 18.0004 15.7399 17.7606 15.5001Z"
+            />
+          </svg>
+        </button>
+      </div>
     </div>
 
     <!-- Keyed by index: labels and hrefs are not unique (two empty hrefs would
@@ -136,19 +144,6 @@
         </li>
       {/each}
     </ul>
-
-    {#if switchTo}
-      <a
-        href={switchTo.href}
-        hreflang={switchTo.lang}
-        lang={switchTo.lang}
-        data-sveltekit-noscroll
-        onclick={onClose}
-        class="text-background font-heading w-fit text-2xl hover:text-green focus-visible:text-green"
-      >
-        {switchTo.label}
-      </a>
-    {/if}
   </div>
 </div>
 

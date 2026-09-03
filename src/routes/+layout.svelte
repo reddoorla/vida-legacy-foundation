@@ -39,6 +39,11 @@
   );
   const switchTo = $derived(switchTarget(lang, page.data.alternates, page.url.pathname));
 
+  // The one navigation that is not a page change: the same page in the other
+  // language (see onNavigate below, and LangToggle).
+  const isLanguageSwitch = (to: URL | null | undefined) =>
+    !!to && !!switchTo && to.pathname === switchTo.href;
+
   // Any link to the contact route opens the contact modal instead of
   // navigating — the nav's "Contact Us", a footer row, a Prismic link field.
   // Intercepted in the router (the PreNavTransition idea: cancel, then do
@@ -47,9 +52,14 @@
   // real route, so without scripts (and for the crawler) the link is the
   // contact page, which renders the same panel in-flow; modified clicks open
   // it in a new tab as usual, since those never reach the router.
+  //
+  // The language switch is the exception: /contact and /es/contact are BOTH
+  // in this set, so without the guard the toggle on the contact page cancelled
+  // itself and reopened the modal in the language you were already reading.
   const CONTACT_PATHS = new Set(LANGS.map((l) => localizePath("/contact", l)));
   beforeNavigate((nav) => {
     if (nav.type !== "link" || !nav.to || !CONTACT_PATHS.has(nav.to.url.pathname)) return;
+    if (isLanguageSwitch(nav.to.url)) return;
     nav.cancel();
     contactModal.open = true;
   });
@@ -67,8 +77,6 @@
   // data-sveltekit-noscroll, so the reader keeps their place while the copy
   // changes under them. Skipped where the API is missing and under reduced
   // motion, where the swap is simply instant.
-  const isLanguageSwitch = (to: URL | null | undefined) =>
-    !!to && !!switchTo && to.pathname === switchTo.href;
   onNavigate((nav) => {
     if (!isLanguageSwitch(nav.to?.url) || prefersReducedMotion()) return;
     const start = (document as Document & { startViewTransition?: unknown }).startViewTransition;

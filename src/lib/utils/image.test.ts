@@ -1,5 +1,12 @@
 import { describe, it, expect } from "vitest";
-import { isPrismicImageUrl, imgix, srcset, DEFAULT_IMAGE_WIDTHS } from "./image";
+import {
+  isPrismicImageUrl,
+  imgix,
+  srcset,
+  DEFAULT_IMAGE_WIDTHS,
+  portraitSrcset,
+  PORTRAIT_HERO_ASPECT,
+} from "./image";
 
 const PRISMIC_URL = "https://images.prismic.io/repo/abc123_hero.jpg?auto=compress";
 
@@ -115,5 +122,36 @@ describe("srcset", () => {
       expect(url.searchParams.has("h")).toBe(false);
       expect(url.searchParams.get("rect")).toBe("120,80,2400,1350");
     }
+  });
+});
+
+describe("portraitSrcset", () => {
+  const url = "https://images.prismic.io/repo/abc_hero.jpg";
+
+  it("crops every candidate to the phone's shape, around a face", () => {
+    const set = portraitSrcset(url, PORTRAIT_HERO_ASPECT)!;
+    const first = set.split(", ")[0];
+    expect(first).toContain("w=390");
+    // 16/9 of 390, rounded.
+    expect(first).toContain("h=693");
+    expect(first).toContain("fit=crop");
+    expect(first).toContain("crop=faces%2Ccenter");
+    expect(first.endsWith(" 390w")).toBe(true);
+    // The ladder climbs high enough for a 3x phone.
+    expect(set).toContain("1170w");
+  });
+
+  it("keeps both dimensions, so the candidate really is portrait", () => {
+    // imgix drops the other dimension when only one is set (see imgix()); the
+    // portrait ladder must pass both or the crop silently becomes a resize.
+    for (const candidate of portraitSrcset(url, 1.5)!.split(", ")) {
+      const q = new URL(candidate.split(" ")[0]).searchParams;
+      expect(Number(q.get("h"))).toBe(Math.round(Number(q.get("w")) * 1.5));
+    }
+  });
+
+  it("returns undefined for a non-Prismic url, so the <source> is omitted", () => {
+    expect(portraitSrcset("https://example.com/a.jpg", 1.5)).toBeUndefined();
+    expect(portraitSrcset(undefined, 1.5)).toBeUndefined();
   });
 });
