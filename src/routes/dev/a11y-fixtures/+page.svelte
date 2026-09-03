@@ -477,11 +477,13 @@
     items: [],
   } as unknown as Content.StatementPanelSlice;
 
-  // Two PersonGrid fixtures on purpose: the heading levels SHIFT with the
+  // Three PersonGrid fixtures on purpose: the heading levels SHIFT with the
   // display heading (h2/h3/h4 with it, h2/h3 without), and rendering both is
   // what lets axe's heading-order rule audit the promotion. The second is the
   // board style — the lighter cream band with page-cream cards and the -aa
-  // green copy — so both card palettes go in front of axe.
+  // green copy — so both card palettes go in front of axe. The third is the
+  // bio-only card the site launches with (`headshots` off), whose name
+  // carries the display size instead of the label size.
   const person = (name: string, role: string, withBio: boolean) => ({
     headshot: { url: placeholder.portrait, alt: name, dimensions: { width: 592, height: 592 } },
     name,
@@ -502,6 +504,7 @@
       ],
       label: "Leadership",
       intro: [{ type: "paragraph", text: "Our staff is dedicated to the mission.", spans: [] }],
+      headshots: true,
     },
     items: [
       person("Brooke Perucki", "Executive Director", true),
@@ -515,6 +518,15 @@
       style: "board",
       heading: [],
       label: "Board of Directors",
+    },
+  } as unknown as Content.PersonGridSlice;
+  const personGridBioOnlyFixture = {
+    ...personGridFixture,
+    primary: {
+      ...personGridFixture.primary,
+      headshots: false,
+      heading: [],
+      label: "Leadership, bio only",
     },
   } as unknown as Content.PersonGridSlice;
 
@@ -841,6 +853,7 @@
   <StatementPanel slice={statementPanelFixture} />
   <PersonGrid slice={personGridFixture} />
   <PersonGrid slice={personGridNoHeadingFixture} />
+  <PersonGrid slice={personGridBioOnlyFixture} />
   <DonationForm slice={donationLinksFixture} />
   <DonationForm slice={donationFormFixture} />
 </div>

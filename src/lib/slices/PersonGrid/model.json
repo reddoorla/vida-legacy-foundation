@@ -2,7 +2,7 @@
   "id": "person_grid",
   "type": "SharedSlice",
   "name": "PersonGrid",
-  "description": "A labelled group of people — headshot cards with an optional bio pop-up",
+  "description": "A labelled group of people \u2014 headshot cards with an optional bio pop-up",
   "variations": [
     {
       "id": "default",
@@ -21,11 +21,20 @@
             "default_value": "leadership"
           }
         },
+        "headshots": {
+          "type": "Boolean",
+          "config": {
+            "label": "headshots",
+            "placeholder_false": "Bio only (no photographs)",
+            "placeholder_true": "Cards carry a headshot",
+            "default_value": false
+          }
+        },
         "heading": {
           "type": "StructuredText",
           "config": {
             "label": "heading",
-            "placeholder": "e.g. A Team That Cares — optional; only the first group on a page needs one",
+            "placeholder": "e.g. A Team That Cares \u2014 optional; only the first group on a page needs one",
             "allowTargetBlank": true,
             "single": "heading2",
             "labels": ["highlight"]
@@ -77,7 +86,7 @@
           "type": "Text",
           "config": {
             "label": "email",
-            "placeholder": "e.g. brooke@vidalegacy.org — the component makes the mailto:"
+            "placeholder": "e.g. brooke@vidalegacy.org \u2014 the component makes the mailto:"
           }
         },
         "bio": {
