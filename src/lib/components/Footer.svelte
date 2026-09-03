@@ -61,7 +61,7 @@
   // line pitch, and `\n` in the config is that break.
   const TONE: Record<string, string> = {
     detail: "text-primary t-label whitespace-pre-line",
-    fine: "text-green-mid-aa font-button text-[10px] leading-[1.5] tracking-[1px] uppercase whitespace-pre-line",
+    fine: "text-green-mid-aa font-button text-[10px] leading-[1.5] tracking-[1.5px] uppercase whitespace-pre-line",
   };
   const toneClass = (item: FooterText) =>
     (item.tone && TONE[item.tone]) ?? "text-dark t-label whitespace-pre-line";
@@ -97,7 +97,7 @@
      whatever panel sits above it rather than restarting on its own colour. The
      columns branch pays its own padding; the placeholder branch keeps the
      template's. -->
-<footer class="bg-background mt-auto w-full {columns?.length ? '' : 'px-8 py-12'}">
+<footer class="bg-background w-full {columns?.length ? '' : 'px-8 py-12'}">
   {#if columns?.length}
     <!-- Figma 5249:1320. The last tenant of the cream closing panel that
          CtaBanner onCream rounds off, so the ground continues rather than

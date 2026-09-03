@@ -139,7 +139,7 @@
     onGreen: { track: "border-green-btn text-green-btn", active: "bg-green-btn text-green" },
   };
   const SEGMENT =
-    "font-button inline-flex h-6 min-w-9 items-center justify-center rounded-full px-2 pb-[1px] text-[10px] tracking-[1px] uppercase";
+    "font-button inline-flex h-6 min-w-9 items-center justify-center rounded-full px-2 pb-[1px] text-[10px] tracking-[1.5px] uppercase";
 </script>
 
 <!-- Figma 5314:2013 (navbar-default), 5314:1743 (navbar) and 5314:1744
@@ -189,11 +189,15 @@
               {LOCALES[code].short}
             </span>
           {:else if switchTo?.lang === code}
+            <!-- data-sveltekit-noscroll: the switch keeps the reader's place —
+                 the same page, the other text — and the layout crossfades it
+                 in place (see onNavigate there). -->
             <a
               href={switchTo.href}
               hreflang={switchTo.lang}
               lang={switchTo.lang}
               aria-label={switchTo.label}
+              data-sveltekit-noscroll
               class="{SEGMENT} hover:opacity-70 {ICON[effectiveTone]}"
             >
               {switchTo.short}

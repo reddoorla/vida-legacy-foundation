@@ -14,6 +14,10 @@ const page = await browser.newPage({
 });
 await page.goto(base + route, { waitUntil: "networkidle" });
 await page.evaluate(() => document.fonts.ready);
+// app.css asks for smooth scrolling; the screenshot must not land mid-glide.
+await page.evaluate(() =>
+  document.documentElement.style.setProperty("scroll-behavior", "auto", "important"),
+);
 const el = page.locator(selector).first();
 await el.scrollIntoViewIfNeeded();
 await page.waitForTimeout(300);

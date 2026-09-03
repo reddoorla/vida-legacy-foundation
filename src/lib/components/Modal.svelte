@@ -1,13 +1,14 @@
 <script lang="ts">
   import { X } from "@lucide/svelte";
   import type { Snippet } from "svelte";
+  import { fade, fly } from "$lib/transitions";
 
   interface ModalProps {
     open: boolean;
     onclose?: () => void;
     class?: string;
-    /** Sizing/skin for the <dialog> itself. Defaults to the fleet's narrow
-     *  centred sheet; override for a wide panel. */
+    /** Sizing/skin for the sheet. Defaults to the fleet's narrow centred
+     *  sheet; override for a wide panel. */
     dialogClass?: string;
     /** Skin for the built-in close button — override when the panel ground is
      *  dark and the default dark-on-light X would vanish into it. */
@@ -32,66 +33,91 @@
   }: ModalProps = $props();
 
   let dialogEl: HTMLDialogElement | undefined = $state();
+  let backdropEl: HTMLElement | undefined = $state();
 
   // No use:trapFocus here: showModal() already gives native focus containment,
   // Escape handling, and focus restore — adding the action would double-trap.
+  //
+  // Opening: the sheet mounts (the {#if open} block, in the same flush) and
+  // THEN the dialog is shown, so the dialog-focusing steps find the content —
+  // an autofocus field — rather than an empty frame. Closing runs the other
+  // way round: `open` goes false, the backdrop fades and the sheet flies out,
+  // and only when that outro has ended (`settle`) does the native dialog
+  // close and `onclose` fire — after the animation, so a parent that unmounts
+  // the Modal on close does not cut the exit short.
   $effect(() => {
-    if (!dialogEl) return;
-    if (open && !dialogEl.open) {
-      dialogEl.showModal();
-    } else if (!open && dialogEl.open) {
-      dialogEl.close();
-    }
+    if (dialogEl && open && !dialogEl.open) dialogEl.showModal();
   });
 
   function close() {
     open = false;
+  }
+
+  function settle() {
+    if (dialogEl?.open) dialogEl.close();
     onclose?.();
   }
 
+  // Escape: the native cancel would close the dialog on the spot; take it
+  // through the outro instead. (A browser may refuse the preventDefault
+  // without recent user activation — then the plain close below applies.)
+  function handleCancel(e: Event) {
+    e.preventDefault();
+    close();
+  }
+
+  // The dialog closed on its own (a refused cancel, a method="dialog" form):
+  // catch the state up, and settle will find it already closed.
+  function handleNativeClose() {
+    if (open) open = false;
+  }
+
+  // The click bubbles from the backdrop (and the dialog's own frame) — but
+  // not from the sheet, which is why the backdrop element is a real child
+  // and not the ::backdrop pseudo, which cannot transition out either.
   function handleBackdropClick(e: MouseEvent) {
-    if (e.target === dialogEl) close();
+    if (e.target === dialogEl || e.target === backdropEl) close();
   }
 </script>
 
-<!-- m-auto + a calc width, NOT w-full mx-4: the preflight zeroes every
-     margin, and a modal dialog is `inset: 0` — with margin 0 it sits in the
-     top-left corner, and with side margins plus a 100% width it is
-     over-constrained and the browser drops the right edge, so the sheet sat
-     flush left. Auto margins on all four sides centre it both ways. -->
+<!-- The <dialog> is a transparent, full-viewport frame kept in the DOM so the
+     effect above can drive showModal/close. m-0 / inset-0 / max-none override
+     the UA's centred fit-content box (the preflight zeroes margins, which put
+     a fit-content dialog in the top-left corner). The dim + blur and the
+     sheet mount inside it while open, and the Svelte transitions run on those:
+     the backdrop fades, the sheet rises in and drops out. -->
 <dialog
   bind:this={dialogEl}
-  onclose={close}
+  onclose={handleNativeClose}
+  oncancel={handleCancel}
   onclick={handleBackdropClick}
   aria-labelledby={labelledby}
-  class="bg-transparent p-0 m-auto w-[calc(100%-2rem)] backdrop:bg-black/40 backdrop:backdrop-blur-sm open:animate-[fade-in_200ms_ease-out] {dialogClass}"
+  class="fixed inset-0 m-0 h-full w-full max-h-none max-w-none bg-transparent p-0 backdrop:bg-transparent"
 >
-  <div
-    class="relative bg-white rounded-lg shadow-xl w-full max-h-[90vh] overflow-y-auto {passedClasses}"
-  >
-    <button
-      type="button"
-      onclick={close}
-      class="absolute top-4 right-4 transition cursor-pointer {closeClass}"
-      aria-label="Close"
+  {#if open}
+    <div
+      bind:this={backdropEl}
+      data-backdrop
+      class="fixed inset-0 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm"
+      transition:fade={{ duration: 200 }}
     >
-      <X size={20} />
-    </button>
-    <div class={bodyClass}>
-      {@render children?.()}
+      <div
+        class="relative max-h-[90vh] w-full overflow-y-auto rounded-lg bg-white shadow-xl {dialogClass} {passedClasses}"
+        transition:fly={{ y: 20, duration: 300 }}
+        onoutroend={settle}
+      >
+        <button
+          type="button"
+          onclick={close}
+          class="absolute top-4 right-4 transition cursor-pointer {closeClass}"
+          aria-label="Close"
+        >
+          <X size={20} />
+        </button>
+        <div class={bodyClass}>
+          {@render children?.()}
+        </div>
+      </div>
     </div>
-  </div>
+  {/if}
 </dialog>
-
-<style>
-  @keyframes fade-in {
-    from {
-      opacity: 0;
-      transform: translateY(10px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-</style>

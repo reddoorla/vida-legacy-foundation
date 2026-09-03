@@ -66,9 +66,11 @@
                  -aa green #507b01 at 4.65:1, not the comp's #527e01 (4.47,
                  which misses AA at body size — see app.css)
 
-  The "+" is a real <button> — the whole headshot is the target — so the bio
-  is reachable by keyboard and announced. It is the comp's 25px badge at the
-  headshot's corner at half opacity, growing to 30 on hover.
+  The whole card opens the bio: a real <button> laid over the card (absolute,
+  inset 0) so it is reachable by keyboard and announced by name, kept UNDER
+  the address link, which stays its own control — no link inside a button.
+  The comp's "+" badge at the headshot's corner (25px at half opacity,
+  growing to 30 while the card is hovered or focused) is decoration beside it.
 -->
 <ContentBand
   sliceType={slice.slice_type}
@@ -106,7 +108,7 @@
       <ul class="flex min-w-0 flex-1 flex-wrap gap-[30px] {board ? 'md:items-center' : ''}">
         {#each people as person, i (i)}
           <li
-            class="relative flex w-full flex-col overflow-hidden rounded-[20px] sm:w-[calc((100%-30px)/2)] md:w-[calc((100%-60px)/3)] {board
+            class="group relative flex w-full flex-col overflow-hidden rounded-[20px] sm:w-[calc((100%-30px)/2)] md:w-[calc((100%-60px)/3)] {board
               ? 'bg-background'
               : 'bg-green-deep'}"
           >
@@ -118,38 +120,23 @@
               style="background-image: url('/texture-grain.webp')"
             ></div>
 
-            {#if opens(person)}
-              <button
-                type="button"
-                onclick={() => (openIndex = i)}
-                class="group relative block aspect-square w-full cursor-pointer overflow-hidden"
-              >
-                {#if isFilled.image(person.headshot)}
-                  <HeroBackgroundImage
-                    image={person.headshot}
-                    preload={false}
-                    class="h-full w-full object-cover"
-                  />
-                {/if}
+            <div class="relative aspect-square w-full overflow-hidden">
+              {#if isFilled.image(person.headshot)}
+                <HeroBackgroundImage
+                  image={person.headshot}
+                  preload={false}
+                  class="h-full w-full object-cover"
+                />
+              {/if}
+              {#if opens(person)}
                 <img
                   src="/icons/plus-circle.svg"
                   alt=""
                   aria-hidden="true"
-                  class="absolute right-0 bottom-0 h-[25px] w-[25px] opacity-50 motion-safe:transition-[width,height] group-hover:h-[30px] group-hover:w-[30px] group-focus-visible:h-[30px] group-focus-visible:w-[30px]"
+                  class="absolute right-0 bottom-0 h-[25px] w-[25px] opacity-50 motion-safe:transition-[width,height] group-hover:h-[30px] group-hover:w-[30px] group-focus-within:h-[30px] group-focus-within:w-[30px]"
                 />
-                <span class="sr-only">Read the bio for {person.name || "this person"}</span>
-              </button>
-            {:else}
-              <div class="relative aspect-square w-full overflow-hidden">
-                {#if isFilled.image(person.headshot)}
-                  <HeroBackgroundImage
-                    image={person.headshot}
-                    preload={false}
-                    class="h-full w-full object-cover"
-                  />
-                {/if}
-              </div>
-            {/if}
+              {/if}
+            </div>
 
             <div class="relative flex flex-col gap-2.5 p-5">
               {#if person.name}
@@ -170,7 +157,7 @@
                      mailto:, so a typo cannot produce a broken scheme. -->
                 <a
                   href="mailto:{person.email}"
-                  class="font-button inline-flex w-fit items-center gap-2.5 text-[10px] tracking-[1px] uppercase hover:opacity-70 {board
+                  class="font-button relative z-10 inline-flex w-fit items-center gap-2.5 text-[10px] tracking-[1.5px] uppercase hover:opacity-70 {board
                     ? 'text-green-mid-aa'
                     : 'text-green'}"
                 >
@@ -184,6 +171,18 @@
                 </a>
               {/if}
             </div>
+
+            {#if opens(person)}
+              <!-- Last in the card so its name reads after the card's own
+                   text; over everything but the address link (z-10). The
+                   focus ring draws inside the rounded card, which clips. -->
+              <button
+                type="button"
+                onclick={() => (openIndex = i)}
+                aria-label="Read the bio for {person.name || 'this person'}"
+                class="absolute inset-0 cursor-pointer rounded-[20px] focus-visible:outline-2 focus-visible:outline-offset-[-3px] focus-visible:outline-green"
+              ></button>
+            {/if}
           </li>
         {/each}
       </ul>
@@ -234,7 +233,7 @@
           {#if current.email}
             <a
               href="mailto:{current.email}"
-              class="text-green font-button inline-flex w-fit items-center gap-2.5 text-[10px] tracking-[1px] uppercase hover:opacity-70"
+              class="text-green font-button inline-flex w-fit items-center gap-2.5 text-[10px] tracking-[1.5px] uppercase hover:opacity-70"
             >
               {current.email}
               <img

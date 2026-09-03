@@ -78,7 +78,11 @@
   --font-body: "pragmatica", ui-sans-serif, system-ui, sans-serif;
   /* The comps' button face, Area Normal Bold (10px uppercase, 1px tracking).
      The kit serves it at 600 and 700. */
-  --font-button: "area-normal", "pragmatica", ui-sans-serif, system-ui, sans-serif;
+  /* The button face is Pragmatica Extended Book — the comp's own
+     "register to be an organ donor" pill and its schedule label. The comps
+     set the other buttons in Area Normal Bold, which the client called an
+     oversight (2026-09-03); nothing on the site uses area-normal now. */
+  --font-button: "pragmatica-extended", "pragmatica", ui-sans-serif, system-ui, sans-serif;
 
   --transition-in-expo: cubic-bezier(0.95, 0.05, 0.795, 0.035);
   --transition-out-expo: cubic-bezier(0.19, 1, 0.22, 1);
@@ -290,8 +294,9 @@ main > section.hero-band:first-child {
   resize: vertical;
 }
 
-/* The design's button: the green pill with dark text, Area Normal Bold
-   10/1.5 tracked 1px. Pair it with static/icons/arrow-right-dark.svg. */
+/* The design's button: the green pill with dark text, Pragmatica Extended
+   Book 10/1.5 tracked 1.5px (the comp's "register" pill — see --font-button).
+   Pair it with static/icons/arrow-right-dark.svg. */
 .vlf-pill {
   display: inline-flex;
   align-items: center;
@@ -299,19 +304,52 @@ main > section.hero-band:first-child {
   gap: 10px;
   height: 40px;
   width: fit-content;
-  /* 2px more below than above: Area Normal's caps sit 1px below the box
-     centre when the line box is centred (measured at 4x: ink rows 17–25 in
-     the 40px pill), and the eye reads capitals by their own centre. */
-  padding: 0 15px 2px;
+  /* 1px more below than above: Extended Book's caps sit half a pixel high
+     when the line box is centred (measured at 4x with
+     scripts/figma-compare/ink.mjs), and the eye reads capitals by their own
+     centre. A label never wraps: the comp's longest ("register to be an
+     organ donor") is a 240px run in a 270px pill, and a grid cell that is a
+     few pixels short would otherwise break it into two lines. */
+  padding: 0 15px 1px;
+  white-space: nowrap;
   border-radius: 9999px;
   background-color: var(--color-green);
   color: var(--color-green-btn);
   font-family: var(--font-button);
-  font-weight: 700;
+  font-weight: 400;
   font-size: 10px;
   line-height: 1.5;
-  letter-spacing: 1px;
+  letter-spacing: 1.5px;
   text-transform: uppercase;
+}
+
+/* The fleet's hover and bump, in the pill itself so every button gets them:
+   the arrow drifts out (gap 10 → 15), the pill brightens a step, and it hops
+   while held — the `bump` utility's own timings. Gated on reduced motion
+   like the utilities above; a plain static control otherwise. */
+@media (prefers-reduced-motion: no-preference) {
+  .vlf-pill {
+    transition:
+      transform 300ms ease-out,
+      color 400ms ease,
+      background-color 400ms ease,
+      filter 400ms ease,
+      gap 100ms ease;
+  }
+  .vlf-pill:hover,
+  .vlf-pill:focus-visible {
+    gap: 15px;
+    filter: brightness(1.1);
+  }
+  .vlf-pill--dark:hover,
+  .vlf-pill--dark:focus-visible,
+  .vlf-pill--deep:hover,
+  .vlf-pill--deep:focus-visible {
+    filter: brightness(1.25);
+  }
+  .vlf-pill:active {
+    transform: translateY(-8px);
+  }
 }
 
 /* The same pill in the design's other direction — green on the dark
@@ -455,6 +493,34 @@ main > section:has(+ section[data-slice-type="cta_banner"][data-slice-variation=
   z-index: 0;
 }
 
+/* The pinned band holds until the FOOTER's bottom edge passes, not <main>'s.
+   A sticky box is released at the end of its containing block, and the footer
+   sits outside <main> — so on its own the closing panel slid over the band and
+   then the footer pushed everything back into flow. <main> therefore grows by
+   the footer's measured height (a spacer, not padding: sticky is constrained
+   to the content box) and the footer is pulled up over the spacer, painting
+   above the band. `--footer-h` is set on their shared parent by
+   $lib/actions/stickyCover; without JS it is 0 and the footer follows in flow. */
+main::after {
+  content: "";
+  display: block;
+  height: var(--footer-h, 0px);
+}
+
+main + footer {
+  position: relative;
+  z-index: 1;
+  margin-top: calc(-1 * var(--footer-h, 0px));
+}
+
+/* The language switch crossfades in place: same layout, the other text —
+   a view transition started by onNavigate in +layout.svelte for that one
+   navigation. Every other route change goes through TransitionOverlay. */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 350ms;
+}
+
 /* Blur-up companion to $lib/components/Img.svelte. Outside @layer base so it
    wins over utility resets without needing !important. */
 .progressive-img {
@@ -529,11 +595,11 @@ main > section:has(+ section[data-slice-type="cta_banner"][data-slice-variation=
     font-weight: 400;
   }
 
-  /* Figma "Button": Area Normal Bold 10/1.5, 1px tracking. The kit serves
-     area-normal at 600 and 700 only, so the weight has to be explicit — with
-     the body at 300 the browser would otherwise settle on 600. */
+  /* The button face (see --font-button): Pragmatica Extended Book 10/1.5,
+     1.5px tracking. Explicit because the body is 300 and a button label is
+     not a heading — nothing else would set it to Book. */
   .font-button {
-    font-weight: 700;
+    font-weight: 400;
   }
 
   /* Respect users who ask for less motion: neutralize CSS transitions/animations

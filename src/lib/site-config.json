@@ -51,17 +51,16 @@
             "page": "donate"
           },
           {
-            "text": "Contact us"
+            "text": "Contact us",
+            "href": "/contact"
           },
           {
             "text": "726-234-6910",
             "href": "tel:+17262346910",
-            "tight": true,
             "tone": "detail"
           },
           {
             "text": "8632 Fredericksburg Rd. Suite 221\nSan Antonio, TX 78240",
-            "tight": true,
             "tone": "detail"
           }
         ]
@@ -122,17 +121,16 @@
                 "page": "donate"
               },
               {
-                "text": "Contacto"
+                "text": "Contacto",
+                "href": "/es/contact"
               },
               {
                 "text": "726-234-6910",
                 "href": "tel:+17262346910",
-                "tight": true,
                 "tone": "detail"
               },
               {
                 "text": "8632 Fredericksburg Rd. Suite 221\nSan Antonio, TX 78240",
-                "tight": true,
                 "tone": "detail"
               }
             ]

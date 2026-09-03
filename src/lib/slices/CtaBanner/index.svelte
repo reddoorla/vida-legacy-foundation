@@ -87,6 +87,7 @@
   <ContentBand
     sliceType={slice.slice_type}
     variation={slice.variation}
+    dataLayout={fill ? "fill" : "float-right"}
     sectionClass="bg-dark"
     contentClass="max-w-[1440px] px-6 pt-16 pb-[30px] md:px-20 md:pt-20"
   >
@@ -140,6 +141,7 @@
   <section
     data-slice-type={slice.slice_type}
     data-slice-variation={slice.variation}
+    data-layout={fill ? "fill" : "float-right"}
     class="w-full bg-transparent"
   >
     <div class="closing-panel bg-background w-full rounded-t-[40px] md:rounded-t-[80px]">

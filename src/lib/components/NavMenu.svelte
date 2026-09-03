@@ -142,6 +142,7 @@
         href={switchTo.href}
         hreflang={switchTo.lang}
         lang={switchTo.lang}
+        data-sveltekit-noscroll
         onclick={onClose}
         class="text-background font-heading w-fit text-2xl hover:text-green focus-visible:text-green"
       >
