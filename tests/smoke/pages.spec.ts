@@ -194,6 +194,53 @@ test.describe("without JavaScript", () => {
     ).toBe(false);
   });
 
+  test("shows a person's bio on the card, where one is written", async ({ page }) => {
+    // /about carries no bios today (the board members have none, the
+    // leadership cards open on `!board` alone), so the fixtures page is the
+    // only rendered bio on the site — and the only thing that can catch the
+    // regression that matters here: a class name that stops matching app.css,
+    // which would leave the bio visible for EVERY visitor, duplicated with the
+    // pop-up, without tripping axe or a type error.
+    await page.goto("/dev/a11y-fixtures", { waitUntil: "domcontentloaded" });
+    await expect
+      .poll(
+        () =>
+          page
+            .locator(".person-bio-nojs")
+            .evaluateAll(
+              (els) => els.filter((el) => getComputedStyle(el).display !== "none").length,
+            ),
+        { message: "no bio revealed without scripts" },
+      )
+      .toBeGreaterThan(0);
+  });
+
+  test("lets the card grow to hold a bio, instead of clipping it", async ({ page }) => {
+    await page.goto("/dev/a11y-fixtures", { waitUntil: "domcontentloaded" });
+    // The leadership card is `aspect-square` over `overflow: hidden`, so its
+    // height comes from its column width and content cannot grow it — a real
+    // multi-sentence bio was cut off with no sign it was there. Measured: 166px
+    // of it hidden. The fixture's own bio is one line and fits by luck, so the
+    // test writes a realistic one before measuring.
+    const hidden = await page.evaluate(() => {
+      const long =
+        "Fifteen years coordinating transplant services across South Texas, " +
+        "and the founder of the family-support programme VLF still runs today. " +
+        "She speaks regularly on donor family advocacy throughout the region.";
+      document.querySelectorAll(".person-bio-nojs p").forEach((el) => (el.textContent = long));
+      return [...document.querySelectorAll(".person-bio-nojs")].map((bio) => {
+        const card = bio.closest("li");
+        if (!card) return -1;
+        return Math.max(
+          0,
+          Math.round(bio.getBoundingClientRect().bottom - card.getBoundingClientRect().bottom),
+        );
+      });
+    });
+    expect(hidden.length, "no bios rendered — check the fixture").toBeGreaterThan(0);
+    expect(hidden, "a bio is clipped off the bottom of its card").toEqual(hidden.map(() => 0));
+  });
+
   test("/about hides the controls that cannot open a bio", async ({ page }) => {
     await page.goto("/about", { waitUntil: "domcontentloaded" });
     // The overlay button does nothing without a script and would swallow
@@ -244,4 +291,26 @@ test.describe("the reduced-motion phone frame", () => {
       )
       .toMatchObject({ stageCollapsed: false, coversWidth: true, coversHeight: true });
   });
+});
+
+test("a card's bio stays hidden while the pop-up can open it", async ({ page }) => {
+  // The other half of the coupling above. With scripts the bio belongs to the
+  // pop-up alone; display:none also keeps it out of the accessibility tree, so
+  // nobody is read it twice.
+  await page.goto("/dev/a11y-fixtures", { waitUntil: "load" });
+  const bios = page.locator(".person-bio-nojs");
+  expect(await bios.count(), "the fixtures page no longer renders a bio").toBeGreaterThan(0);
+  // Polled: the suite runs against a dev server, where app.css can land after
+  // `load`, so a single read catches the moment before the rule applies and
+  // fails for the wrong reason. A class name that never matches still fails —
+  // it just takes the timeout to do it.
+  await expect
+    .poll(
+      () =>
+        bios.evaluateAll(
+          (els) => els.filter((el) => getComputedStyle(el).display !== "none").length,
+        ),
+      { message: "a card bio is visible even though scripts can open the pop-up" },
+    )
+    .toBe(0);
 });

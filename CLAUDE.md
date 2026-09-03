@@ -673,10 +673,17 @@ block to the triple bar.
   and invisible to a crawler. Each card renders `.person-bio-nojs` as well,
   and `[data-bio-toggle]` (the overlay button, which would also swallow
   selection of the bio under it) and `.person-open-cue` (the + badge, which
-  advertises a pop-up that cannot open) both go. **Nothing on `/about`
-  currently has a bio** — the four board members have none, and the three
-  leadership cards open on `!board` alone — so the only thing exercising this
-  path is `PersonGrid.test.ts` until one is authored.
+  advertises a pop-up that cannot open) both go — and `.person-card` loses its
+  `aspect-ratio`, because the leadership card's height comes from its column
+  width over `overflow: hidden`, so content cannot grow it and a real bio was
+  simply CUT OFF (measured: 166px of it). **Nothing on `/about` currently has
+  a bio** — the four board members have none, and the three leadership cards
+  open on `!board` alone — so the only rendered bio on the site is on
+  `/dev/a11y-fixtures`, which is where the smoke suite measures both
+  directions of the coupling: revealed without scripts, `display: none` with
+  them. That pair is the only thing that catches a class name drifting out of
+  step with app.css, which would show every visitor a bio twice without
+  tripping axe, a type error or a console warning.
 - **`PageMasthead`'s stage collapsed to zero** on a reduced-motion phone, the
   same shape as HeartHero's below. Nothing reads that box, so nothing rendered
   wrong; it is fixed so the next thing to measure it does not inherit the bug.

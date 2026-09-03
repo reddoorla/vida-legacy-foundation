@@ -117,7 +117,7 @@
        the component — which is how the tests here address "the visible
        number", and the reading stays true. -->
   <span aria-hidden="true" class="countup-live">{liveText}</span>
-  <span aria-hidden="true" class="countup-nojs">{finalText}</span>
+  <span aria-hidden="true" class="countup-nojz">{finalText}</span>
   <!-- select-none so copying the visible number doesn't also pull this
        screen-reader duplicate ("1,234+1,234+"). -->
   <span class="sr-only select-none">{label ?? finalText}</span>

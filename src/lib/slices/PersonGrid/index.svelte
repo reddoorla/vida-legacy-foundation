@@ -134,7 +134,7 @@
         {#each people as person, i (i)}
           {@const photo = photos && isFilled.image(person.headshot)}
           <li
-            class="group relative flex w-full flex-col overflow-hidden rounded-[20px] sm:w-[calc((100%-30px)/2)] md:w-[calc((100%-60px)/3)] {board
+            class="person-card group relative flex w-full flex-col overflow-hidden rounded-[20px] sm:w-[calc((100%-30px)/2)] md:w-[calc((100%-60px)/3)] {board
               ? 'bg-background'
               : 'bg-green-deep'} {photo ? '' : board ? 'min-h-[200px]' : 'aspect-square'}"
           >
