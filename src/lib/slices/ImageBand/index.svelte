@@ -27,20 +27,12 @@
   5249:1223) and the navy band after it slides up over it — the slide-over
   note in app.css. On a viewport shorter than the band, the action holds it
   by its bottom edge, so the crop that shows is the photograph's lower part.
-
-  `sticky-cover--clear` says the band that slides over this one has to finish
-  the job before the section after IT arrives: app.css gives that band a
-  viewport of minimum height. Without it the 318px navy band could only ever
-  cover 318px of the photograph per screen, so for ~580px of scrolling the
-  photograph stayed as a shrinking strip across the top while "By the
-  numbers" was already up — "feels weird it stops at her forehead" (client
-  review, round 4).
 -->
 {#if hasImage}
   <section
     data-slice-type={slice.slice_type}
     data-slice-variation={slice.variation}
-    class="sticky-cover sticky-cover--clear aspect-1440/860 w-full overflow-hidden"
+    class="sticky-cover aspect-1440/860 w-full overflow-hidden"
   >
     <HeroBackgroundImage
       image={slice.primary.image}

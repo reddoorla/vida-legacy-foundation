@@ -540,27 +540,15 @@ main > section:has(+ section[data-slice-type="cta_banner"][data-slice-variation=
   z-index: 0;
 }
 
-/* A `.sticky-cover--clear` band must be covered COMPLETELY before the section
-   after its cover arrives, so the section that slides over it gets a viewport
-   of minimum height. A pinned band is only ever covered by as much of the next
-   band as exists: the homepage's photograph is pinned at the top and the navy
-   band over it is 318px, so from the moment "By the numbers" entered at the
-   bottom the photograph was still a 574px strip across the top, shrinking to
-   nothing over another 580px of scrolling — "feels weird it stops at her
-   forehead" (round 4). At a viewport tall the cover's top edge reaches the top
-   of the screen exactly as the next section's top edge reaches the bottom.
-
-   The extra height goes BELOW the band's content, not above (the client's
-   call): the copy keeps the comp's place at the top of the band and scrolls up
-   out of the way, and the next section follows it. Space above would have held
-   a blank screen of navy first and only then brought the copy up.
-
-   `lvh`, not `svh` or `dvh`: `svh` is the phone's viewport with its toolbars
-   showing, so a band sized to it comes up short — and leaves the strip back —
-   the moment they retract, and `dvh` changes height mid-scroll. `lvh` is the
-   only one that cannot be shorter than the screen. */
-main > section.sticky-cover--clear + section {
-  min-height: 100lvh;
+/* `--cover-slack` is the height the closing statement grows by, below its own
+   line, so the held screen reaches the top — set by $lib/actions/stickyCover
+   from the measured shortfall and zero without JavaScript. It is padding, not
+   min-height: the band is bottom-anchored, so it has to grow DOWNWARD from
+   the line and take the stack up with it, and the comp's gap between the line
+   and the box above it must not move. On a screen the stack already covers,
+   the slack is zero and the band is exactly the comp's. */
+main > section.sticky-cover--bottom {
+  padding-bottom: var(--cover-slack, 0px);
 }
 
 /* `[data-cover-run]` is written by $lib/actions/stickyCover: the sections the
