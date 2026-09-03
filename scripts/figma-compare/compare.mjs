@@ -37,16 +37,23 @@ for (const ft of figTexts) {
   let match = dom.texts.find((t, i) => !usedDom.has(i) && norm(t.text) === key);
   let partial = false;
   if (!match) {
+    // The fragments must come from one place — the same section — and add
+    // up to most of the paragraph, or a short run that merely occurs inside
+    // a longer comp text ("compassionate support" inside the lead paragraph)
+    // would be swallowed here and reported missing where it really lives.
     const cands = dom.texts
       .map((t, i) => ({ t, i }))
       .filter(
         ({ t, i }) => !usedDom.has(i) && norm(t.text).length > 12 && key.includes(norm(t.text)),
       );
-    if (cands.length) {
+    const section = cands[0]?.t.section;
+    const same = cands.filter(({ t }) => t.section === section);
+    const covered = same.reduce((n, { t }) => n + norm(t.text).length, 0);
+    if (same.length && covered >= key.length * 0.8) {
       // Take the first fragment: its top-left is the paragraph's.
-      match = cands[0].t;
+      match = same[0].t;
       partial = true;
-      cands.forEach(({ i }) => usedDom.add(i));
+      same.forEach(({ i }) => usedDom.add(i));
     }
   } else usedDom.add(dom.texts.indexOf(match));
   if (!match) {

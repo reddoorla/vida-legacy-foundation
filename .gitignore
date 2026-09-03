@@ -31,3 +31,6 @@ test-results
 dist/
 .vitest-cache/
 .tsbuildinfo
+
+# The operator's local notes — never part of a public repo (see CLAUDE.md).
+NOTES.md
