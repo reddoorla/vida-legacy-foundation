@@ -599,6 +599,76 @@ it is invisible and no amount of scrolling reveals it. The `<noscript><style>`
 in app.html that reveals the nav's entry list is the mechanism if that is
 ever worth closing.
 
+## Without scripts, both runway stages render their final frame
+
+`HeartHero` and `PageMasthead` are 260vh runways whose opening is driven by
+scroll progress that only JavaScript computes. Without it they rendered frame
+0 — the photograph in its closed shape and the page's only `<h1>` at
+`opacity: 0`, on `/`, `/es` and `/about` alike, which is every published page
+with a masthead. The text is in the markup, so a crawler and a screen reader
+were fine; it was a sighted visitor who got a green field and two and a half
+screens of nothing. HeartHero at least had `.reveal:focus-within`, since its
+block holds the two call-to-action links; PageMasthead's holds only a
+paragraph and a heading, so on Who We Are nothing could reveal it at all.
+**Reduced motion does not rescue this** — both `@media` blocks set only
+`transition: none`, and the open frame comes from the `reducedMotion` STATE
+variable, which is JavaScript.
+
+The second `<noscript><style>` in `src/app.html` is the fix: the components'
+own reduced-motion geometry plus the open values their JavaScript half
+supplies. Three things about it are load-bearing:
+
+- **Classes are TRIPLED, not doubled.** Svelte scopes a component rule with a
+  hash class, so `.reveal` is really `.reveal.svelte-1abc` at (0,2,0), and
+  those sheets arrive with the app's head markup BELOW this block — two
+  classes tie and lose on order. (The nav list above it doubles, because it
+  beats a (0,1,0) rule in app.css. Same lever, one class apart.)
+- **The open heart is sized without measuring anything.** The component sets
+  the mask as a percentage of the stage's WIDTH, which it can only learn from
+  a ResizeObserver; `mask-size: auto 273.4919%` expresses the same heart as a
+  multiple of its HEIGHT, because a percentage in that slot resolves against
+  the positioning area's height. Algebraically identical to `heartEndPct` at
+  every aspect, except the `Math.max` floor, which binds only above W/H
+  1.6747 and gives a slightly smaller — still covering — heart there.
+  `app-html.test.ts` holds the number against `HEART_END_HEIGHT_RATIO`.
+- **`--opened: 1` is set on `.masthead-window`, the element that READS it**,
+  not on the stage that declares it inline. A value declared on the element
+  always beats an inherited one, so that needs no specificity contest.
+
+`max-width: 47.999rem` rather than the components' `width < 48rem`: Safari
+learned range syntax only in 16.4 and drops a block it cannot parse, which
+here would hand a phone the 1440/860 desktop band. And `100vh` precedes every
+`100svh`, since an engine without small-viewport units drops the declaration
+and would be left with no height at all.
+
+**A dev server cannot show any of this** and neither could the suite: the
+shared Playwright config forces `contextOptions.reducedMotion: "reduce"` on
+every test, which collapses both runways through the components' own media
+query — so a no-JS test that inherits it passes on a page with no fix. The
+`without JavaScript` block in `tests/smoke/pages.spec.ts` overrides it to
+`no-preference`, and asserts opacity on the `.reveal` ANCESTOR, because
+opacity does not inherit as a computed value and the `<h1>`'s own is 1 while
+it is completely invisible. Both were verified by deleting the fix and
+watching the tests go red.
+
+### The reduced-motion phone heart did not cover
+
+Separate bug, found the same afternoon. `.heart-hero-stage`'s `height: 100%`
+resolves against the band, and under reduced motion on a phone the band has
+only a `min-height` — indefinite, so it computed to `auto`, and since every
+child is absolutely positioned the box collapsed to ZERO. Layout survived it
+(the mask is positioned against the section, which is `relative`), but
+measurement did not: `heartEndPct` read 0 and fell back to the comp's 187.2%,
+which on 390x664 is a 702x612 heart in a 664-tall band — its cleft and its
+point both on screen with green around them, the exact failure the height
+ratio was introduced to end. `height: 100svh` under that media query fixes
+it, and it must sit BELOW the general stage rule, not inside the band's own
+phone block above it: a media query adds no specificity, so at an equal
+(0,2,0) the later declaration simply takes it back. It did, for one build.
+No existing test could reach it — the rule needs reduced motion AND width
+< 768, and every other test runs at the config's 1280x720 — so
+`the reduced-motion phone frame` in the smoke suite pins it at 390x664.
+
 ## Mobile is not the comp scaled down
 
 The comps are 1440x860 landscape and every full-bleed measurement in them is a

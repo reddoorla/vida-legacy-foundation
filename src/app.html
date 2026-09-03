@@ -62,6 +62,111 @@
         }
       </style>
     </noscript>
+    <!-- The two runway stages, rendered as their FINAL frame when there is
+         nothing to run them.
+
+         HeartHero and PageMasthead are 260vh runways whose opening is driven
+         by scroll progress that only a script computes. Without one the band
+         is two and a half viewports of unchanging green, the photograph stays
+         in its closed shape, and the page's only h1 sits at opacity 0 — on
+         `/` and `/about` alike, which between them is every published page
+         that has a masthead. The text is in the markup, so a crawler and a
+         screen reader both get it; it is a sighted visitor who gets nothing.
+         HeartHero's copy at least has a `:focus-within` hatch, because the
+         block holds the two call-to-action links. PageMasthead's holds only a
+         paragraph and a heading, so on Who We Are nothing can reveal it at
+         all.
+
+         These rules are the components' own reduced-motion block plus the
+         open values its JavaScript half supplies, which is the same static
+         frame the design already specifies for a visitor who does not want
+         the animation.
+
+         Every class is TRIPLED. Svelte scopes a component's rules with a hash
+         class, so `.reveal` is really `.reveal.svelte-1abc` at (0,2,0), and
+         those sheets arrive with the app's head markup BELOW this block: two
+         classes here would tie and lose on order, one would lose outright.
+         Three clears both without naming a hash, which changes every build.
+         Same lever as the nav list above, one class further along. -->
+    <noscript>
+      <style>
+        /* The band and its stage: the comp's shape, not a runway. */
+        .heart-hero.heart-hero.heart-hero,
+        .page-masthead.page-masthead.page-masthead {
+          min-height: 0;
+          aspect-ratio: 1440 / 860;
+        }
+        .heart-hero-stage.heart-hero-stage.heart-hero-stage,
+        .page-masthead-stage.page-masthead-stage.page-masthead-stage {
+          position: static;
+          height: 100%;
+        }
+        /* The components' own reduced-motion breakpoint, to the pixel: these
+           rules stand in for that block's geometry, so a width where the two
+           disagreed would get half of each. (The px rule for `--nav-h` in
+           app.css is about the nav bar, which is gated on a different query.)
+
+           Written `max-width` rather than the components' `width < 48rem`
+           range syntax on purpose. Safari only learned range syntax in 16.4
+           and drops a whole block it cannot parse — which for THIS block would
+           hand a phone the 1440/860 desktop band, a 233px letterbox with the
+           heading positioned off it. The components degrade the same way on
+           those versions, but they only lose the reduced-motion frame; this is
+           the sole thing standing between a scriptless visitor and a readable
+           page, so it is worth the less elegant form. */
+        @media (max-width: 47.999rem) {
+          .heart-hero.heart-hero.heart-hero,
+          .page-masthead.page-masthead.page-masthead {
+            aspect-ratio: auto;
+            /* vh first: an engine with no small-viewport units drops the svh
+               line and would otherwise be left with no height at all. */
+            min-height: 100vh;
+            min-height: 100svh;
+          }
+          .heart-hero-stage.heart-hero-stage.heart-hero-stage,
+          .page-masthead-stage.page-masthead-stage.page-masthead-stage {
+            height: 100vh;
+            height: 100svh;
+          }
+        }
+        /* The open heart, sized without measuring anything. The component
+           sets the mask as a percentage of the stage's WIDTH, which it can
+           only learn from a ResizeObserver. That same size is a fixed
+           multiple of the stage's HEIGHT — HEART_END_HEIGHT_RATIO in
+           HeartHero/heart.ts, 2352.03/860 — and a percentage in the height
+           slot of mask-size resolves against the positioning area's height.
+           So the second form needs no measurement and computes the identical
+           heart at every aspect. heart.test.ts holds the two in step.
+           mask-position's own fallback is already the open value; the inline
+           attribute is what was overriding it. */
+        .heart-mask.heart-mask.heart-mask {
+          -webkit-mask-size: auto 273.4919%;
+          mask-size: auto 273.4919%;
+          -webkit-mask-position: center 50%;
+          mask-position: center 50%;
+        }
+        /* PageMasthead's window is a clip-path whose insets are all scaled by
+           --opened, set inline on the stage and inherited down. Setting it on
+           the element that READS it wins by directness — an inherited value
+           never beats one declared on the element itself — so this needs no
+           specificity contest at all. */
+        .masthead-window.masthead-window.masthead-window {
+          --opened: 1;
+        }
+        /* The copy, the buttons, the scroll cue and the grain. .hero-bar is a
+           transform rather than a .reveal, and has no hatch of its own. */
+        .reveal.reveal.reveal {
+          opacity: 1;
+          transform: none;
+        }
+        .hero-bar.hero-bar.hero-bar {
+          transform: none;
+        }
+        .texture-full.texture-full.texture-full {
+          opacity: 1;
+        }
+      </style>
+    </noscript>
     %sveltekit.head%
   </head>
   <body data-sveltekit-preload-data="hover">
