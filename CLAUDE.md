@@ -60,6 +60,12 @@ fleet-maintenance sessions (reddoor-maintenance) also open PRs here, so:
 - **Never hand-roll `scrollTo`** — use `$lib/utils/instantNavScroll`.
 - **Never redraw an asset in CSS** when the real file is downloadable. Ship the
   file.
+- **Svelte empties a `<style>` written anywhere in a component**, not just at
+  the top level — it is taken as the component's style block. And a browser
+  running scripts parses `<noscript>` content as raw TEXT, so real markup in
+  there does not survive hydration. Anything a no-JS visitor needs therefore
+  renders normally (hidden) with a `<noscript><style>` in **app.html** to
+  reveal it. That is how the nav's entry list works.
 - **A custom Tailwind v4 breakpoint must be `--breakpoint-*` and in `rem`.**
   Measured in the built CSS: a px-valued key and an arbitrary `min-[1440px]:`
   variant are both emitted BEFORE the rem-valued defaults, so `sm:` wins and
@@ -86,15 +92,17 @@ That was verified: `pnpm verify` passes green against the live repo.
 
 What is in Prismic:
 
-- `page` custom type (uid, title, slice zone, SEO group) and all 9 shared
-  slices, pushed from Slice Machine.
+- `page` custom type (uid, title, slice zone, SEO group) and all **17** shared
+  slices, pushed from Slice Machine. (`src/lib/slices/` holds 17 `model.json`
+  files and `customtypes/page/index.json` registers all 17.)
 - Locales `en-us` (master) and **`es-mx`**. Note the Spanish source copy is
   labelled _Español latino (EE. UU.)_; `es-mx` is the nearest thing Prismic's
   picker offers. Baked into URLs — changing it later is a migration.
-- One document: `home` (`apdOUREAADAAAfBa`), published, **empty slice zone**.
-  It is a deliberate stub whose only job was to satisfy the prerender so the
-  sentinel could come out. The home page currently renders as nav + footer +
-  an `<h1>` and nothing else. `/figma-slices` fills the slice zone.
+- **Six published documents**: `home`, `about` and `donate`, each in both
+  locales. The home slice zone is authored — 10 slice instances, the whole
+  comp — and `/`, `/es`, `/about`, `/es/about`, `/donate`, `/es/donate` all
+  render and are in `sitemap.xml`. (`home` is `apdOUREAADAAAfBa`, if you need
+  the id.)
 
 Slice and custom-type models CAN be pushed from a session: `@slicemachine/manager`
 is in the pnpm store (not a top-level dep; load its CJS entry, the ESM one fails
@@ -106,28 +114,37 @@ release; **publishing is a human step in the dashboard** — do not call
 
 What is NOT done, in the order it blocks things:
 
-1. **The site has no real content.** The homepage slices exist and the mocks
-   render, but the `home` document's slice zone is still empty — filling it is
-   a Prismic authoring job, not a code one.
-2. `src/lib/site-config.json` **footer and nav are both populated.** One
+1. `src/lib/site-config.json` **footer and nav are both populated.** One
    nav target is provisional: `Become a Donor` points at the operator's noted
    registry URL, which the client has not confirmed. `Contact Us` keeps its
    `/contact` href on purpose — the layout intercepts that link into the
    contact modal (below), and the route stays as the no-JS fallback and the
    crawler's target.
-3. **`Who we are` and `Donate` name pages that are not live yet.**
-   Prerendering loud-fails, and the crawler follows every internal link it
-   renders — so a hard-coded `/about` href in the chrome 404s the build until
-   that Prismic page is published. Chrome items therefore carry a page
-   reference (`"page": "about"`, `"page": "donate"` in `site-config.json`)
-   instead of a path: the root layout lists the page documents published in
-   the request's locale, and `loadSiteConfig(lang, publishedUids)` links a
-   reference only when its page is live, falling back to the item's `href`
-   (Donate → the LGL form) or to no link at all (`Who we are` renders a `<p>`
-   in the footer and a `<span>` in the menu). Publishing the page is the
-   whole change; no code follows. A previewed release sees its own links.
-4. Netlify site + `FORMS_INGEST_URL` / `FORMS_INGEST_TOKEN` (docs/NEW-SITE.md).
-5. **The donation form ships hidden.** `DonationForm` (Figma `5328:1611`)
+2. **`Who we are` and `Donate` are both published now**, so the chrome links
+   straight to `/about` and `/donate` — but the mechanism that got the build
+   green before they were is still load-bearing and still the rule. Prerendering
+   loud-fails and the crawler follows every internal link it renders, so a
+   hard-coded `/about` href in the chrome 404s the build the moment that page
+   is not published in the request's locale. Chrome items therefore carry a
+   page reference (`"page": "about"`, `"page": "donate"` in
+   `site-config.json`) instead of a path: the root layout lists the page
+   documents published in the request's locale, and
+   `loadSiteConfig(lang, publishedUids)` links a reference only when its page
+   is live, falling back to the item's `href` (Donate → the LGL form) or to no
+   link at all (`Who we are` renders a `<p>` in the footer and a `<span>` in
+   the menu). Add a chrome item for a page that is not published yet and it
+   costs nothing; hard-code its path and the next build fails. A previewed
+   release sees its own links.
+3. The Netlify site is up and `FORMS_INGEST_URL` / `FORMS_INGEST_TOKEN` are
+   set — `/health` reports `{"ok":true,"prismic":"ok"}` with both true.
+   `PUBLIC_TURNSTILE_SITE_KEY` is not set, so `TurnstileWidget` renders
+   nothing and the timing screen plus the honeypot are the whole anti-bot
+   story. **Nobody at VLF receives a contact submission yet**: ingest routes
+   to the operator, and the Airtable Websites row needs a real VLF point of
+   contact before launch — `reddoor-maint forms-notify-target
+vida-legacy-foundation` must print a vidalegacy.org address, not the
+   operator's.
+4. **The donation form ships hidden.** `DonationForm` (Figma `5328:1611`)
    keeps the comp's form behind a `show_form` Boolean that defaults to off:
    the donate page renders the heading and intro with two buttons out to
    LGL's hosted form and PayPal. Flipping the Boolean in Prismic draws the
@@ -427,7 +444,15 @@ picks the Prismic locale through `$lib/locale`. Prismic's ids (`en-us`,
   `$lib/ui-copy` (`ui(lang)`), because nothing translates them: they are code,
   not content. Components take the page's `lang` and slices read
   `context.lang`, the same split the contact and donation forms use for their
-  field labels. `Modal` takes a `closeLabel` so its caller decides. Anything
+  field labels. Two siblings hold the rest: `$lib/contact-copy` (the contact
+  panel's words, shared with the route's ACTION so a server-side failure
+  answers in the right language — `createIngestAction` freezes its messages at
+  construction, so the route builds one action per locale), and
+  `$lib/form-validation` (the field messages, because native constraint
+  validation speaks the BROWSER's language and puts it in a bubble that is not
+  in the accessibility tree). `novalidate` on those forms is set from an
+  effect, never written in the markup: it must apply only where scripts can do
+  the job instead, or a no-JS visitor loses the guard entirely. `Modal` takes a `closeLabel` so its caller decides. Anything
   new that a visitor can read and Prismic does not write belongs there, or
   the Spanish site announces it in English (it did, until round 4).
 - **Head**: `<html lang>` is set per request in `hooks.server.ts` (app.html
