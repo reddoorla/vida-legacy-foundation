@@ -377,6 +377,37 @@ decide most of it and are invisible in a screenshot:
   back to `offsetHeight` where there is no layout, i.e. jsdom) plus
   `STACK_OVERLAP` fixes both that and the closing band's own bottom edge,
   which now lands exactly on the viewport's.
+- **A pinned band holds BELOW the bar, not under it.** `--nav-h` in app.css
+  is the bar's height and the only place it is written: 70px from `md` up,
+  and **0 below it**, where the bar leaves once the first section is past —
+  there is nothing to leave room for, so nothing is left. `stickyTop` clamps
+  a top-anchored band to `min(navHeight, viewport - height)`, so a band
+  taller than the room available still holds its bottom edge on the
+  viewport's; `coverRun` fills `viewport - navHeight` and pays the closing
+  statement only what is short of the BAR's bottom edge, not the screen's.
+  **The fill test counts what the stack COVERS, not the sum of its boxes** —
+  each joint overlaps by `STACK_OVERLAP`, and summing the boxes let the walk
+  stop believing the screen was full while the real top edge was still 1.4px
+  short. That exit meets no pinned band, so it pays no slack either. Under
+  the bar the hairline was invisible; resting at the bar's edge it showed the
+  photograph, at one integer viewport height per width (1440x1018,
+  1280x1020, 1024x1086 …).
+  **The breakpoint is `768px`, not `48rem`, and matches Nav's own
+  `MOBILE_QUERY` exactly.** A rem in a media query resolves against the
+  BROWSER's default font size, not the document's, so at Chrome's "Large"
+  (20px) `48rem` is 960 while the bar still disappears at 768 — between them
+  the bar is present and `--nav-h` would have said there was nothing to leave
+  room for. `--nav-h` describes the bar, so it is gated on what the bar is
+  gated on. (This is the one place a `rem` breakpoint is WRONG; the Tailwind
+  trap above still stands for `--breakpoint-*` theme keys.)
+  The CSS falls back to `var(--nav-h)` when there is no measurement (no JS).
+  The companion column in `IconColumns` takes it too. The two runway stages
+  (`HeartHero`, `PageMasthead`) deliberately do NOT: they are full-bleed, the
+  stage IS the viewport, and the bar is transparent over them by design —
+  PageMasthead's own window insets already pay the 70 themselves. Holding at
+  the top of the screen ate the spacing the comp draws above a band's
+  content, and it read as the band tucking under the chrome rather than
+  arriving beneath it.
 - **A pinned band is only covered by as much of the stack above it.** The
   photograph holds at the top of the screen and the closing stack is the navy
   band, the stats card and the closing line — 946px of it. On a screen taller

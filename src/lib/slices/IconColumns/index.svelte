@@ -146,12 +146,13 @@
 
     /* Rows 1 and 2: the sticky range is the grid area, so the intro holds
        until the spacer's bottom — the run's end. z-index puts it over the
-       run's sections, which are positioned later siblings of this band. */
+       run's sections, which are positioned later siblings of this band.
+       It holds BELOW the bar, not under it (--nav-h in app.css). */
     .intro {
       grid-column: 1;
       grid-row: 1 / span 2;
       position: sticky;
-      top: 0;
+      top: var(--nav-h);
       z-index: 1;
     }
 

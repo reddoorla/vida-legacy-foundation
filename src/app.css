@@ -519,6 +519,35 @@ main > section.hero-band:first-child {
   display: none;
 }
 
+/* The fixed bar's height, and the single source of it for everything that has
+   to leave room. A pinned band used to hold at the top of the SCREEN, which
+   put it under the bar and ate the spacing the comp draws above its content;
+   it holds below the bar instead. Zero under `md`, where the bar leaves once
+   the first section is past (see "Mobile is not the comp scaled down" in
+   CLAUDE.md) — there is nothing to leave room for, so nothing is left.
+
+   Read by $lib/actions/stickyCover for the pin offsets it computes, and used
+   directly by the IconColumns companion column. NOT by the two full-bleed
+   runway stages (HeartHero, PageMasthead): the bar is transparent over those
+   by design and their stage IS the viewport. */
+:root {
+  --nav-h: 0px;
+}
+
+/* 768px, in px and matching Nav's own MOBILE_QUERY exactly — NOT `48rem`.
+   A rem in a media query resolves against the browser's DEFAULT font size,
+   not the document's, so at Chrome's "Large" (20px) `48rem` is 960 while the
+   bar still disappears at 768: between the two the bar is present and this
+   would have said there was nothing to leave room for. `--nav-h` describes
+   the bar, so it is gated on what the bar is gated on. Range syntax on both
+   sides also closes the sub-pixel window that `(max-width: 767px)` plus
+   `(min-width: 768px)` leaves open under browser zoom. */
+@media (width >= 768px) {
+  :root {
+    --nav-h: 70px;
+  }
+}
+
 /* ---- Slide-over sections ----------------------------------------------------
    The comp pins some bands while the next one scrolls up over them (Figma
    "sticky scrolls" on the lead paragraph, the full-bleed photograph and the
@@ -544,7 +573,10 @@ main > section.sticky-cover,
 main > section[data-cover-run],
 main > section:has(+ section[data-slice-type="cta_banner"][data-slice-variation="onCream"]) {
   position: sticky;
-  top: var(--sticky-top, 0px);
+  /* The measured offset, falling back to the bar's height: without JS there is
+     no measurement, and holding at the top of the SCREEN would put the band
+     under the bar. */
+  top: var(--sticky-top, var(--nav-h));
   z-index: 0;
 }
 
