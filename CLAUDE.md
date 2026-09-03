@@ -341,8 +341,10 @@ decide most of it and are invisible in a screenshot:
   therefore pins on the same scroll position: the whole screen holds still
   and only the panel moves. The walk stops at a `.sticky-cover` band, which
   is already holding on its own account and fills whatever is left above —
-  on the homepage that is the full-bleed photograph, so the frozen screen is
-  "Compassion in Action" + "By the numbers" + the closing line over it.
+  on the homepage that is the full-bleed photograph. Since the clear rule
+  below made the navy band a viewport tall, the stack now reaches the top on
+  that band alone: the frozen screen is a run of navy, "By the numbers" and
+  the closing line, and "Compassion in Action" has scrolled off it.
   **The stack is measured fractionally and overlaps by a pixel at every
   joint.** `offsetHeight` rounds to whole pixels and the real bands are
   fractional (327.61, 301.81), so butting the boxes edge to edge left a
@@ -351,6 +353,26 @@ decide most of it and are invisible in a screenshot:
   back to `offsetHeight` where there is no layout, i.e. jsdom) plus
   `STACK_OVERLAP` fixes both that and the closing band's own bottom edge,
   which now lands exactly on the viewport's.
+- **A pinned band is only covered by as much of the next band as exists.**
+  The photograph is pinned at the top of the screen and the navy band over it
+  is 318px, so from the moment "By the numbers" entered at the bottom the
+  photograph was still a 574px strip across the top, shrinking away over
+  another 580px of scrolling — "feels weird it stops at her forehead", and
+  "can the blue section reach all the way to the top before the next section
+  scrolls up?" (Nicole, round 4). `.sticky-cover--clear` on a band says the
+  section that slides over it must be a viewport tall (`main >
+section.sticky-cover--clear + section` in app.css), and at exactly that
+  height the cover's top edge reaches the top of the screen as the next
+  section's top edge reaches the bottom. `lvh`, not `svh` or `dvh`: `svh` is
+  the phone's viewport with its toolbars showing, so a band sized to it
+  leaves the strip back the moment they retract, and `dvh` changes height
+  mid-scroll. The extra height goes BELOW the band's content — the client's
+  call ("let's do bottom on the space for now"), so the copy keeps the comp's
+  place at the top of the band and scrolls up out of the way. The cost of
+  that choice is the frozen screen above: the copy is gone by then and the
+  held screen leads with ~360px of navy. Space ABOVE the content is the other
+  half of the trade — it would keep the copy in the frozen screen and hold a
+  blank screen of navy on the way in instead.
 
 The VLF variations that sit in the comp's right-hand column (952.5 of the
 1280 grid, from x=407.5) carry a `layout` Select — `float right` (the comp,
