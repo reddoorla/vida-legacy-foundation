@@ -9,14 +9,18 @@ import type { Actions, PageServerLoad } from "./$types";
 // route is genuinely dynamic.
 export const prerender = false;
 
-// Plant a per-request timestamp for the bot timing screen. `title` flows to
-// the root layout's <Seo> (static routes set head via data, not their own tags).
+// Plant a per-request timestamp for the bot timing screen. `title` and
+// `meta_description` flow to the root layout's <Seo> (static routes set head
+// via data, not their own tags). This route has no Prismic document, so its
+// head copy is the panel's own — and without the description it shipped with
+// none at all, since DEFAULT_DESCRIPTION is deliberately empty.
 export const load: PageServerLoad = ({ params }) => {
   const lang = langFromParam(params.lang);
   return {
     formTs: Date.now(),
     lang,
     title: lang === "es" ? "Contáctenos" : "Contact",
+    meta_description: contactCopy(lang).metaDescription,
   };
 };
 

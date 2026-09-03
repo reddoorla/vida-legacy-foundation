@@ -81,17 +81,17 @@ for (const route of smokeRoutes) {
       `head tags loose in the body on ${route.path}`,
     ).toHaveCount(0);
     if (expectedStatus < 400) {
-      // At most one of each: the head being emitted TWICE is the failure mode
-      // this guards. (/contact has no description at all — DEFAULT_DESCRIPTION
-      // is empty and the route sets none. That is a content gap, not this bug.)
+      // Exactly one of each. Two is the head being emitted twice; zero is a
+      // page that forgot its description, which /contact did until it was
+      // given one of its own (DEFAULT_DESCRIPTION is deliberately empty).
       await expect(
         page.locator('head link[rel="canonical"]'),
         `canonical links on ${route.path}`,
       ).toHaveCount(1);
-      expect(
-        await page.locator('head meta[name="description"]').count(),
+      await expect(
+        page.locator('head meta[name="description"]'),
         `description meta tags on ${route.path}`,
-      ).toBeLessThanOrEqual(1);
+      ).toHaveCount(1);
     }
   });
 }
