@@ -1,5 +1,12 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import { stickyBands, stickyTop, stickyCovers, footerAfter, anchorOf } from "./stickyCover";
+import {
+  stickyBands,
+  stickyTop,
+  stickyCovers,
+  footerAfter,
+  anchorOf,
+  coverRun,
+} from "./stickyCover";
 
 const section = (type: string, variation = "default", cls = "") => {
   const el = document.createElement("section");
@@ -55,6 +62,65 @@ describe("stickyBands", () => {
     div.className = "sticky-cover";
     main.append(div, section("cta_banner", "onCream"));
     expect(stickyBands(main)).toEqual([]);
+  });
+});
+
+describe("coverRun", () => {
+  const main = (heights: Record<string, number>, els: HTMLElement[]) => {
+    const m = document.createElement("main");
+    m.append(...els);
+    return [m, (el: HTMLElement) => heights[el.dataset.sliceType!] ?? 0] as const;
+  };
+
+  it("stacks the sections the panel rolls over until they fill the viewport", () => {
+    // The homepage: the closing statement rests at the bottom, and the two
+    // navy sections above it hold against it rather than scrolling behind.
+    const cta = section("cta_banner", "onDark");
+    const stats = section("stats_band");
+    const statement = section("lead_text", "statement", "sticky-cover sticky-cover--bottom");
+    const [m, h] = main({ cta_banner: 400, stats_band: 330, lead_text: 300 }, [
+      section("image_band", "default", "sticky-cover"),
+      cta,
+      stats,
+      statement,
+      section("cta_banner", "onCream"),
+    ]);
+    // The statement rests at 900 - 300 = 600; stats holds its bottom against
+    // that (600 - 330), and the CTA against stats (270 - 400).
+    expect(coverRun(m, 900, h)).toEqual([
+      { el: cta, top: -130 },
+      { el: stats, top: 270 },
+    ]);
+  });
+
+  it("stops at a band that is already holding on its own", () => {
+    const photo = section("image_band", "default", "sticky-cover");
+    const stats = section("stats_band");
+    const statement = section("lead_text", "statement", "sticky-cover sticky-cover--bottom");
+    const [m, h] = main({ image_band: 900, stats_band: 100, lead_text: 100 }, [
+      photo,
+      stats,
+      statement,
+      section("cta_banner", "onCream"),
+    ]);
+    // 200px of stack in a 900px viewport, and the photograph above it is
+    // pinned already — it is not taken into the run.
+    expect(coverRun(m, 900, h).map((r) => r.el)).toEqual([stats]);
+  });
+
+  it("adds nothing when the band before the panel already fills the screen", () => {
+    const board = section("person_grid");
+    const [m, h] = main({ person_grid: 1100, statement_panel: 300 }, [
+      section("statement_panel"),
+      board,
+      section("cta_banner", "onCream"),
+    ]);
+    expect(coverRun(m, 900, h)).toEqual([]);
+  });
+
+  it("is empty on a page with no closing panel", () => {
+    const [m, h] = main({ donation_form: 800 }, [section("donation_form")]);
+    expect(coverRun(m, 900, h)).toEqual([]);
   });
 });
 

@@ -59,6 +59,47 @@ export function stickyTop(
   return anchor === "bottom" ? bottomEdge : Math.min(0, bottomEdge);
 }
 
+/** The sections the closing cream panel rolls up over, and where each one
+ *  holds while it does.
+ *
+ *  Pinning only the band before the panel made that band feel detached: it
+ *  stopped dead while "By the numbers" and "Compassion in Action" kept
+ *  scrolling behind it. The panel is supposed to come over the PAGE. So the
+ *  run walks back from the panel, stacking each section on the one below it
+ *  — its bottom edge against that section's top — until the stack fills the
+ *  viewport, and every section in it therefore pins on the same scroll
+ *  position. The whole screen holds still and only the panel moves.
+ *
+ *  It stops at a band that is already `.sticky-cover`: that one is holding on
+ *  its own account (the homepage's full-bleed photograph, at the top of the
+ *  screen), so it fills whatever the stack does not.
+ *
+ *  Heights come from `height` so a test can supply them; jsdom lays nothing
+ *  out. */
+export function coverRun(
+  main: ParentNode,
+  viewportHeight: number,
+  height: (el: HTMLElement) => number,
+): { el: HTMLElement; top: number }[] {
+  const sections = Array.from(main.children).filter(
+    (el): el is HTMLElement => el instanceof HTMLElement && el.tagName === "SECTION",
+  );
+  const panel = sections.findIndex((el) => el.matches(CLOSING));
+  if (panel < 1) return [];
+  const anchor = sections[panel - 1];
+  let top = stickyTop(height(anchor), viewportHeight, anchorOf(anchor));
+  let stacked = height(anchor);
+  const run: { el: HTMLElement; top: number }[] = [];
+  for (let i = panel - 2; i >= 0 && stacked < viewportHeight; i--) {
+    const el = sections[i];
+    if (el.classList.contains("sticky-cover")) break;
+    top -= height(el);
+    stacked += height(el);
+    run.unshift({ el, top });
+  }
+  return run;
+}
+
 /** The footer <main> is followed by, if any — the element whose height the
  *  page reserves so the slide-over holds through it. */
 export function footerAfter(main: Element): HTMLElement | null {
@@ -68,8 +109,18 @@ export function footerAfter(main: Element): HTMLElement | null {
 
 export const stickyCovers: Action<HTMLElement> = (main) => {
   let bands: HTMLElement[] = [];
+  let observed: HTMLElement[] = [];
+  let run: HTMLElement[] = [];
   const resize =
     typeof ResizeObserver === "undefined" ? undefined : new ResizeObserver(() => measure());
+
+  function clearRun() {
+    for (const el of run) {
+      el.removeAttribute("data-cover-run");
+      if (!bands.includes(el)) el.style.removeProperty("--sticky-top");
+    }
+    run = [];
+  }
 
   function measure() {
     const vh = window.innerHeight;
@@ -79,13 +130,27 @@ export const stickyCovers: Action<HTMLElement> = (main) => {
         `${stickyTop(band.offsetHeight, vh, anchorOf(band))}px`,
       );
     }
+    // The run's members are pinned by app.css off this attribute, so a page
+    // without JavaScript simply has none of them.
+    clearRun();
+    for (const { el, top } of coverRun(main, vh, (e) => e.offsetHeight)) {
+      el.setAttribute("data-cover-run", "");
+      el.style.setProperty("--sticky-top", `${top}px`);
+      run.push(el);
+    }
   }
 
   function collect() {
     resize?.disconnect();
     for (const band of bands) band.style.removeProperty("--sticky-top");
+    clearRun();
     bands = stickyBands(main);
-    for (const band of bands) resize?.observe(band);
+    // Every section is observed, not just the pinned ones: a run member's
+    // height decides where the whole stack holds.
+    observed = Array.from(main.children).filter(
+      (el): el is HTMLElement => el instanceof HTMLElement && el.tagName === "SECTION",
+    );
+    for (const el of observed) resize?.observe(el);
     measure();
   }
 
@@ -111,6 +176,7 @@ export const stickyCovers: Action<HTMLElement> = (main) => {
     destroy() {
       children.disconnect();
       resize?.disconnect();
+      clearRun();
       footerResize?.disconnect();
       window.removeEventListener("resize", measure);
       window.removeEventListener("resize", measureFooter);

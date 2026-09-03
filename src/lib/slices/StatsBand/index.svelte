@@ -46,14 +46,18 @@
 
   Inside the card the comp is 40 from the eyebrow's cap to the figures' cap,
   20 between a figure, its copy and the button, and four 282.5px columns
-  30 apart. Four columns from `xl` up, measured: the round-1 note asked for
-  "a 2x2 grid before the register button wraps", but the button does not fit
-  a column at ANY width — "Register to be an organ donor" needs 291px on one
-  line against the comp's own 282.5px column, so it takes two lines even in
-  the comp's frame, inside the pill's 40px min-height and without growing it.
-  Holding four columns for 1440 instead cost the client the layout on his own
-  screen: a maximized 1440 window is 1425 of viewport once the scrollbar is
-  paid, and 1425 fell to 2x2 (review round 4).
+  30 apart. Four columns from `xl` up: holding them for the comp's 1440 cost
+  the client the layout on his own screen, because a maximized 1440 window is
+  1425 of viewport once the scrollbar is paid, and 1425 fell to 2x2.
+
+  The button does not fit a quarter of that grid at any width, and neither
+  does the comp's: Figma's own "button 4" is 294px wide in the 282.5px column
+  and hangs 11.5px into the card's 30px padding to stay on one line. Ours
+  does the same through `.vlf-pill--hang` (the column plus 20 of the padding,
+  which is 291px of pill from about 1410 up). Below that the label wraps
+  inside the pill's own 40px height rather than being clipped — the only way
+  to hold one line at 1280 would be a shorter label, which is the author's
+  copy, not ours.
 -->
 <section
   data-slice-type={slice.slice_type}
@@ -93,7 +97,10 @@
                   <!-- The comp hangs the CTA off the last figure rather than
                        giving it its own cell, so it stays with the column even
                        when the grid reflows to 2-up or 1-up. -->
-                  <PrismicLink field={slice.primary.cta_link} class="vlf-pill vlf-pill--dark">
+                  <PrismicLink
+                    field={slice.primary.cta_link}
+                    class="vlf-pill vlf-pill--dark vlf-pill--hang"
+                  >
                     {slice.primary.cta_label}
                     <img
                       src="/icons/arrow-right.svg"
