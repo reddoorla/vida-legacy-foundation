@@ -264,6 +264,11 @@
           "__TYPE__": "ExternalLink",
           "url": "https://example.com/about"
         }
+      },
+      "layout": {
+        "__TYPE__": "FieldContent",
+        "type": "Select",
+        "value": "float right"
       }
     },
     "items": [

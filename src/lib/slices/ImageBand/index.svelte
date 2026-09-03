@@ -22,12 +22,17 @@
   above-the-fold image per page should do that — on the homepage that is
   HeartHero. These sit mid-page; preloading them would make two more images
   fight the real LCP for bandwidth.
+
+  `sticky-cover`: the comp pins the photograph ("sticky scrolls" on
+  5249:1223) and the navy band after it slides up over it — the slide-over
+  note in app.css. On a viewport shorter than the band, the action holds it
+  by its bottom edge, so the crop that shows is the photograph's lower part.
 -->
 {#if hasImage}
   <section
     data-slice-type={slice.slice_type}
     data-slice-variation={slice.variation}
-    class="relative aspect-1440/860 w-full overflow-hidden"
+    class="sticky-cover aspect-1440/860 w-full overflow-hidden"
   >
     <HeroBackgroundImage
       image={slice.primary.image}

@@ -95,6 +95,15 @@
             "allowTargetBlank": true,
             "select": null
           }
+        },
+        "layout": {
+          "type": "Select",
+          "config": {
+            "label": "layout",
+            "placeholder": "",
+            "options": ["float right", "fill"],
+            "default_value": "float right"
+          }
         }
       },
       "items": {}
@@ -138,6 +147,15 @@
             "placeholder": "",
             "allowTargetBlank": true,
             "select": null
+          }
+        },
+        "layout": {
+          "type": "Select",
+          "config": {
+            "label": "layout",
+            "placeholder": "",
+            "options": ["float right", "fill"],
+            "default_value": "float right"
           }
         }
       },

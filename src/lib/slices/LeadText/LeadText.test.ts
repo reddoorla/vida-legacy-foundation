@@ -92,6 +92,22 @@ describe("LeadText slice", () => {
     expect(h2?.querySelector(".highlight")?.textContent).toBe("Help that Lasts.");
   });
 
+  it("sets both VLF variations in the comp's right-hand column, or fills on request", () => {
+    const body = [{ type: "paragraph", text: "Body.", spans: [] }];
+    const onDark = { slice_type: "lead_text", variation: "onDark", primary: { body }, items: [] };
+    const { container, rerender } = render(LeadText, { props: { slice: onDark as never } });
+    // 952.5 of the 1280 grid, from x=407.5 — and pinned for the next band to
+    // slide over (app.css's slide-over rule).
+    expect(container.querySelector(".lead-on-dark")?.className).toContain("md:w-[74.4%]");
+    expect(container.querySelector("section")?.className).toContain("sticky-cover");
+    rerender({ slice: { ...onDark, primary: { body, layout: "fill" } } as never });
+    expect(container.querySelector(".lead-on-dark")?.className).not.toContain("md:w-[74.4%]");
+    const statement = { ...onDark, variation: "statement" };
+    rerender({ slice: statement as never });
+    expect(container.querySelector(".lead-statement")?.className).toContain("md:w-[74.4%]");
+    expect(container.querySelector("section")?.className).toContain("sticky-cover");
+  });
+
   it("renders no eyebrow heading in the statement variation", () => {
     const statement = {
       slice_type: "lead_text",

@@ -88,9 +88,9 @@ describe("CtaBanner onDark variation", () => {
     // #01263f ground: the #9cbf5b eyebrow is 7.42:1 and #fdf5e8 copy 14.37:1.
     expect(section?.className).toContain("bg-dark");
     // The comps' couple, 5.86:1 both ways — never white-on-green, which is 2.10.
+    // app.css .vlf-pill--dark is #263b02 on #9cbf5b.
     const cta = container.querySelector("a");
-    expect(cta?.className).toContain("bg-green-btn");
-    expect(cta?.className).toContain("text-green");
+    expect(cta?.className).toContain("vlf-pill--dark");
     expect(cta?.className).not.toContain("text-white");
   });
 
@@ -148,25 +148,29 @@ const makeOnCream = (primary: Record<string, unknown> = {}) =>
   }) as never;
 
 describe("CtaBanner onCream variation", () => {
-  it("rounds the cream panel off the dark ground behind it", () => {
-    // The <section> stays dark so the 80px corner has something to cut into;
-    // the CONTENT box carries the cream ground. Only this slice draws it — the
-    // testimonial and footer beneath stack into the same panel flat.
+  it("rounds a full-bleed cream panel over a transparent section", () => {
+    // The <section> paints nothing: the band before it is pinned (app.css's
+    // slide-over rule) and shows through the 80px corners as the panel slides
+    // up over it. The panel itself is the viewport's width — the ground runs
+    // edge to edge on a wide screen, only the copy sits on the 1440 grid.
     const { container } = render(CtaBanner, { props: { slice: makeOnCream() } });
     const section = container.querySelector("section");
-    expect(section?.className).toContain("bg-dark");
+    expect(section?.className).not.toContain("bg-dark");
     const panel = section?.querySelector("div");
     expect(panel?.className).toContain("bg-background");
     expect(panel?.className).toContain("rounded-t-[80px]");
+    expect(panel?.className).toContain("w-full");
+    expect(panel?.className).not.toContain("max-w-");
   });
 
   it("inverts the button couple for the cream ground", () => {
     // #9cbf5b fill + #263b02 text — 5.86:1, the same couple as onDark the
     // other way round. Never white-on-green, which is 2.10.
+    // app.css .vlf-pill is #263b02 on #9cbf5b.
     const { container } = render(CtaBanner, { props: { slice: makeOnCream() } });
     const cta = container.querySelector("a");
-    expect(cta?.className).toContain("bg-green");
-    expect(cta?.className).toContain("text-green-btn");
+    expect(cta?.className).toContain("vlf-pill");
+    expect(cta?.className).not.toContain("vlf-pill--dark");
     expect(cta?.className).not.toContain("text-white");
   });
 

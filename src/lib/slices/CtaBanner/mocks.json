@@ -79,6 +79,11 @@
           "__TYPE__": "ExternalLink",
           "url": "https://secure.lglforms.com/form_engine/s/1DAy4mOf7OlVR4Ke-4h2gA"
         }
+      },
+      "layout": {
+        "__TYPE__": "FieldContent",
+        "type": "Select",
+        "value": "float right"
       }
     },
     "items": []
@@ -104,7 +109,9 @@
                   "type": "label",
                   "start": 57,
                   "end": 77,
-                  "data": { "label": "highlight" }
+                  "data": {
+                    "label": "highlight"
+                  }
                 }
               ]
             }
@@ -123,6 +130,11 @@
           "__TYPE__": "ExternalLink",
           "url": "https://secure.lglforms.com/form_engine/s/1DAy4mOf7OlVR4Ke-4h2gA"
         }
+      },
+      "layout": {
+        "__TYPE__": "FieldContent",
+        "type": "Select",
+        "value": "float right"
       }
     },
     "items": []
