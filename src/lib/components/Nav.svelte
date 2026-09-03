@@ -53,6 +53,15 @@
   // language — see $lib/ui-copy.
   const copy = $derived(ui(lang));
 
+  // Only http(s) links open in a new tab; a route stays same-tab. The same
+  // shape NavMenu and Footer use, so target/rel cannot drift between them.
+  const isExternal = (href: string) => /^https?:\/\//i.test(href);
+  const linkAttrs = (href: string) => ({
+    href,
+    target: isExternal(href) ? "_blank" : undefined,
+    rel: isExternal(href) ? "noopener noreferrer" : undefined,
+  });
+
   const entries = $derived<NavItem[]>(
     navLinks.length > 0 ? navLinks.map((l) => ({ label: l.text, href: l.href })) : items,
   );
@@ -207,6 +216,7 @@
         <button
           bind:this={triggerEl}
           type="button"
+          data-nav-toggle
           class="-mr-3 flex h-11 w-11 items-center justify-center {ICON[effectiveTone]}"
           aria-label={copy.openMenu}
           aria-expanded={isMenuOpen}
@@ -221,6 +231,36 @@
       {/if}
     </div>
   </div>
+
+  {#if entries.length > 0}
+    <!-- Without scripts the hamburger is an inert control: it announces a
+         menu and does nothing, because NavMenu is not in the DOM until it is
+         clicked. So the entries are always rendered here and always hidden,
+         and the <noscript> block below reveals them and hides the button that
+         cannot work.
+
+         The rule that reveals it is a <noscript><style> in app.html, not
+         here: Svelte treats a <style> anywhere in a component as a style
+         block and empties it out of the markup, and real elements inside a
+         <noscript> would not survive hydration either — a browser running
+         scripts parses that content as raw text. -->
+    <ul
+      class="nav-nojs mx-auto w-full max-w-[1440px] flex-wrap items-center justify-end gap-x-6 gap-y-2 px-6 pb-4 md:px-20"
+    >
+      {#each entries as entry, i (i)}
+        {#if entry.href}
+          <li>
+            <a
+              {...linkAttrs(entry.href)}
+              class="font-button text-[10px] tracking-[1.5px] uppercase {ICON[effectiveTone]}"
+            >
+              {entry.label}
+            </a>
+          </li>
+        {/if}
+      {/each}
+    </ul>
+  {/if}
 </nav>
 
 {#if isMenuOpen}

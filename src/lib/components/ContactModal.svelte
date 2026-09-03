@@ -291,6 +291,10 @@
     bind:open={contactModal.open}
     labelledby={headingId}
     closeLabel={ui(lang).close}
+    restoreFocus={() =>
+      contactModal.returnFocus?.isConnected
+        ? contactModal.returnFocus
+        : document.querySelector<HTMLElement>("[data-nav-toggle]")}
     dialogClass="max-w-[640px]"
     class="bg-transparent! rounded-[20px]! shadow-none!"
     closeClass="text-green-btn hover:opacity-70 z-10"

@@ -238,4 +238,20 @@ describe("Footer", () => {
     // The brand glyph still renders.
     expect(container.querySelector("svg")).toBeTruthy();
   });
+
+  it("grows the link hit boxes to 24px without moving a baseline", () => {
+    // The rows are set in `.t-label`, which trims its box to cap height —
+    // 8.41px here — so the real target was 16.5px of line box, under WCAG
+    // 2.5.8's 24. Padding would move the comp's baselines; a pseudo element
+    // 8px above and below does not, and still leaves 14px clear between
+    // neighbours at the 38.41px row pitch.
+    const { container } = render(Footer, {
+      props: { columns: [{ items: [{ text: "Who we are", href: "/about" }] }] },
+    });
+    const link = container.querySelector<HTMLElement>("a[href='/about']")!;
+    expect(link.className).toContain("relative");
+    expect(link.className).toContain("before:-top-[8px]");
+    expect(link.className).toContain("before:-bottom-[8px]");
+    expect(link.className).toContain("before:inset-x-0");
+  });
 });
