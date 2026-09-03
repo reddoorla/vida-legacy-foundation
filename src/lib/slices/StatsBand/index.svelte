@@ -84,7 +84,7 @@
         {#if stats.length}
           <div class="grid gap-[30px] sm:grid-cols-2 xl:grid-cols-4">
             {#each stats as stat, i (i)}
-              <div class="flex flex-col items-start gap-5">
+              <div class="flex min-w-0 flex-col items-start gap-5">
                 {#if stat.value !== null}
                   <p class="t-stat text-green">
                     <CountUp value={stat.value} suffix={joinSuffix(stat.suffix)} />

@@ -86,10 +86,19 @@
   // scroll runway, PageMasthead is about 650px — and the swap must not happen
   // while the masthead is still on screen.
   function measure() {
-    const first = document.getElementById("main-content")?.firstElementChild;
-    scrolled = first
-      ? first.getBoundingClientRect().bottom <= NAV_HEIGHT
-      : window.scrollY > NAV_HEIGHT;
+    const main = document.getElementById("main-content");
+    const first = main?.firstElementChild;
+    // A page that IS one section — /donate and /contact, whose single slice
+    // runs the whole page — has no "first slice bottom" to pass under the
+    // bar, so the DOM test never fired: the bar stayed transparent over the
+    // copy for the whole page, and (below md) never went away either. Those
+    // pages fall back to the scroll offset. A page with slices keeps the
+    // measured test, which is what stops the swap firing mid-hero.
+    const single = main ? main.children.length < 2 : true;
+    scrolled =
+      first && !single
+        ? first.getBoundingClientRect().bottom <= NAV_HEIGHT
+        : window.scrollY > NAV_HEIGHT;
 
     const y = window.scrollY;
     const narrow = window.matchMedia?.(MOBILE_QUERY).matches ?? false;

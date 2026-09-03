@@ -391,12 +391,20 @@ main > section.hero-band:first-child {
    so it takes only what it needs, and below about 1400 — where even the
    padding is not enough — it wraps inside its own 40px height rather than
    being clipped by the card. */
-.vlf-pill--hang {
-  /* `width: max-content`, not the base pill's `fit-content`: fit-content
-     clamps to the containing block before max-width is ever consulted, so
-     the pill would keep taking exactly its column and wrapping inside it. */
-  width: max-content;
-  max-width: calc(100% + 20px);
+/* From `sm` up ONLY, where the card actually has columns to hang out of. A
+   single-column grid track sizes to its widest item, so on a phone
+   `max-content` stretched the track to the pill's 291px inside a 257px card
+   and every line of the card's copy was clipped by its own overflow — 64px
+   of it at 320. (The cell also carries `min-w-0`, so nothing else can stretch
+   the track that way again.) */
+@media (width >= 40rem) {
+  .vlf-pill--hang {
+    /* `width: max-content`, not the base pill's `fit-content`: fit-content
+       clamps to the containing block before max-width is ever consulted, so
+       the pill would keep taking exactly its column and wrapping inside it. */
+    width: max-content;
+    max-width: calc(100% + 20px);
+  }
 }
 
 /* ---- The comp's type styles ------------------------------------------------

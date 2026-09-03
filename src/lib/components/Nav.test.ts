@@ -57,7 +57,11 @@ function mountMain(bottom: () => number) {
   const main = document.createElement("main");
   main.id = "main-content";
   const first = document.createElement("section");
-  main.appendChild(first);
+  // Two sections, as a real slice zone has: Nav only measures the first
+  // slice's bottom edge when there IS more than one, because a page that is
+  // a single section (/donate, /contact) has no first slice to pass under
+  // the bar and falls back to the scroll offset instead.
+  main.append(first, document.createElement("section"));
   document.body.appendChild(main);
   vi.spyOn(first, "getBoundingClientRect").mockImplementation(
     () => ({ bottom: bottom() }) as DOMRect,
@@ -400,6 +404,22 @@ describe("Nav on a phone", () => {
 
     // And it can never be caught off-screen by the keyboard.
     expect(nav.className).toContain("focus-within:translate-y-0");
+  });
+
+  it("falls back to the scroll offset on a page that is one section", async () => {
+    // /donate and /contact are a single slice: there is no first slice whose
+    // bottom passes under the bar, so the measured test never fired and the
+    // bar stayed transparent over the copy the whole way down.
+    const main = document.createElement("main");
+    main.id = "main-content";
+    const only = document.createElement("section");
+    only.getBoundingClientRect = () => ({ bottom: 4000 }) as DOMRect;
+    main.append(only);
+    document.body.append(main);
+    const { container } = render(Nav, { items });
+    await scrollTo(400);
+    expect(container.querySelector("nav")!.dataset.scrolled).toBe("true");
+    main.remove();
   });
 
   it("keeps the bar on a wide viewport, however far down the page", async () => {
