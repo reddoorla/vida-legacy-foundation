@@ -247,9 +247,16 @@ test.describe("without JavaScript", () => {
     // selection of the bio beneath it; the + badge promises a pop-up that
     // cannot happen. Same treatment as the nav's hamburger.
     for (const selector of ["[data-bio-toggle]", ".person-open-cue"]) {
-      const shown = await page
-        .locator(selector)
-        .evaluateAll((els) => els.filter((el) => getComputedStyle(el).display !== "none").length);
+      const all = page.locator(selector);
+      // A floor first: "none are showing" is also true of a selector that
+      // matches nothing, so a rename would retire the guard silently.
+      expect(
+        await all.count(),
+        `${selector} matches nothing — has it been renamed?`,
+      ).toBeGreaterThan(0);
+      const shown = await all.evaluateAll(
+        (els) => els.filter((el) => getComputedStyle(el).display !== "none").length,
+      );
       expect(shown, `${selector} still showing without scripts`).toBe(0);
     }
   });
@@ -291,6 +298,20 @@ test.describe("the reduced-motion phone frame", () => {
       )
       .toMatchObject({ stageCollapsed: false, coversWidth: true, coversHeight: true });
   });
+
+  test("gives PageMasthead's stage a height too", async ({ page }) => {
+    // Same shape, same media query. Nothing reads this box today, so nothing
+    // renders wrong — which is exactly why it needs a test: the next thing to
+    // measure it would inherit a zero silently, as HeartHero's heart did.
+    await page.goto("/about", { waitUntil: "load" });
+    await expect
+      .poll(
+        () =>
+          page.locator(".page-masthead-stage").evaluate((el) => el.getBoundingClientRect().height),
+        { message: "the masthead stage collapsed to nothing" },
+      )
+      .toBeGreaterThan(0);
+  });
 });
 
 test("a card's bio stays hidden while the pop-up can open it", async ({ page }) => {
@@ -313,4 +334,42 @@ test("a card's bio stays hidden while the pop-up can open it", async ({ page }) 
       { message: "a card bio is visible even though scripts can open the pop-up" },
     )
     .toBe(0);
+});
+
+test("a stat paints one figure, not both of its candidates", async ({ page }) => {
+  // The CountUp half of the same coupling. A class name that drifts out of
+  // step with app.css leaves both layers painted — "100,000+ 100,000+" on
+  // every stat — and NOTHING else sees it: the unit suite stays green, and so
+  // do the no-JS tests, because with no script the noscript rule hides
+  // .countup-live and the renamed layer is the only thing showing. It only
+  // breaks with scripts ON, which is every real visitor. This was not a
+  // hypothetical; a renamed class reached a commit on this branch.
+  await page.goto("/", { waitUntil: "load" });
+  const band = page.locator('[data-slice-type="stats_band"]');
+  const roots = band.locator(".countup-live");
+  expect(await roots.count(), "no CountUp in the stats band — check the selector").toBeGreaterThan(
+    0,
+  );
+
+  // Counted by what is PAINTED, not by class name. Naming `.countup-nojs` in
+  // the selector was the first attempt and it passed the mutation happily: a
+  // renamed class simply stopped matching, so the test measured one element
+  // and found one. Every candidate is an aria-hidden child of the same
+  // wrapper, so counting those catches a rename to anything at all.
+  await expect
+    .poll(
+      () =>
+        roots.evaluateAll((els) =>
+          els.map(
+            (live) =>
+              [...(live.parentElement?.children ?? [])].filter(
+                (c) =>
+                  c.getAttribute("aria-hidden") === "true" &&
+                  getComputedStyle(c).display !== "none",
+              ).length,
+          ),
+        ),
+      { message: "a stat is painting more than one figure" },
+    )
+    .toEqual(await roots.evaluateAll((els) => els.map(() => 1)));
 });
