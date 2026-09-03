@@ -341,4 +341,17 @@ describe("Slider autoplay", () => {
     await advance(1000);
     expect(activeDot(container)?.getAttribute("aria-label")).toBe("Go to slide 2");
   });
+
+  it("names its controls in the page's language", () => {
+    // Nothing in a slice writes these — they are code, so they come from
+    // $lib/ui-copy and follow the page's locale like the rest of the chrome.
+    const { container } = renderSlider({ lang: "es", showArrows: true });
+    const names = [...container.querySelectorAll("button")].map((b) =>
+      b.getAttribute("aria-label"),
+    );
+    expect(names).toContain("Diapositiva anterior");
+    expect(names).toContain("Diapositiva siguiente");
+    expect(names).toContain("Ir a la diapositiva 1");
+    expect(container.textContent).toContain("Diapositiva 1 de");
+  });
 });

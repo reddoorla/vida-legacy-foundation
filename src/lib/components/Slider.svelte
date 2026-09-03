@@ -2,6 +2,8 @@
   import { useSwipe, type SwipeCustomEvent } from "svelte-gestures";
   import { onMount, type Snippet } from "svelte";
   import { viewport } from "$stores/viewport.svelte";
+  import { DEFAULT_LANG, type Lang } from "$lib/locale";
+  import { ui } from "$lib/ui-copy";
 
   interface Props {
     itemCount: number;
@@ -35,6 +37,10 @@
     /** Style the dot visuals (the button hit areas stay 24px+). */
     dotClass?: string;
     activeDotClass?: string;
+    /** The page's locale, for the controls' own names — everything a visitor
+     *  can read that Prismic does not write ($lib/ui-copy). `label` is the
+     *  caller's, so it arrives already in the right language. */
+    lang?: Lang;
     class?: string;
   }
 
@@ -56,8 +62,11 @@
     pauseClass = "",
     dotClass = "bg-gray-500 group-hover:bg-gray-600 group-active:bg-gray-700",
     activeDotClass = "bg-gray-800",
+    lang = DEFAULT_LANG,
     class: passedClasses = "",
   }: Props = $props();
+
+  const copy = $derived(ui(lang));
 
   let currentSlide = $state(0);
   let hovered = $state(false);
@@ -213,7 +222,7 @@
             class="w-full shrink-0"
             role="group"
             aria-roledescription="slide"
-            aria-label="{i + 1} of {itemCount}"
+            aria-label={copy.ofCount(i + 1, itemCount)}
             aria-hidden={slideVisible(i) ? undefined : "true"}
             inert={!slideVisible(i)}
             style={viewport.width >= 768
@@ -233,7 +242,7 @@
               : 'opacity-0 pointer-events-none'}"
             role="group"
             aria-roledescription="slide"
-            aria-label="{i + 1} of {itemCount}"
+            aria-label={copy.ofCount(i + 1, itemCount)}
             aria-hidden={currentSlide === i ? undefined : "true"}
             inert={currentSlide !== i}
           >
@@ -248,10 +257,9 @@
        a rotating carousel announcing every few seconds is noise (APG). -->
   <div class="sr-only" aria-live={autoRotating ? "off" : "polite"} aria-atomic="true">
     {#if responsiveCardsPerView > 1}
-      Slides {currentSlide + 1} through {currentSlide + responsiveCardsPerView} of
-      {itemCount}
+      {copy.slideRange(currentSlide + 1, currentSlide + responsiveCardsPerView, itemCount)}
     {:else}
-      Slide {currentSlide + 1} of {itemCount}
+      {copy.slideCount(currentSlide + 1, itemCount)}
     {/if}
   </div>
 
@@ -263,7 +271,7 @@
           type="button"
           onclick={() => (userPaused = !userPaused)}
           class="w-8 h-8 rounded-full text-gray-700 hover:bg-gray-200 transition-colors duration-200 flex items-center justify-center {pauseClass}"
-          aria-label={userPaused ? "Play slides" : "Pause slides"}
+          aria-label={userPaused ? copy.playSlides : copy.pauseSlides}
         >
           {#if userPaused}
             <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
@@ -286,7 +294,7 @@
           onkeydown={handleKeydown}
           aria-disabled={atStart ? "true" : undefined}
           class="w-8 h-8 rounded-full text-gray-700 hover:bg-gray-200 transition-colors duration-200 flex items-center justify-center aria-disabled:opacity-40 aria-disabled:hover:bg-transparent aria-disabled:cursor-default {arrowClass}"
-          aria-label="Previous slide"
+          aria-label={copy.previousSlide}
         >
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path
@@ -310,7 +318,7 @@
               class="group h-6 min-w-6 flex items-center justify-center {currentSlide === i
                 ? 'cursor-default'
                 : ''}"
-              aria-label="Go to slide {i + 1}"
+              aria-label={copy.goToSlide(i + 1)}
               aria-current={currentSlide === i ? "true" : undefined}
             >
               <span
@@ -331,7 +339,7 @@
           onkeydown={handleKeydown}
           aria-disabled={atEnd ? "true" : undefined}
           class="w-8 h-8 rounded-full text-gray-700 hover:bg-gray-200 transition-colors duration-200 flex items-center justify-center aria-disabled:opacity-40 aria-disabled:hover:bg-transparent aria-disabled:cursor-default {arrowClass}"
-          aria-label="Next slide"
+          aria-label={copy.nextSlide}
         >
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path
