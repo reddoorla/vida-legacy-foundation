@@ -216,6 +216,23 @@
       height: 100%;
     }
 
+    /* That `height: 100%` resolves against the band, and on a phone the band
+       has only a min-height — indefinite, so it computes to `auto`, and since
+       every child of the stage is absolutely positioned the box collapses to
+       ZERO. Nothing here reads the box, so unlike HeartHero (whose heart is
+       sized from it, and did not cover a phone until this was fixed) nothing
+       renders wrong today. It is the same latent shape, and the next thing to
+       measure this stage would inherit the bug silently.
+
+       Below the rule above, not inside the band's phone block higher up: a
+       media query adds no specificity, so at an equal (0,2,0) the later
+       declaration simply takes it back. */
+    @media (width < 48rem) {
+      .page-masthead-stage {
+        height: 100svh;
+      }
+    }
+
     .reveal {
       transition: none;
     }

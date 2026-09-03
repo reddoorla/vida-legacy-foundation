@@ -511,11 +511,21 @@ main > section.hero-band:first-child {
   text-transform: inherit;
 }
 
-/* The bar's no-JS entry list (Nav.svelte). Hidden until the <noscript> rule
-   in the bar itself reveals it — the list has to live outside the <noscript>,
-   because a browser running scripts parses that element's content as raw text
-   and real markup in there would not survive hydration. */
-.nav-nojs {
+/* Content a script would have supplied, rendered but hidden until the
+   <noscript> block in app.html reveals it. All three have to live outside the
+   <noscript> itself, because a browser running scripts parses that element's
+   content as raw text and real markup in there would not survive hydration —
+   and display:none keeps them out of the accessibility tree meanwhile, so a
+   visitor WITH scripts is never told about them twice.
+
+     .nav-nojs        the bar's entry list (Nav.svelte)
+     .person-bio-nojs a person's bio, which otherwise exists only inside a
+                      pop-up that a click has to create (PersonGrid)
+     .countup-nojs    the real figure, where the animated one is still 0
+                      (CountUp) */
+.nav-nojs,
+.person-bio-nojs,
+.countup-nojs {
   display: none;
 }
 

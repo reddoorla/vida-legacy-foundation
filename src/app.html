@@ -60,6 +60,27 @@
         [data-nav-toggle] {
           display: none;
         }
+        /* PersonGrid's bios live only inside a pop-up that a click creates, so
+           with no script they were not hidden but absent. The card renders
+           them instead, and the two controls that advertise the pop-up go: the
+           overlay button does nothing and would swallow selection of the bio
+           underneath it, and the + badge promises an interaction that cannot
+           happen. Same shape as the hamburger above. */
+        .person-bio-nojs.person-bio-nojs {
+          display: block;
+        }
+        [data-bio-toggle],
+        .person-open-cue.person-open-cue {
+          display: none;
+        }
+        /* CountUp's visible layer is a tween that starts at 0 and is never run,
+           so the figure read "0 people". Show the real one instead. */
+        .countup-nojs.countup-nojs {
+          display: inline;
+        }
+        .countup-live.countup-live {
+          display: none;
+        }
       </style>
     </noscript>
     <!-- The two runway stages, rendered as their FINAL frame when there is

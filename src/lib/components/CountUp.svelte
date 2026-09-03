@@ -100,7 +100,24 @@
 </script>
 
 <span bind:this={el} class={passedClasses}>
-  <span aria-hidden="true">{liveText}</span>
+  <!-- Two visible candidates, one shown, and BOTH aria-hidden — the sr-only
+       layer below is what assistive tech reads either way, so the swap never
+       changes what is announced.
+
+       The tween starts at `startValue`, so the server renders 0 and, with no
+       script to run the count, 0 is what a sighted visitor was left reading:
+       "0 people", "0 lives" — figures that are not merely unanimated but
+       WRONG. The sr-only layer always carried the real number, which is why
+       nothing in the suite could see it. `.countup-nojs` is display:none in
+       app.css and the <noscript> block in app.html swaps the pair; it cannot
+       live inside a <noscript> itself, because a browser running scripts
+       parses that content as raw text and it would not survive hydration.
+
+       `.countup-live` stays FIRST so it is the first [aria-hidden] element in
+       the component — which is how the tests here address "the visible
+       number", and the reading stays true. -->
+  <span aria-hidden="true" class="countup-live">{liveText}</span>
+  <span aria-hidden="true" class="countup-nojs">{finalText}</span>
   <!-- select-none so copying the visible number doesn't also pull this
        screen-reader duplicate ("1,234+1,234+"). -->
   <span class="sr-only select-none">{label ?? finalText}</span>

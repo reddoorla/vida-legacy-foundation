@@ -173,17 +173,41 @@ test.describe("without JavaScript", () => {
       expect(runway, `${path} still renders a scroll runway without scripts`).toBeLessThan(1.2);
     });
   }
+  test("/ shows the real figures, not the count's starting zeros", async ({ page }) => {
+    await page.goto("/", { waitUntil: "domcontentloaded" });
+    // CountUp's visible layer is a tween starting at 0 that no script runs, so
+    // the band read "0+", "0 people", "0%", "0 lives" — not merely unanimated
+    // but wrong. The sr-only layer always carried the truth, which is exactly
+    // why nothing else in the suite could see this.
+    const figures = await page
+      .locator('[data-slice-type="stats_band"] [aria-hidden="true"]')
+      .evaluateAll((els) =>
+        els
+          .filter((el) => getComputedStyle(el).display !== "none")
+          .map((el) => (el.textContent ?? "").trim())
+          .filter(Boolean),
+      );
+    expect(figures.length, "no stat figures found — check the selector").toBeGreaterThan(0);
+    expect(
+      figures.some((f) => /^0\b/.test(f)),
+      `stats still reading zero: ${figures}`,
+    ).toBe(false);
+  });
+
+  test("/about hides the controls that cannot open a bio", async ({ page }) => {
+    await page.goto("/about", { waitUntil: "domcontentloaded" });
+    // The overlay button does nothing without a script and would swallow
+    // selection of the bio beneath it; the + badge promises a pop-up that
+    // cannot happen. Same treatment as the nav's hamburger.
+    for (const selector of ["[data-bio-toggle]", ".person-open-cue"]) {
+      const shown = await page
+        .locator(selector)
+        .evaluateAll((els) => els.filter((el) => getComputedStyle(el).display !== "none").length);
+      expect(shown, `${selector} still showing without scripts`).toBe(0);
+    }
+  });
 });
 
-// The reduced-motion phone frame. Its heart is sized from a MEASUREMENT of the
-// stage, and the stage's `height: 100%` resolved against a band that has only
-// a min-height here — indefinite, so it computed to auto and, every child
-// being absolutely positioned, the box collapsed to zero. heartEndPct read 0
-// and fell back to the comp's 187.2%, which does not cover a phone: the
-// heart's cleft and point were both on screen with green around them.
-//
-// Nothing else in the suite can see this. The rule is gated on reduced motion
-// AND width < 768, and every other test runs at the config's 1280x720.
 test.describe("the reduced-motion phone frame", () => {
   test.use({ viewport: { width: 390, height: 664 } });
 
