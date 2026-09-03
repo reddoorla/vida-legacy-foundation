@@ -12,12 +12,14 @@
   --screen-lg: 1024px;
   --screen-xl: 1340px;
 
-  /* The comp's own width, as a real v4 breakpoint — in REM, like v4's own.
-     Two ways to get this wrong, both measured in the built CSS: an arbitrary
-     variant (`min-[1440px]:`) and a px-valued custom breakpoint are BOTH
-     emitted before the rem-valued defaults, so `sm:grid-cols-2` would win
-     over the 4-column rule at every width. 90rem sorts where it belongs. */
-  --breakpoint-wide: 90rem;
+  /* If this file ever adds a breakpoint of its own it must be a
+     `--breakpoint-*` key with a REM value. Measured in the built CSS: an
+     arbitrary variant (`min-[1440px]:`) and a px-valued `--breakpoint-*` are
+     BOTH emitted before the rem-valued defaults, so `sm:grid-cols-2` beats
+     them at every width — which is how the stats grid's fourth column went
+     missing in silence. It runs on plain `xl:` now: the comp's 1440 is not a
+     usable threshold, because a maximized 1440 window is 1425 of viewport
+     once the scrollbar is paid, and 4-up has to hold there. */
 
   --color-transparent: transparent;
   --color-current: currentColor;
@@ -499,7 +501,10 @@ main > section.hero-band:first-child {
    pin offset is `--sticky-top`: 0 for a band shorter than the viewport, and
    negative for a taller one so it holds with its bottom edge at the bottom
    of the viewport instead of hiding its lower half — set per band by
-   $lib/actions/stickyCover from the measured height. */
+   $lib/actions/stickyCover from the measured height. A band marked
+   `.sticky-cover--bottom` holds by its bottom edge whatever its height, so a
+   short one rests at the BOTTOM of the screen (the homepage's closing
+   statement) instead of the top. */
 main > section {
   position: relative;
 }
@@ -509,6 +514,20 @@ main > section:has(+ section[data-slice-type="cta_banner"][data-slice-variation=
   position: sticky;
   top: var(--sticky-top, 0px);
   z-index: 0;
+}
+
+/* The band ABOVE a bottom-anchored cover carries its ground down behind it.
+   A cover that rests at the bottom of the screen leaves the band above it
+   still scrolling, and the hole that opens between them goes all the way
+   down to whatever is pinned further up the page — on the homepage, a strip
+   of the full-bleed photograph appearing between the stats card and the
+   closing line. Padding plus the same negative margin: the ground grows, the
+   flow does not, so the comp's gap to the line is untouched. It can only
+   paint over things already covered — a later sibling always paints over an
+   earlier one, so the cover itself and the cream panel are unaffected. */
+main > section:has(+ section.sticky-cover--bottom) {
+  padding-bottom: 100vh;
+  margin-bottom: -100vh;
 }
 
 /* The pinned band holds until the FOOTER's bottom edge passes, not <main>'s.

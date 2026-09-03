@@ -49,13 +49,19 @@
      ("sticky scrolls") while the next band slides up over them — see the
      slide-over note in app.css. The comp's vertical rhythm is 60px above
      the paragraph and none below it for onDark (the columns band that
-     follows pays its own 120), and 60 above / 120 below for the statement. -->
+     follows pays its own 120), and 60 above / 120 below for the statement.
+
+     The statement holds by its BOTTOM edge (`sticky-cover--bottom`): the
+     closing line comes to rest at the bottom of the screen, not the top,
+     and the cream panel rolls up over it from there. The band keeps the
+     comp's height — the resting edge is the only thing the client asked to
+     change, so the 60px between the line and the band above it stays 60. -->
 <ContentBand
   sliceType={slice.slice_type}
   variation={slice.variation}
   dataLayout={fill ? "fill" : "float-right"}
   sectionClass={statement
-    ? "bg-dark sticky-cover flex min-h-dvh items-end"
+    ? "bg-dark sticky-cover sticky-cover--bottom"
     : onDark
       ? "bg-green-btn sticky-cover"
       : ""}

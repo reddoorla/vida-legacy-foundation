@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import { stickyBands, stickyTop, stickyCovers, footerAfter } from "./stickyCover";
+import { stickyBands, stickyTop, stickyCovers, footerAfter, anchorOf } from "./stickyCover";
 
 const section = (type: string, variation = "default", cls = "") => {
   const el = document.createElement("section");
@@ -18,6 +18,21 @@ describe("stickyTop", () => {
     // 1098px board section in a 900px viewport: hold it 198px above the top,
     // so its bottom sits at the bottom of the viewport.
     expect(stickyTop(1098, 900)).toBe(-198);
+  });
+
+  it("rests a bottom-anchored band on the bottom edge whatever its height", () => {
+    // The homepage's closing statement: 303px of comp height in a 900px
+    // viewport comes to rest 597px down, its bottom on the viewport's.
+    expect(stickyTop(303, 900, "bottom")).toBe(597);
+    // A tall one is unchanged — the top anchor already held it that way.
+    expect(stickyTop(1098, 900, "bottom")).toBe(-198);
+  });
+
+  it("reads the anchor off the band", () => {
+    expect(anchorOf(section("lead_text", "statement"))).toBe("top");
+    expect(anchorOf(section("lead_text", "statement", "sticky-cover sticky-cover--bottom"))).toBe(
+      "bottom",
+    );
   });
 });
 
@@ -58,6 +73,15 @@ describe("stickyCovers action", () => {
     main.append(band, section("cta_banner", "onCream"));
     const action = stickyCovers(main);
     expect(band.style.getPropertyValue("--sticky-top")).toBe("-200px");
+    action?.destroy?.();
+  });
+
+  it("rests a bottom-anchored band on the viewport's bottom edge", () => {
+    const band = section("lead_text", "statement", "sticky-cover sticky-cover--bottom");
+    Object.defineProperty(band, "offsetHeight", { value: 300, configurable: true });
+    main.append(band, section("cta_banner", "onCream"));
+    const action = stickyCovers(main);
+    expect(band.style.getPropertyValue("--sticky-top")).toBe("600px");
     action?.destroy?.();
   });
 

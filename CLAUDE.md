@@ -60,6 +60,11 @@ fleet-maintenance sessions (reddoor-maintenance) also open PRs here, so:
 - **Never hand-roll `scrollTo`** — use `$lib/utils/instantNavScroll`.
 - **Never redraw an asset in CSS** when the real file is downloadable. Ship the
   file.
+- **A custom Tailwind v4 breakpoint must be `--breakpoint-*` and in `rem`.**
+  Measured in the built CSS: a px-valued key and an arbitrary `min-[1440px]:`
+  variant are both emitted BEFORE the rem-valued defaults, so `sm:` wins and
+  the rule never applies — silently. (`--screen-*` is v3 naming and v4 ignores
+  it outright; this site really runs on v4's defaults, 640/768/1024/1280.)
 
 ---
 
@@ -197,6 +202,13 @@ takes green to **3.80**. That still passes for the 36px stat figures (large
 text) and they are the only green on it. **Do not put small green text on this
 ground.**
 
+The stats card's four columns hold from Tailwind's `xl` (1280) up, not from
+the comp's 1440: a maximized 1440 window is 1425 of viewport once the
+scrollbar is paid, and that fell to 2x2 on the client's own screen. The
+register pill takes two lines below ~1430 — it needs 291px against the
+comp's own 282.5px column, so it wraps even in the comp's frame — and the
+pill's 40px min-height swallows both lines without growing.
+
 `pnpm test:a11y` gates all of this, so a regression fails CI rather than
 shipping — and the footer renders on every audited route, so its contrast is
 genuinely covered. But the gate only sees rendered routes. Do not assign
@@ -311,10 +323,19 @@ decide most of it and are invisible in a screenshot:
   one holds by its bottom edge. `CtaBanner onCream` is a full-bleed cream
   panel on a transparent section: its rounded corners show the pinned band
   through, whatever colour that band is. The homepage's closing statement
-  ("Hope that heals. Help that Lasts.") is a departure the client asked for:
-  that band is a full screen of navy (`min-h-dvh`) with the line at its BOTTOM
-  edge, so the panel rolls up over a whole screen of colour instead of over a
-  303px strip with the page's own ground showing above it.
+  ("Hope that heals. Help that Lasts.") is a departure the client asked for,
+  and it took two rounds to land: the line comes to rest at the BOTTOM of the
+  screen rather than the top, and the band keeps the comp's own height doing
+  it. `.sticky-cover--bottom` is that — stickyCover gives the band the full
+  `viewport - height` offset, positive for a short band, so it holds by its
+  bottom edge. The first attempt grew the band to `min-h-dvh` instead, which
+  put the comp's 60px between the stats card and the line at a whole viewport
+  ("it shouldn't grow that much", round 4). One consequence needs the rule
+  that follows it in app.css: a band resting at the bottom leaves the band
+  above it still scrolling, and the hole between them shows whatever is
+  pinned further up (the full-bleed photograph, in a strip) — so the section
+  BEFORE a `.sticky-cover--bottom` carries its own ground 100vh down behind
+  it, padding plus an equal negative margin, which changes no flow.
 
 The VLF variations that sit in the comp's right-hand column (952.5 of the
 1280 grid, from x=407.5) carry a `layout` Select — `float right` (the comp,
@@ -355,6 +376,15 @@ picks the Prismic locale through `$lib/locale`. Prismic's ids (`en-us`,
 - **Chrome per locale** lives in `site-config.json` under `locales.es` (nav and
   footer replaced wholesale, hrefs included); `loadSiteConfig(lang)` resolves
   it. The contact page carries its own two-language copy.
+- **The words the chrome supplies itself** — the skip link, "Open menu",
+  "Close menu", the menu dialog's name, the language group's name, a dialog's
+  close button, "Read the bio for …", the landscape cover — are in
+  `$lib/ui-copy` (`ui(lang)`), because nothing translates them: they are code,
+  not content. Components take the page's `lang` and slices read
+  `context.lang`, the same split the contact and donation forms use for their
+  field labels. `Modal` takes a `closeLabel` so its caller decides. Anything
+  new that a visitor can read and Prismic does not write belongs there, or
+  the Spanish site announces it in English (it did, until round 4).
 - **Head**: `<html lang>` is set per request in `hooks.server.ts` (app.html
   carries `%lang%`), `og:locale` comes from the loader, and `Seo` emits
   reciprocal `hreflang` links plus an English `x-default` only when a page has

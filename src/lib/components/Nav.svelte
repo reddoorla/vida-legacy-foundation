@@ -3,6 +3,7 @@
   import type { NavItem } from "$lib/site-config";
   import type { NavTone } from "$lib/nav-tone";
   import { DEFAULT_LANG, localizePath, type Lang, type SwitchTarget } from "$lib/locale";
+  import { ui } from "$lib/ui-copy";
   import NavMenu from "./NavMenu.svelte";
   import LangToggle from "./LangToggle.svelte";
 
@@ -47,6 +48,10 @@
     lang = DEFAULT_LANG,
     switchTo,
   }: Props = $props();
+
+  // The bar's own words (the lockup's alt, the menu button) in the page's
+  // language — see $lib/ui-copy.
+  const copy = $derived(ui(lang));
 
   const entries = $derived<NavItem[]>(
     navLinks.length > 0 ? navLinks.map((l) => ({ label: l.text, href: l.href })) : items,
@@ -175,7 +180,7 @@
     <a href={localizePath("/", lang)} class="flex items-center">
       <img
         src={LOCKUP[effectiveTone]}
-        alt="Vida Legacy Foundation home"
+        alt={copy.homeLink}
         width="242"
         height="38"
         class="h-[30px] w-auto"
@@ -194,7 +199,7 @@
           bind:this={triggerEl}
           type="button"
           class="-mr-3 flex h-11 w-11 items-center justify-center {ICON[effectiveTone]}"
-          aria-label="Open menu"
+          aria-label={copy.openMenu}
           aria-expanded={isMenuOpen}
           onclick={() => (isMenuOpen = true)}
         >

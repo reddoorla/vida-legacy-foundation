@@ -162,14 +162,14 @@ describe("Nav — the bar", () => {
 
   it("links the lockup to the locale's own home", () => {
     const { getByAltText } = render(Nav, { items, lang: "es" });
-    expect(getByAltText("Vida Legacy Foundation home").closest("a")?.getAttribute("href")).toBe(
-      "/es",
-    );
+    expect(
+      getByAltText("Inicio de Vida Legacy Foundation").closest("a")?.getAttribute("href"),
+    ).toBe("/es");
   });
 
   it("marks ES as current on a Spanish page and flips the couple on the green hero", () => {
     const { getByRole } = render(Nav, { items, lang: "es", tone: "onGreen" });
-    const current = getByRole("group", { name: "Language" }).querySelector("[aria-current]");
+    const current = getByRole("group", { name: "Idioma" }).querySelector("[aria-current]");
     expect(current?.textContent?.trim()).toBe("ES");
     expect(current?.getAttribute("lang")).toBe("es");
     // Green on green is no switch: the active side wears dark-on-green there.
@@ -409,5 +409,22 @@ describe("Nav on a phone", () => {
     await scrollTo(400);
     await scrollTo(900);
     expect(container.querySelector("nav")!.dataset.hidden).toBe("false");
+  });
+
+  it("speaks the page's language, chrome included", async () => {
+    // The entries come from Prismic already translated; these words are the
+    // chrome's own, and on the Spanish site they were still English.
+    const { getByLabelText, getByRole, container } = render(Nav, {
+      items,
+      lang: "es",
+      switchTo: { lang: "en", href: "/about", label: "English", short: "EN" },
+    });
+    expect(getByRole("group", { name: "Idioma" })).toBeTruthy();
+    expect(container.querySelector("img")!.getAttribute("alt")).toBe(
+      "Inicio de Vida Legacy Foundation",
+    );
+    await fireEvent.click(getByLabelText("Abrir el menú"));
+    const dialog = getByRole("dialog", { name: "Menú" });
+    expect(dialog.querySelector('[aria-label="Cerrar el menú"]')).not.toBeNull();
   });
 });
