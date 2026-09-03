@@ -353,26 +353,27 @@ decide most of it and are invisible in a screenshot:
   back to `offsetHeight` where there is no layout, i.e. jsdom) plus
   `STACK_OVERLAP` fixes both that and the closing band's own bottom edge,
   which now lands exactly on the viewport's.
-- **A pinned band is only covered by as much of the next band as exists.**
-  The photograph is pinned at the top of the screen and the navy band over it
-  is 318px, so from the moment "By the numbers" entered at the bottom the
-  photograph was still a 574px strip across the top, shrinking away over
-  another 580px of scrolling — "feels weird it stops at her forehead", and
-  "can the blue section reach all the way to the top before the next section
-  scrolls up?" (Nicole, round 4). `.sticky-cover--clear` on a band says the
-  section that slides over it must be a viewport tall (`main >
-section.sticky-cover--clear + section` in app.css), and at exactly that
-  height the cover's top edge reaches the top of the screen as the next
-  section's top edge reaches the bottom. `lvh`, not `svh` or `dvh`: `svh` is
-  the phone's viewport with its toolbars showing, so a band sized to it
-  leaves the strip back the moment they retract, and `dvh` changes height
-  mid-scroll. The extra height goes BELOW the band's content — the client's
-  call ("let's do bottom on the space for now"), so the copy keeps the comp's
-  place at the top of the band and scrolls up out of the way. The cost of
-  that choice is the frozen screen above: the copy is gone by then and the
-  held screen leads with ~360px of navy. Space ABOVE the content is the other
-  half of the trade — it would keep the copy in the frozen screen and hold a
-  blank screen of navy on the way in instead.
+- **A pinned band is only covered by as much of the stack above it.** The
+  photograph holds at the top of the screen and the closing stack is the navy
+  band, the stats card and the closing line — 946px of it. On a screen taller
+  than that, the rest is the photograph, held still across the top of the
+  frozen screen for as long as the cream panel takes to roll: "feels weird it
+  stops at her forehead", and "can the blue section reach all the way to the
+  top before the next section scrolls up?" (Nicole, round 4 — her screenshot
+  measures 1151px of viewport and a 204px strip, exactly the shortfall).
+  `coverRun` returns that shortfall as `slack` and `stickyCover` writes it as
+  `--cover-slack` on the closing statement, which app.css pays as
+  **padding-bottom** — height BELOW the line ("I meant below 'hope that heals,
+  help that lasts', and should be just enough to cover the image above at the
+  top of the screen"). The band is bottom-anchored, so growing it downward
+  takes the whole stack up with it until its top edge lands on the screen's,
+  and the comp's 60px between the line and the stats card never moves. It is
+  paid only when the walk actually ran into a pinned band — run out of
+  sections instead and what is above simply scrolls, and freezing a screen for
+  it would be wrong — and it is zero at every viewport the stack already
+  covers, which includes the comp's own and every phone. Measured after: no
+  photograph anywhere in the roll at 1440x760, x900, x1151, 1920x1300 or
+  390x664; slack 0 / 0 / 204.4 / 353.4 / 0.
 
 The VLF variations that sit in the comp's right-hand column (952.5 of the
 1280 grid, from x=407.5) carry a `layout` Select — `float right` (the comp,

@@ -50,17 +50,6 @@ describe("ImageBand slice", () => {
     expect(container.querySelector("[data-slice-type='image_band']")).toBeNull();
   });
 
-  it("asks to be cleared completely by the band that slides over it", () => {
-    // app.css gives the section after a `.sticky-cover--clear` band a viewport
-    // of minimum height. Without it the 318px navy band could only cover 318px
-    // of the photograph per screen, so it stayed as a strip across the top
-    // while the section after it was already up — "feels weird it stops at her
-    // forehead" (client review, round 4).
-    const { container } = render(ImageBand, { props: { slice } });
-    const section = container.querySelector("[data-slice-type='image_band']");
-    expect(section?.className).toContain("sticky-cover--clear");
-  });
-
   it("holds the comps' 1440x860 box", () => {
     const { container } = render(ImageBand, { props: { slice } });
     const section = container.querySelector("[data-slice-type='image_band']");

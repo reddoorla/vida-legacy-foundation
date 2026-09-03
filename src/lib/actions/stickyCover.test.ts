@@ -87,11 +87,57 @@ describe("coverRun", () => {
     ]);
     // The statement rests at 900 - 300 = 600; stats holds its bottom against
     // that (600 - 330), and the CTA against stats (271 - 400) — each a pixel
-    // lower than flush, so no rounding can open a seam between them.
-    expect(coverRun(m, 900, h)).toEqual([
+    // lower than flush, so no rounding can open a seam between them. The
+    // stack clears the top of the screen on its own, so it grows by nothing.
+    const cover = coverRun(m, 900, h);
+    expect(cover.slack).toBe(0);
+    expect(cover.anchor).toBe(statement);
+    expect(cover.anchorTop).toBe(600);
+    expect(cover.run).toEqual([
       { el: cta, top: -128 },
       { el: stats, top: 271 },
     ]);
+  });
+
+  it("grows the anchor below its line by exactly what the screen is short", () => {
+    // Nicole's screen, round 4: 1151px of viewport against a stack of
+    // 300 + 330 + 400 (less two pixels of overlap) left the pinned
+    // photograph as a band across the top of the held screen. The statement
+    // takes the difference as height BELOW its own line, and the whole stack
+    // slides up until its top edge lands on the screen's.
+    const cta = section("cta_banner", "onDark");
+    const stats = section("stats_band");
+    const statement = section("lead_text", "statement", "sticky-cover sticky-cover--bottom");
+    const [m, h] = main({ cta_banner: 400, stats_band: 330, lead_text: 300 }, [
+      section("image_band", "default", "sticky-cover"),
+      cta,
+      stats,
+      statement,
+      section("cta_banner", "onCream"),
+    ]);
+    const cover = coverRun(m, 1151, h);
+    expect(cover.slack).toBe(123);
+    expect(cover.anchor).toBe(statement);
+    // 1151 - 300 - 123: the band still ends on the bottom of the screen.
+    expect(cover.anchorTop).toBe(728);
+    expect(cover.anchorTop + 300 + cover.slack).toBe(1151);
+    // And the top of the stack is now the top of the screen.
+    expect(cover.run[0]?.top).toBe(0);
+    expect(cover.run.map((r) => r.el)).toEqual([cta, stats]);
+  });
+
+  it("never grows a band that holds by its top edge", () => {
+    // Who We Are's board section: a top anchor is already clamped to 0, so
+    // the stack cannot come up short and there is nothing to pay for.
+    const board = section("person_grid", "default", "sticky-cover");
+    const [m, h] = main({ person_grid: 400, statement_panel: 200 }, [
+      section("statement_panel"),
+      board,
+      section("cta_banner", "onCream"),
+    ]);
+    const cover = coverRun(m, 1400, h);
+    expect(cover.slack).toBe(0);
+    expect(cover.anchorTop).toBe(0);
   });
 
   it("stops at a band that is already holding on its own", () => {
@@ -105,8 +151,12 @@ describe("coverRun", () => {
       section("cta_banner", "onCream"),
     ]);
     // 200px of stack in a 900px viewport, and the photograph above it is
-    // pinned already — it is not taken into the run.
-    expect(coverRun(m, 900, h).map((r) => r.el)).toEqual([stats]);
+    // pinned already — it is not taken into the run; the statement grows by
+    // the 701 the stack is short instead.
+    const cover = coverRun(m, 900, h);
+    expect(cover.run.map((r) => r.el)).toEqual([stats]);
+    expect(cover.slack).toBe(701);
+    expect(cover.run[0]?.top).toBe(0);
   });
 
   it("adds nothing when the band before the panel already fills the screen", () => {
@@ -116,12 +166,14 @@ describe("coverRun", () => {
       board,
       section("cta_banner", "onCream"),
     ]);
-    expect(coverRun(m, 900, h)).toEqual([]);
+    const cover = coverRun(m, 900, h);
+    expect(cover.run).toEqual([]);
+    expect(cover.slack).toBe(0);
   });
 
   it("is empty on a page with no closing panel", () => {
     const [m, h] = main({ donation_form: 800 }, [section("donation_form")]);
-    expect(coverRun(m, 900, h)).toEqual([]);
+    expect(coverRun(m, 900, h)).toEqual({ anchor: null, anchorTop: 0, slack: 0, run: [] });
   });
 });
 
@@ -150,6 +202,36 @@ describe("stickyCovers action", () => {
     const action = stickyCovers(main);
     expect(band.style.getPropertyValue("--sticky-top")).toBe("600px");
     action?.destroy?.();
+  });
+
+  it("pays the shortfall as height below the anchor's line, and takes it back", () => {
+    // Nicole's 1151px screen: 300 + 330 of stack under a pinned photograph
+    // left 523 of it showing across the top of the held screen.
+    Object.defineProperty(window, "innerHeight", { value: 1151, configurable: true });
+    const photo = section("image_band", "default", "sticky-cover");
+    const stats = section("stats_band");
+    const statement = section("lead_text", "statement", "sticky-cover sticky-cover--bottom");
+    for (const [el, h] of [
+      [photo, 851],
+      [stats, 330],
+      [statement, 300],
+    ] as const)
+      Object.defineProperty(el, "offsetHeight", { value: h, configurable: true });
+    main.append(photo, stats, statement, section("cta_banner", "onCream"));
+    const action = stickyCovers(main);
+    expect(statement.style.getPropertyValue("--cover-slack")).toBe("522px");
+    // The band still ends on the bottom of the screen: 329 + 300 + 522.
+    expect(statement.style.getPropertyValue("--sticky-top")).toBe("329px");
+    // And the stats card above it now starts at the top of it.
+    expect(stats.style.getPropertyValue("--sticky-top")).toBe("0px");
+    // A second pass must read the band's own height back, not the grown one,
+    // or the slack it just paid would look like height it does not need.
+    Object.defineProperty(statement, "offsetHeight", { value: 822, configurable: true });
+    window.dispatchEvent(new Event("resize"));
+    expect(statement.style.getPropertyValue("--cover-slack")).toBe("522px");
+    action?.destroy?.();
+    expect(statement.style.getPropertyValue("--cover-slack")).toBe("");
+    Object.defineProperty(window, "innerHeight", { value: 900, configurable: true });
   });
 
   it("re-collects when the slice zone changes", async () => {
