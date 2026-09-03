@@ -343,6 +343,14 @@ decide most of it and are invisible in a screenshot:
   is already holding on its own account and fills whatever is left above —
   on the homepage that is the full-bleed photograph, so the frozen screen is
   "Compassion in Action" + "By the numbers" + the closing line over it.
+  **The stack is measured fractionally and overlaps by a pixel at every
+  joint.** `offsetHeight` rounds to whole pixels and the real bands are
+  fractional (327.61, 301.81), so butting the boxes edge to edge left a
+  sub-pixel seam that showed the photograph behind — intermittently, because
+  a sticky offset is composited. `getBoundingClientRect().height` (falling
+  back to `offsetHeight` where there is no layout, i.e. jsdom) plus
+  `STACK_OVERLAP` fixes both that and the closing band's own bottom edge,
+  which now lands exactly on the viewport's.
 
 The VLF variations that sit in the comp's right-hand column (952.5 of the
 1280 grid, from x=407.5) carry a `layout` Select — `float right` (the comp,
