@@ -330,12 +330,19 @@ decide most of it and are invisible in a screenshot:
   `viewport - height` offset, positive for a short band, so it holds by its
   bottom edge. The first attempt grew the band to `min-h-dvh` instead, which
   put the comp's 60px between the stats card and the line at a whole viewport
-  ("it shouldn't grow that much", round 4). One consequence needs the rule
-  that follows it in app.css: a band resting at the bottom leaves the band
-  above it still scrolling, and the hole between them shows whatever is
-  pinned further up (the full-bleed photograph, in a strip) — so the section
-  BEFORE a `.sticky-cover--bottom` carries its own ground 100vh down behind
-  it, padding plus an equal negative margin, which changes no flow.
+  ("it shouldn't grow that much", round 4).
+- **The panel rolls over the PAGE, not over one band.** Pinning only the band
+  before it left that band stopping dead while the sections above it kept
+  scrolling — "out of flow", round 4, and the hole it opened showed a strip
+  of the pinned photograph. `coverRun` in `$lib/actions/stickyCover` walks
+  back from the closing panel, stacking each section's bottom against the top
+  of the one below it until the stack fills the viewport, and writes
+  `data-cover-run` + the offset on each (app.css pins those). Every member
+  therefore pins on the same scroll position: the whole screen holds still
+  and only the panel moves. The walk stops at a `.sticky-cover` band, which
+  is already holding on its own account and fills whatever is left above —
+  on the homepage that is the full-bleed photograph, so the frozen screen is
+  "Compassion in Action" + "By the numbers" + the closing line over it.
 
 The VLF variations that sit in the comp's right-hand column (952.5 of the
 1280 grid, from x=407.5) carry a `layout` Select — `float right` (the comp,

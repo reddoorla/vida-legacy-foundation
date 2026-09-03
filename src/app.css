@@ -327,10 +327,7 @@ main > section.hero-band:first-child {
   /* 1px more below than above: Extended Book's caps sit half a pixel high
      when the line box is centred (measured at 4x with
      scripts/figma-compare/ink.mjs), and the eye reads capitals by their own
-     centre. A label never wraps: the comp's longest ("register to be an
-     organ donor") is a 240px run in a 270px pill, and a grid cell that is a
-     few pixels short would otherwise break it into two lines — which is why
-     the stats grid goes 2-up below 1340 rather than squeezing the column. */
+     centre. */
   padding: 0 15px 1px;
   border-radius: 9999px;
   background-color: var(--color-green);
@@ -382,6 +379,24 @@ main > section.hero-band:first-child {
 .vlf-pill--deep {
   background-color: var(--color-green-deep);
   color: var(--color-green);
+}
+
+/* A pill allowed to hang out of its column, the way the comp's own does.
+   Figma 5249:1243 → "button 4": the stats band's register button is 294px
+   wide in a 282.5px column and stays on ONE line, ending 18.5px from the
+   card's edge instead of the other columns' 30 — because its label does not
+   fit a quarter of that grid at any width (240px of text, then the arrow).
+   So the comp spends the card's padding rather than break the label, and so
+   do we: the column plus 20 of the 30px padding. The pill is `fit-content`,
+   so it takes only what it needs, and below about 1400 — where even the
+   padding is not enough — it wraps inside its own 40px height rather than
+   being clipped by the card. */
+.vlf-pill--hang {
+  /* `width: max-content`, not the base pill's `fit-content`: fit-content
+     clamps to the containing block before max-width is ever consulted, so
+     the pill would keep taking exactly its column and wrapping inside it. */
+  width: max-content;
+  max-width: calc(100% + 20px);
 }
 
 /* ---- The comp's type styles ------------------------------------------------
@@ -510,25 +525,20 @@ main > section {
 }
 
 main > section.sticky-cover,
+main > section[data-cover-run],
 main > section:has(+ section[data-slice-type="cta_banner"][data-slice-variation="onCream"]) {
   position: sticky;
   top: var(--sticky-top, 0px);
   z-index: 0;
 }
 
-/* The band ABOVE a bottom-anchored cover carries its ground down behind it.
-   A cover that rests at the bottom of the screen leaves the band above it
-   still scrolling, and the hole that opens between them goes all the way
-   down to whatever is pinned further up the page — on the homepage, a strip
-   of the full-bleed photograph appearing between the stats card and the
-   closing line. Padding plus the same negative margin: the ground grows, the
-   flow does not, so the comp's gap to the line is untouched. It can only
-   paint over things already covered — a later sibling always paints over an
-   earlier one, so the cover itself and the cream panel are unaffected. */
-main > section:has(+ section.sticky-cover--bottom) {
-  padding-bottom: 100vh;
-  margin-bottom: -100vh;
-}
+/* `[data-cover-run]` is written by $lib/actions/stickyCover: the sections the
+   closing cream panel rolls up over. Pinning only the band before the panel
+   left that band stopping dead while the sections above it kept scrolling —
+   the panel is supposed to come over the PAGE, not over one band. The action
+   stacks each section on the one below it until the stack fills the viewport
+   and gives them all the same pin position, so the whole screen holds still
+   and only the panel moves. */
 
 /* The pinned band holds until the FOOTER's bottom edge passes, not <main>'s.
    A sticky box is released at the end of its containing block, and the footer
