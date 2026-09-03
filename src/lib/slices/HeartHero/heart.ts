@@ -65,6 +65,40 @@ export function shouldAutoOpen(state: {
 /** A few pixels of slack: a restored scroll position is rarely exactly 0. */
 export const AUTO_OPEN_EPSILON = 4;
 
+/** Does the stored "already played" mark still apply to THIS page load?
+ *
+ *  The mark exists so the opening does not replay every time a visitor
+ *  navigates back to the home page — home → about → home is a soft navigation,
+ *  the mark survives it, and the hero stays where they left it. That is what it
+ *  is for and it still does it.
+ *
+ *  A reload is not that. It re-requests this page, and the browser puts the
+ *  visitor back where they were — which, if they were at the top, is frame 0:
+ *  a green field with a small closed heart and NOTHING else. The eyebrow, the
+ *  heading, both calls to action and the bar are all revealed by scroll
+ *  progress, so at rest the hero carries no message and nothing to act on, and
+ *  the mark guaranteed it would stay that way for the rest of the session. That
+ *  is the exact state the opening was added to prevent.
+ *
+ *  Discarding the mark on a reload is safe because it is not the only guard:
+ *  `shouldAutoOpen` still requires the visitor to be at the top of the page, so
+ *  a refresh anywhere else — where the scroll is restored mid-runway and the
+ *  heart is already open — declines on the scroll test instead, and nobody
+ *  reading has the page moved under them. */
+export function playedThisSession(
+  stored: string | null,
+  navigationType: string | undefined,
+): boolean {
+  if (navigationType === "reload") return false;
+  return stored === "1";
+}
+
+/** How this page load was reached, if the browser will say. */
+export function navigationType(): string | undefined {
+  const entries = performance?.getEntriesByType?.("navigation");
+  return (entries?.[0] as PerformanceNavigationTiming | undefined)?.type;
+}
+
 /** Does an open heart of `pct` cover a `w`x`h` stage? Used by the tests. */
 export function heartCovers(pct: number, w: number, h: number): boolean {
   const maskW = (pct / 100) * w;

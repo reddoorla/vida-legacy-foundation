@@ -5,7 +5,13 @@
   import { isFilled } from "@prismicio/client";
   import type { Content } from "@prismicio/client";
   import { TEXTURE_LQIP } from "./texture-lqip";
-  import { AUTO_OPEN_EPSILON, heartEndPct, shouldAutoOpen } from "./heart";
+  import {
+    AUTO_OPEN_EPSILON,
+    heartEndPct,
+    navigationType,
+    playedThisSession,
+    shouldAutoOpen,
+  } from "./heart";
 
   let { slice }: { slice: Content.HeartHeroSlice } = $props();
 
@@ -125,9 +131,12 @@
 
   $effect(() => {
     if (reducedMotion || !sectionEl) return;
+    // A reload discards the mark — see `playedThisSession`. Refreshing at the
+    // top of the page otherwise stranded the visitor on frame 0, which has no
+    // copy and no buttons in it, for the rest of the session.
     let played = true;
     try {
-      played = sessionStorage.getItem(AUTO_OPEN_KEY) === "1";
+      played = playedThisSession(sessionStorage.getItem(AUTO_OPEN_KEY), navigationType());
     } catch {
       // Private mode or a blocked store: treat it as already played rather
       // than replaying the opening on every navigation back to the home page.
