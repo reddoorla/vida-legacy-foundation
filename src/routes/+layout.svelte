@@ -16,6 +16,7 @@
   import { navToneFor } from "$lib/nav-tone";
   import { LANGS, LOCALES, langFromParam, localizePath, switchTarget } from "$lib/locale";
   import { disableSmoothScroll, restoreSmoothScroll } from "$lib/utils/instantNavScroll";
+  import { stickyCovers } from "$lib/actions/stickyCover";
 
   let { data, children } = $props();
 
@@ -88,10 +89,13 @@
     items={siteConfig.nav.items}
     tone={navToneFor(page.data.page?.data?.slices)}
     pathname={page.url.pathname}
+    {lang}
     {switchTo}
   />
 
-  <main id="main-content" tabindex="-1" class="flex-1">
+  <!-- use:stickyCovers keeps the slide-over bands' pin offsets measured
+       (see $lib/actions/stickyCover and the rule in app.css). -->
+  <main id="main-content" tabindex="-1" class="flex-1" use:stickyCovers>
     {@render children?.()}
   </main>
 

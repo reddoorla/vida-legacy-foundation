@@ -167,6 +167,25 @@ describe("Footer", () => {
     expect(queryByRole("list")).toBeNull();
   });
 
+  it("keeps the fine print's line break", () => {
+    // The comp sets the rights line as two lines; the config carries the
+    // break as a newline and the row honours it.
+    const { getByText } = render(Footer, {
+      props: {
+        columns: [
+          {
+            items: [{ text: "© 2026 Vida Legacy Foundation.\nAll Rights Reserved.", tone: "fine" }],
+          },
+        ],
+      },
+    });
+    const line = getByText(
+      (_, el) => el?.textContent?.startsWith("© 2026") === true && el.tagName === "P",
+    );
+    expect(line.className).toContain("whitespace-pre-line");
+    expect(line.textContent).toContain("\n");
+  });
+
   it("renders the supplied rights line verbatim", () => {
     const text = "© Composition Hospitality 2017, All Rights Reserved";
     const { container } = render(Footer, { text });

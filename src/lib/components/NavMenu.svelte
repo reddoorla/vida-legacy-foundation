@@ -2,7 +2,7 @@
   import { trapFocus } from "$lib/actions/trapFocus";
   import { fade } from "$lib/transitions";
   import type { NavItem } from "$lib/site-config";
-  import type { SwitchTarget } from "$lib/locale";
+  import { DEFAULT_LANG, localizePath, type Lang, type SwitchTarget } from "$lib/locale";
 
   interface Props {
     entries: NavItem[];
@@ -14,12 +14,21 @@
      * trap — trapping focus in a page section would itself be a keyboard
      * trap. */
     inline?: boolean;
+    /** The page's locale — the lockup links to that locale's home. */
+    lang?: Lang;
     /** The other locale's version of this page; rendered under the entries
      * when present (see Nav). */
     switchTo?: SwitchTarget;
   }
 
-  let { entries, onClose, restoreFocus, inline = false, switchTo }: Props = $props();
+  let {
+    entries,
+    onClose,
+    restoreFocus,
+    inline = false,
+    lang = DEFAULT_LANG,
+    switchTo,
+  }: Props = $props();
 
   // Only http(s) links open in a new tab; a route stays same-tab. The same
   // shape as Footer's, so target/rel cannot drift between the two.
@@ -58,7 +67,7 @@
     class="mx-auto flex w-full max-w-[1440px] flex-1 flex-col gap-10 px-6 pt-5 pb-[100px] md:px-20"
   >
     <div class="flex h-[30px] items-center justify-between">
-      <a href="/" onclick={onClose} class="flex items-center">
+      <a href={localizePath("/", lang)} onclick={onClose} class="flex items-center">
         <img
           src="/logo-lockup-on-dark.svg"
           alt="Vida Legacy Foundation home"

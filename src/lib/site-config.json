@@ -34,7 +34,7 @@
             }
           },
           {
-            "text": "© 2026 Vida Legacy Foundation. All Rights Reserved.",
+            "text": "© 2026 Vida Legacy Foundation.\nAll Rights Reserved.",
             "tone": "fine"
           }
         ]
@@ -60,12 +60,7 @@
             "tone": "detail"
           },
           {
-            "text": "8632 Fredericksburg Rd. Suite 221",
-            "tight": true,
-            "tone": "detail"
-          },
-          {
-            "text": "San Antonio, TX 78240",
+            "text": "8632 Fredericksburg Rd. Suite 221\nSan Antonio, TX 78240",
             "tight": true,
             "tone": "detail"
           }
@@ -110,7 +105,7 @@
                 }
               },
               {
-                "text": "© 2026 Vida Legacy Foundation. Todos los derechos reservados.",
+                "text": "© 2026 Vida Legacy Foundation.\nTodos los derechos reservados.",
                 "tone": "fine"
               }
             ]
@@ -136,12 +131,7 @@
                 "tone": "detail"
               },
               {
-                "text": "8632 Fredericksburg Rd. Suite 221",
-                "tight": true,
-                "tone": "detail"
-              },
-              {
-                "text": "San Antonio, TX 78240",
+                "text": "8632 Fredericksburg Rd. Suite 221\nSan Antonio, TX 78240",
                 "tight": true,
                 "tone": "detail"
               }

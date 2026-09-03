@@ -299,7 +299,10 @@ main > section.hero-band:first-child {
   gap: 10px;
   height: 40px;
   width: fit-content;
-  padding: 0 15px;
+  /* 2px more below than above: Area Normal's caps sit 1px below the box
+     centre when the line box is centred (measured at 4x: ink rows 17–25 in
+     the 40px pill), and the eye reads capitals by their own centre. */
+  padding: 0 15px 2px;
   border-radius: 9999px;
   background-color: var(--color-green);
   color: var(--color-green-btn);
@@ -309,6 +312,147 @@ main > section.hero-band:first-child {
   line-height: 1.5;
   letter-spacing: 1px;
   text-transform: uppercase;
+}
+
+/* The same pill in the design's other direction — green on the dark
+   grounds — and on the textured dark green of the cards. Both 5.86:1. */
+.vlf-pill--dark {
+  background-color: var(--color-green-btn);
+  color: var(--color-green);
+}
+
+.vlf-pill--deep {
+  background-color: var(--color-green-deep);
+  color: var(--color-green);
+}
+
+/* ---- The comp's type styles ------------------------------------------------
+   One class per Figma text style, in the family, weight, size, line-height
+   and tracking the comp sets — measured off the final Section-4 frames with
+   scripts/figma-compare, not read off the style panel. A slice reaches for
+   the style by name instead of re-deriving it.
+
+   Sizes are the comp's at 1440 and clamp below it. The Pragmatica Extended
+   styles carry `text-box: trim-both cap alphabetic`: Figma lays these out
+   with the box trimmed to cap height and baseline (a 12px label is an 8px
+   box, a 60px line a 42px one), so every gap in the comp is cap-to-baseline.
+   Without the trim the line box's half-leading pads a label by ~5px and a
+   display line by ~20px, and nothing lines up. Body copy and button labels
+   are NOT trimmed in the comp, and are not trimmed here. Browsers without
+   text-box-trim fall back to the untrimmed box — a few px looser, same type. */
+
+/* Pragmatica Extended Light 60/81 — the page statements and menu entries. */
+@utility t-display {
+  font-family: var(--font-heading);
+  font-weight: 300;
+  font-size: clamp(2rem, 4.17vw, 3.75rem);
+  line-height: 1.35;
+  letter-spacing: 0;
+  text-box: trim-both cap alphabetic;
+}
+
+/* Pragmatica Extended Light 36/42 — the stat figures. */
+@utility t-stat {
+  font-family: var(--font-heading);
+  font-weight: 300;
+  font-size: clamp(1.75rem, 2.5vw, 2.25rem);
+  line-height: 1.1667;
+  letter-spacing: 0;
+  text-box: trim-both cap alphabetic;
+}
+
+/* Pragmatica Extended Light 24/34.8 — the lead paragraphs and quotes. */
+@utility t-lead {
+  font-family: var(--font-heading);
+  font-weight: 300;
+  font-size: clamp(1.25rem, 1.67vw, 1.5rem);
+  line-height: 1.45;
+  letter-spacing: 0;
+  text-box: trim-both cap alphabetic;
+}
+
+/* Pragmatica Extended Book 18/26.1, tracked 1.5, uppercase — section labels
+   and names ("a companion on the journey", "Leadership"). */
+@utility t-label-lg {
+  font-family: var(--font-heading);
+  font-weight: 400;
+  font-size: clamp(0.9375rem, 1.25vw, 1.125rem);
+  line-height: 1.45;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  text-box: trim-both cap alphabetic;
+}
+
+/* Pragmatica Extended Book 12/17.4, tracked 1.5, uppercase — eyebrows, card
+   headings, footer links. */
+@utility t-label {
+  font-family: var(--font-heading);
+  font-weight: 400;
+  font-size: 0.75rem;
+  line-height: 1.45;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  text-box: trim-both cap alphabetic;
+}
+
+/* Pragmatica Extended Book 10/15, tracked 1.5, uppercase — form labels. */
+@utility t-label-sm {
+  font-family: var(--font-heading);
+  font-weight: 400;
+  font-size: 0.625rem;
+  line-height: 1.5;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  text-box: trim-both cap alphabetic;
+}
+
+/* Pragmatica Light 16/24 — body copy. Not trimmed, as in the comp. */
+@utility t-body {
+  font-family: var(--font-body);
+  font-weight: 300;
+  font-size: 1rem;
+  line-height: 1.5;
+  letter-spacing: 0;
+}
+
+/* A rich-text field inside one of the styles above takes the style whole:
+   the element (h2, p) keeps its outline role and loses the base rule's
+   weight and the browser's heading size. Plain CSS rather than @utility so
+   the descendant selector is allowed. */
+.t-display :is(h1, h2, h3, h4, h5, h6, p),
+.t-stat :is(h1, h2, h3, h4, h5, h6, p),
+.t-lead :is(h1, h2, h3, h4, h5, h6, p),
+.t-label-lg :is(h1, h2, h3, h4, h5, h6, p),
+.t-label :is(h1, h2, h3, h4, h5, h6, p),
+.t-label-sm :is(h1, h2, h3, h4, h5, h6, p) {
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+}
+
+/* ---- Slide-over sections ----------------------------------------------------
+   The comp pins some bands while the next one scrolls up over them (Figma
+   "sticky scrolls" on the lead paragraph, the full-bleed photograph and the
+   closing statement on the homepage; on the board section of Who We Are).
+   The pinned band is `.sticky-cover`, and the band before the closing cream
+   panel is always one, so that panel — with the footer it carries — slides
+   over whatever precedes it.
+
+   Every slice section is positioned so a later sibling paints over an
+   earlier pinned one (tree order decides between positioned siblings). The
+   pin offset is `--sticky-top`: 0 for a band shorter than the viewport, and
+   negative for a taller one so it holds with its bottom edge at the bottom
+   of the viewport instead of hiding its lower half — set per band by
+   $lib/actions/stickyCover from the measured height. */
+main > section {
+  position: relative;
+}
+
+main > section.sticky-cover,
+main > section:has(+ section[data-slice-type="cta_banner"][data-slice-variation="onCream"]) {
+  position: sticky;
+  top: var(--sticky-top, 0px);
+  z-index: 0;
 }
 
 /* Blur-up companion to $lib/components/Img.svelte. Outside @layer base so it

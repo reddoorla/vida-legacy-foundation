@@ -1,7 +1,14 @@
 <script lang="ts">
   import type { NavItem } from "$lib/site-config";
   import type { NavTone } from "$lib/nav-tone";
-  import type { SwitchTarget } from "$lib/locale";
+  import {
+    DEFAULT_LANG,
+    LANGS,
+    LOCALES,
+    localizePath,
+    type Lang,
+    type SwitchTarget,
+  } from "$lib/locale";
   import NavMenu from "./NavMenu.svelte";
 
   interface NavLink {
@@ -27,13 +34,24 @@
      * ground. Passed in rather than read from $app/state so the component
      * stays a plain unit under test. */
     pathname?: string;
+    /** The page's locale: names the active side of the language toggle and
+     * localizes the lockup's home link. */
+    lang?: Lang;
     /** The other locale's version of this page (see `switchTarget` in
-     * $lib/locale). Omit when there is none — the switch then does not render,
-     * because a link to a page that does not exist fails the prerender. */
+     * $lib/locale). Omit when there is none — that side of the toggle then
+     * renders inert, because a link to a page that does not exist fails the
+     * prerender. */
     switchTo?: SwitchTarget;
   }
 
-  let { navLinks = [], items = [], tone = "default", pathname = "/", switchTo }: Props = $props();
+  let {
+    navLinks = [],
+    items = [],
+    tone = "default",
+    pathname = "/",
+    lang = DEFAULT_LANG,
+    switchTo,
+  }: Props = $props();
 
   const entries = $derived<NavItem[]>(
     navLinks.length > 0 ? navLinks.map((l) => ({ label: l.text, href: l.href })) : items,
@@ -109,6 +127,19 @@
     onDark: "text-background",
     onGreen: "text-green-btn",
   };
+
+  // The language toggle — the one deliberate addition to the comp's bar. A
+  // pill in the donate button's clothes, as a switch: the active locale
+  // wears the button couple, the other side is a plain label in the tone's
+  // control colour. On the green hero the couple flips to dark-on-green,
+  // because green on green is no switch at all (both pairings 5.86:1).
+  const TOGGLE: Record<NavTone, { track: string; active: string }> = {
+    default: { track: "border-primary text-primary", active: "bg-green text-green-btn" },
+    onDark: { track: "border-background text-background", active: "bg-green text-green-btn" },
+    onGreen: { track: "border-green-btn text-green-btn", active: "bg-green-btn text-green" },
+  };
+  const SEGMENT =
+    "font-button inline-flex h-6 min-w-9 items-center justify-center rounded-full px-2 pb-[1px] text-[10px] tracking-[1px] uppercase";
 </script>
 
 <!-- Figma 5314:2013 (navbar-default), 5314:1743 (navbar) and 5314:1744
@@ -125,7 +156,7 @@
   <div
     class="mx-auto flex h-[70px] w-full max-w-[1440px] items-center justify-between px-6 md:px-20"
   >
-    <a href="/" class="flex items-center">
+    <a href={localizePath("/", lang)} class="flex items-center">
       <img
         src={LOCKUP[effectiveTone]}
         alt="Vida Legacy Foundation home"
@@ -135,24 +166,45 @@
       />
     </a>
 
-    <div class="flex items-center gap-3">
-      {#if switchTo}
-        <!-- Language switch. Not in the comps: the smallest addition that fits
-             the bar — the button face at button size, in the tone's control
-             colour. "ES" is the visible label; the accessible name is the
-             language's own name, which begins with it. -->
-        <a
-          href={switchTo.href}
-          hreflang={switchTo.lang}
-          lang={switchTo.lang}
-          aria-label={switchTo.label}
-          class="font-button flex h-11 items-center px-2 text-[10px] tracking-[1px] uppercase {ICON[
-            effectiveTone
-          ]}"
-        >
-          {switchTo.short}
-        </a>
-      {/if}
+    <div class="flex items-center gap-4">
+      <!-- The EN | ES toggle. The current locale is marked, not linked; the
+           other is a link only when its page exists (a dead switch would send
+           the prerender crawler into a 404), and otherwise an inert label so
+           the visitor still sees which version they are on. The visible label
+           is the short code; the link's accessible name is the language. -->
+      <div
+        role="group"
+        aria-label="Language"
+        class="flex h-[30px] items-center gap-[2px] rounded-full border p-[2px] {TOGGLE[
+          effectiveTone
+        ].track}"
+      >
+        {#each LANGS as code (code)}
+          {#if code === lang}
+            <span
+              aria-current="true"
+              lang={LOCALES[code].html}
+              class="{SEGMENT} {TOGGLE[effectiveTone].active}"
+            >
+              {LOCALES[code].short}
+            </span>
+          {:else if switchTo?.lang === code}
+            <a
+              href={switchTo.href}
+              hreflang={switchTo.lang}
+              lang={switchTo.lang}
+              aria-label={switchTo.label}
+              class="{SEGMENT} hover:opacity-70 {ICON[effectiveTone]}"
+            >
+              {switchTo.short}
+            </a>
+          {:else}
+            <span aria-disabled="true" lang={LOCALES[code].html} class="{SEGMENT} opacity-50">
+              {LOCALES[code].short}
+            </span>
+          {/if}
+        {/each}
+      </div>
 
       {#if entries.length > 0}
         <!-- A 44px hit target around the comp's 20x16 glyph (Figma 5314:1993);
@@ -179,6 +231,7 @@
 {#if isMenuOpen}
   <NavMenu
     {entries}
+    {lang}
     {switchTo}
     onClose={() => (isMenuOpen = false)}
     restoreFocus={() => triggerEl}
