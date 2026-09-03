@@ -82,21 +82,28 @@ describe("PersonGrid slice", () => {
     const { container } = render(PersonGrid, { props: { slice: make() } });
     const triggers = container.querySelectorAll("li button");
     expect(triggers.length).toBe(2);
-    expect(triggers[0].textContent).toContain("Brooke Perucki");
+    expect(triggers[0].getAttribute("aria-label")).toContain("Brooke Perucki");
     const board = render(PersonGrid, { props: { slice: make({ style: "board" }) } });
     const boardTriggers = board.container.querySelectorAll("li button");
     expect(boardTriggers.length).toBe(1);
-    expect(boardTriggers[0].textContent).toContain("Brooke Perucki");
+    expect(boardTriggers[0].getAttribute("aria-label")).toContain("Brooke Perucki");
   });
 
   it("gives the bio trigger a real accessible name, not a bare icon", () => {
     const { container } = render(PersonGrid, { props: { slice: make() } });
     const trigger = container.querySelector("li button");
     expect(trigger?.tagName).toBe("BUTTON");
-    expect(trigger?.querySelector(".sr-only")?.textContent).toContain("Brooke Perucki");
+    expect(trigger?.getAttribute("aria-label")).toContain("Brooke Perucki");
+    // The whole card is the target — the button is laid over it — and the
+    // "+" badge beside it is decoration. The address link stays its own
+    // control, above the button, so there is no link inside a button.
+    const card = trigger?.closest("li");
+    expect(trigger?.className).toContain("absolute inset-0");
     expect(
-      trigger?.querySelector("img[src='/icons/plus-circle.svg']")?.getAttribute("aria-hidden"),
+      card?.querySelector("img[src='/icons/plus-circle.svg']")?.getAttribute("aria-hidden"),
     ).toBe("true");
+    expect(card?.querySelector("a[href^='mailto:']")?.className).toContain("z-10");
+    expect(card?.querySelector("a button, button a")).toBeNull();
   });
 
   it("paints the board style on the lighter cream with page-cream cards", () => {
@@ -123,7 +130,8 @@ describe("PersonGrid slice", () => {
     // a @theme utility, so there is no scoping to get wrong.
     const { container } = render(PersonGrid, { props: { slice: make() } });
     await fireEvent.click(container.querySelector("li button")!);
-    const panel = container.querySelector("dialog > div");
+    // The sheet sits inside Modal's own backdrop element now.
+    const panel = container.querySelector("dialog [data-backdrop] > div");
     expect(panel).not.toBeNull();
     expect(panel?.className).toContain("bg-green-deep!");
     expect(container.querySelector("dialog")?.textContent).toContain("Brooke Perucki bio copy.");

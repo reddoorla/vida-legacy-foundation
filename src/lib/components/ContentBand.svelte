@@ -12,6 +12,7 @@
     sectionClass = "",
     contentClass = "",
     fallbackHeight,
+    dataLayout,
     background,
     children,
   }: {
@@ -20,6 +21,10 @@
     sectionClass?: string;
     contentClass?: string;
     fallbackHeight?: string;
+    /** The slice's `layout` field, as data-layout on the section: a
+     *  "float-right" band leaves the left column empty, and the IconColumns
+     *  intro before it stays put for its length ($lib/actions/companionRun). */
+    dataLayout?: "float-right" | "fill";
     background?: Snippet;
     children: Snippet;
   } = $props();
@@ -28,6 +33,7 @@
 <section
   data-slice-type={sliceType}
   data-slice-variation={variation}
+  data-layout={dataLayout}
   class="w-full {sectionClass}"
   style={fallbackHeight
     ? `min-height: ${fallbackHeight}; display: flex; flex-direction: column; justify-content: center`

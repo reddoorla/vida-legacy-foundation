@@ -62,6 +62,7 @@
 <ContentBand
   sliceType={slice.slice_type}
   variation={slice.variation}
+  dataLayout={fill ? "fill" : "float-right"}
   sectionClass={onDark ? "bg-green-btn" : ""}
   contentClass={onDark ? "max-w-[1440px] px-6 pb-16 md:px-20 md:pb-30" : "max-w-7xl px-6 py-16"}
 >

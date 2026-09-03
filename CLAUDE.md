@@ -223,12 +223,20 @@ The Figma text styles, and what `app.css` does with them globally:
 | H1–H3  | Pragmatica Extended **Light** 300 | `h1, h2, h3 { 300 }`   |
 | H4–H5  | Pragmatica Extended **Book** 400  | `h4, h5, h6 { 400 }`   |
 | Body 1 | Pragmatica Light 16/24            | `body { 300 }`         |
-| Button | Area Normal Bold 10               | `.font-button { 700 }` |
+| Button | Pragmatica Extended Book 10       | `.font-button { 400 }` |
 
 Sizes stay per slice. A display-size text that is not a heading element (the
-nav menu's entries, a stat figure) needs `font-light` itself. The button rule
-is explicit because the kit serves `area-normal` at 600 and 700 only — with
-the body at 300 the browser would settle on 600.
+nav menu's entries, a stat figure) needs `font-light` itself.
+
+**Buttons are Pragmatica Extended Book, not Area Normal.** The comps set most
+buttons in Area Normal Bold 10/1.5 tracked 1px and one — "register to be an
+organ donor" — in Pragmatica Extended Book 10/1.5 tracked 1.5px; the client
+called Area Normal the oversight (review round 2, 2026-09-03). `--font-button`
+is pragmatica-extended, `.font-button` is 400, and every button, the nav
+toggle, the footer's fine print and the email links take the 1.5px tracking.
+The kit still serves `area-normal`; nothing on the site asks for it. The
+pill's hover (the arrow drifts, the pill brightens a step) and press bump are
+in `.vlf-pill` itself, the fleet's `bump` timings, gated on reduced motion.
 
 Adding more families to the kit costs almost nothing client-side: browsers
 fetch a `@font-face` file only when text actually uses that family and weight,
@@ -306,7 +314,14 @@ decide most of it and are invisible in a screenshot:
 
 The VLF variations that sit in the comp's right-hand column (952.5 of the
 1280 grid, from x=407.5) carry a `layout` Select — `float right` (the comp,
-and what a document authored before the field gets) or `fill`.
+and what a document authored before the field gets) or `fill`. `ContentBand`
+writes it as `data-layout` on the section, and that is what
+`$lib/actions/companionRun` reads: the `IconColumns` intro ("A companion on
+the journey") holds not just for its own band but for the run of float-right
+sections after it, which leave the left column empty. The band grows by the
+run's measured height (a spacer row in its grid) and a negative bottom margin
+pulls the run back up over the spacer, so the intro's sticky range — its grid
+area — reaches the run's end. The run stops at a pinned band.
 
 `scripts/figma-compare/` is the harness: comp geometry and renders from
 Figma's REST API, the rendered site measured the same way with Playwright,
@@ -372,6 +387,17 @@ The open menu (`5314:1679`) is `NavMenu`, extracted so the a11y fixtures can
 render it in-flow (`inline`) — the real one is not in the DOM until opened, so
 that fixture is the only thing that puts its colours in front of axe.
 
+**Switching language does not reload, and does not fade.** The toggle is a
+plain Kit link with `data-sveltekit-noscroll`, so the reader keeps their place;
+the layout's `onNavigate`wraps that one navigation (the target is`switchTo.href`) in a view transition — the browser's own crossfade of the
+whole document, 350ms in app.css, skipped where unsupported or under reduced
+motion — and an effect restamps `<html lang>`, which hooks.server.ts only
+sets per request. Every other route change goes through `TransitionOverlay`,
+which is the menu's textured dark green (not the fleet's black) and takes a
+`skip` predicate: the contact link is cancelled into the modal, and a cancelled
+navigation never fires `afterNavigate`, so without the skip the overlay stayed
+up behind the dialog for good.
+
 ## The donation form's labels are code, its copy is content
 
 `DonationForm` is one slice that IS the donate page — the comp has no
@@ -411,6 +437,14 @@ The vocabulary itself is app.css `.vlf-label` / `.vlf-field` /
 contrast measured there. A new form on this site uses those classes, not
 `Field.svelte`.
 
+`Modal` keeps the native `<dialog>` (focus containment, Escape, restore) as a
+transparent full-viewport frame; the dim + blur is a real element inside it,
+because `::backdrop` cannot transition out, and the sheet mounts with Svelte
+`fade`/`fly` from `$lib/transitions`. Closing runs the outro first and only
+then closes the dialog and calls `onclose` — so a parent that unmounts the
+Modal on close (`PersonGrid`) does not cut the exit short. Escape is taken
+through the same path via `cancel`.
+
 ## The footer is chrome, not a slice
 
 It renders from `site-config.json` through `+layout.svelte`, so it is NOT in
@@ -426,3 +460,15 @@ hints were added to `FooterText` for it, both optional:
 The footer's ground is `--color-background`, deliberately: it is the last
 tenant of the cream panel that `CtaBanner onCream` rounds off, so it has to
 continue that panel rather than restart on its own colour.
+
+It also slides over the pinned band with that panel. A sticky box is released
+at the end of its containing block, and the footer is outside `<main>` — so on
+its own the panel slid over the band and then the footer pushed everything
+back into flow. `stickyCovers` measures the footer and sets `--footer-h` on the
+parent both share; `main::after` grows by it and `main + footer` is pulled up
+over that spacer (app.css). Padding would not do: sticky is constrained to the
+content box. Without JS the footer simply follows in flow.
+
+The second column's five rows sit at one 30px pitch — the client asked for
+equal gaps, a deliberate departure from the comp's 30/15. `tight` still
+exists on `FooterText`; nothing uses it.

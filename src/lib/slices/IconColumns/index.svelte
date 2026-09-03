@@ -1,6 +1,7 @@
 <script lang="ts">
   import RichTextBody from "$lib/components/RichTextBody.svelte";
   import HeroBackgroundImage from "$lib/components/HeroBackgroundImage.svelte";
+  import { companionSticky } from "$lib/actions/companionRun";
   import { isFilled } from "@prismicio/client";
   import type { Content } from "@prismicio/client";
 
@@ -14,7 +15,9 @@
 <!--
   Figma 5249:1133. Two columns on the #263b02 ground, 40px apart:
     left   297.5px (23.24% of the 1280 grid), STICKY — it holds while the
-           right column scrolls
+           right column scrolls, and on past it for the length of the
+           float-right slices that follow (the TOSA boxes, Compassion in
+           Action), which leave the left column empty
     right  942.5px: the icon card (#172303 + the site's grain at 20%
            plus-lighter), rounded at the top, with the feature photo joined
            beneath it so the pair reads as one rounded block
@@ -22,6 +25,12 @@
   In the comp the TOSA grid (SectionGrid onDark) sits 40px under the photo
   inside this same band, and the band pays 120 below it. Split across the two
   slices: this pays the 40, the grid pays the 120.
+
+  The hold past the band's end is $lib/actions/companionRun: the band grows
+  by the measured height of the run (the spacer row below the columns) and a
+  negative bottom margin pulls the run back up over the spacer, so the intro's
+  grid area — its sticky range — reaches the run's end. Without JS the intro
+  holds for this band alone.
 
   The grain is the same file the hero uses (verified byte-identical to the
   comp's own card texture), so it costs no extra bytes here.
@@ -33,15 +42,12 @@
 <section
   data-slice-type={slice.slice_type}
   data-slice-variation={slice.variation}
-  class="bg-green-btn w-full"
+  class="companion-band bg-green-btn w-full"
+  use:companionSticky
 >
-  <div
-    class="mx-auto flex w-full max-w-[1440px] flex-col gap-10 px-6 pb-10 md:flex-row md:items-start md:px-20"
-  >
+  <div class="companion mx-auto flex w-full max-w-[1440px] flex-col gap-10 px-6 pb-10 md:px-20">
     {#if slice.primary.eyebrow || hasBody}
-      <div
-        class="intro text-background flex flex-col gap-5 pt-16 md:w-[23.24%] md:shrink-0 md:py-30"
-      >
+      <div class="intro text-background flex flex-col gap-5 pt-16 md:py-30">
         {#if slice.primary.eyebrow}
           <h2 class="t-label-lg">
             {slice.primary.eyebrow}
@@ -55,7 +61,7 @@
       </div>
     {/if}
 
-    <div class="flex min-w-0 flex-1 flex-col md:pt-30">
+    <div class="columns flex min-w-0 flex-col md:pt-30">
       {#if columns.length}
         <!-- Rounded only at the top: the photo below completes the block. -->
         <div class="icon-card relative overflow-hidden rounded-t-[20px]">
@@ -108,6 +114,11 @@
         </div>
       {/if}
     </div>
+
+    <!-- The spacer row: the comp's 40 under the photo, plus the run the intro
+         holds through. Empty and decorative; nothing lands in it, the run's
+         sections are pulled up over it. -->
+    <div aria-hidden="true" class="run-spacer"></div>
   </div>
 </section>
 
@@ -116,13 +127,48 @@
     background-color: var(--color-green-deep);
   }
 
-  /* The comp holds the intro column while the cards scroll past it. Sticky is
-     opt-in at md+ only: on a single-column phone layout there is nothing to
-     scroll past, and a sticky block there just eats the viewport. */
+  /* One column below md, and no hold: on a phone there is nothing to scroll
+     past, and a sticky block just eats the viewport. */
+  .run-spacer {
+    display: none;
+  }
+
   @media (min-width: 768px) {
+    .companion {
+      display: grid;
+      grid-template-columns: 23.24% minmax(0, 1fr);
+      grid-template-rows: auto auto;
+      column-gap: 40px;
+      row-gap: 0;
+      align-items: start;
+      padding-bottom: 0;
+    }
+
+    /* Rows 1 and 2: the sticky range is the grid area, so the intro holds
+       until the spacer's bottom — the run's end. z-index puts it over the
+       run's sections, which are positioned later siblings of this band. */
     .intro {
+      grid-column: 1;
+      grid-row: 1 / span 2;
       position: sticky;
       top: 0;
+      z-index: 1;
+    }
+
+    .columns {
+      grid-column: 2;
+      grid-row: 1;
+    }
+
+    .run-spacer {
+      display: block;
+      grid-column: 1 / -1;
+      grid-row: 2;
+      height: calc(40px + var(--companion-run, 0px));
+    }
+
+    .companion-band {
+      margin-bottom: calc(-1 * var(--companion-run, 0px));
     }
   }
 

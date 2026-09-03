@@ -1,7 +1,7 @@
 <script lang="ts">
   import { PrismicPreview } from "@prismicio/svelte/kit";
   import { page } from "$app/state";
-  import { afterNavigate, beforeNavigate } from "$app/navigation";
+  import { afterNavigate, beforeNavigate, onNavigate } from "$app/navigation";
   import { repositoryName } from "$lib/prismicio";
   import "../app.css";
   import Seo from "$lib/components/Seo.svelte";
@@ -17,6 +17,7 @@
   import { LANGS, LOCALES, langFromParam, localizePath, switchTarget } from "$lib/locale";
   import { disableSmoothScroll, restoreSmoothScroll } from "$lib/utils/instantNavScroll";
   import { stickyCovers } from "$lib/actions/stickyCover";
+  import { prefersReducedMotion } from "$lib/transitions";
 
   let { data, children } = $props();
 
@@ -57,6 +58,35 @@
   // instantly instead of gliding under app.css's smooth-scroll. See the util.
   beforeNavigate(disableSmoothScroll);
   afterNavigate(restoreSmoothScroll);
+
+  // The language switch is the one navigation that skips the overlay: it is
+  // the same page in the other language, so it crossfades in place — the
+  // browser's view transition (a crossfade of the whole document, the
+  // duration in app.css) wrapped around Kit's DOM swap, which runs once the
+  // other locale's data has loaded. The toggle links carry
+  // data-sveltekit-noscroll, so the reader keeps their place while the copy
+  // changes under them. Skipped where the API is missing and under reduced
+  // motion, where the swap is simply instant.
+  const isLanguageSwitch = (to: URL | null | undefined) =>
+    !!to && !!switchTo && to.pathname === switchTo.href;
+  onNavigate((nav) => {
+    if (!isLanguageSwitch(nav.to?.url) || prefersReducedMotion()) return;
+    const start = (document as Document & { startViewTransition?: unknown }).startViewTransition;
+    if (typeof start !== "function") return;
+    return new Promise<void>((resolve) => {
+      start.call(document, async () => {
+        resolve();
+        await nav.complete;
+      });
+    });
+  });
+
+  // The server stamps <html lang> per request (hooks.server.ts); a client-side
+  // language switch has to restamp it, or the document keeps announcing the
+  // old language to assistive tech.
+  $effect(() => {
+    document.documentElement.lang = LOCALES[lang].html;
+  });
 </script>
 
 <!-- Single head source for the whole app. Static routes feed their title
@@ -105,7 +135,22 @@
     text={siteConfig.footer.text}
   />
 </div>
-<TransitionOverlay />
+<!-- The page fade goes through the menu's textured dark green, not black —
+     #172303 under the site's grain at 20% plus-lighter, as NavMenu paints it.
+     It leaves the contact link alone (cancelled above into the modal, so
+     afterNavigate would never take it down) and the language switch (which
+     crossfades in place instead — see onNavigate). -->
+<TransitionOverlay
+  class="fixed top-0 left-0 z-50 h-screen w-screen bg-green-deep"
+  skip={(nav) =>
+    (!!nav.to && CONTACT_PATHS.has(nav.to.url.pathname)) || isLanguageSwitch(nav.to?.url)}
+>
+  <div
+    aria-hidden="true"
+    class="pointer-events-none absolute inset-0 bg-cover bg-center opacity-20 mix-blend-plus-lighter"
+    style="background-image: url('/texture-grain.webp')"
+  ></div>
+</TransitionOverlay>
 <LandscapeModal />
 <ContactModal {lang} />
 {#if data.isPreviewSession}

@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import { stickyBands, stickyTop, stickyCovers } from "./stickyCover";
+import { stickyBands, stickyTop, stickyCovers, footerAfter } from "./stickyCover";
 
 const section = (type: string, variation = "default", cls = "") => {
   const el = document.createElement("section");
@@ -69,6 +69,28 @@ describe("stickyCovers action", () => {
     // MutationObserver callbacks are microtasks.
     await Promise.resolve();
     expect(band.style.getPropertyValue("--sticky-top")).toBe("0px");
+    action?.destroy?.();
+  });
+
+  it("reserves the footer's height on the shared parent, so a band holds through it", () => {
+    // <main> grows by it (::after) and the footer is pulled up over the
+    // spacer (app.css): the pinned band is released at the footer's bottom
+    // edge, not <main>'s.
+    const footer = document.createElement("footer");
+    Object.defineProperty(footer, "offsetHeight", { value: 320, configurable: true });
+    main.after(footer);
+    expect(footerAfter(main)).toBe(footer);
+    const action = stickyCovers(main);
+    expect(document.body.style.getPropertyValue("--footer-h")).toBe("320px");
+    action?.destroy?.();
+    expect(document.body.style.getPropertyValue("--footer-h")).toBe("");
+    footer.remove();
+  });
+
+  it("reserves nothing when nothing follows <main>", () => {
+    expect(footerAfter(main)).toBeNull();
+    const action = stickyCovers(main);
+    expect(document.body.style.getPropertyValue("--footer-h")).toBe("");
     action?.destroy?.();
   });
 });
