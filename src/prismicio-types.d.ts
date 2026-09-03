@@ -1235,6 +1235,17 @@ export interface PersonGridSliceDefaultPrimary {
   style: prismic.SelectField<"leadership" | "board", "filled">;
 
   /**
+   * headshots field in *PersonGrid → Default → Primary*
+   *
+   * - **Field Type**: Boolean
+   * - **Placeholder**: *None*
+   * - **Default Value**: false
+   * - **API ID Path**: person_grid.default.primary.headshots
+   * - **Documentation**: https://prismic.io/docs/fields/boolean
+   */
+  headshots: prismic.BooleanField;
+
+  /**
    * heading field in *PersonGrid → Default → Primary*
    *
    * - **Field Type**: Rich Text

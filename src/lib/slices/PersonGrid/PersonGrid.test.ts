@@ -71,6 +71,35 @@ const make = (primary: Record<string, unknown> = {}, items?: unknown[]) =>
 // auto-cleanup between renders, so an unscoped getBy* sees every earlier test's
 // DOM too and fails on duplicates.
 describe("PersonGrid slice", () => {
+  it("draws the comp's bio-only card until headshots are switched on", async () => {
+    // The launch state, and what a document authored before the field reads:
+    // no photograph, the name at display size, the badge on the card's own
+    // corner. Switching `headshots` on brings back the picture card.
+    const { container } = render(PersonGrid, { props: { slice: make() } });
+    expect(container.querySelector("li img[alt='Brooke Perucki']")).toBeNull();
+    const name = container.querySelector("li h4")!;
+    expect(name.textContent?.trim()).toBe("Brooke Perucki");
+    expect(name.className).toContain("t-stat");
+    expect(container.querySelector("li")?.className).toContain("aspect-square");
+    expect(container.querySelector("li img[src='/icons/plus-circle.svg']")?.className).toContain(
+      "bottom-5",
+    );
+
+    const withPhotos = render(PersonGrid, {
+      props: { slice: make({ headshots: true }) },
+    });
+    const photoName = withPhotos.container.querySelector("li h4")!;
+    expect(photoName.className).toContain("t-label-lg");
+    expect(withPhotos.container.querySelector("li img[alt='Brooke Perucki']")).not.toBeNull();
+  });
+
+  it("keeps the photograph out of the pop-up while headshots are off", async () => {
+    const { container } = render(PersonGrid, { props: { slice: make() } });
+    await fireEvent.click(container.querySelector<HTMLButtonElement>("li button")!);
+    expect(container.querySelector("dialog img[alt='Brooke Perucki']")).toBeNull();
+    expect(container.querySelector("dialog h2")?.textContent?.trim()).toBe("Brooke Perucki");
+  });
+
   it("names the card and the pop-up's close button in the document's language", async () => {
     // The people come from Prismic translated; these two labels are the
     // component's own, so they follow SliceZone's locale context.

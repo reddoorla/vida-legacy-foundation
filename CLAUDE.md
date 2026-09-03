@@ -495,6 +495,25 @@ fix is measured, not guessed (review round 3, 2026-09-03):
   face on the card, and at 390px the square photo pushed the name, role and
   bio off the screen. The comp's two-column pop-up is a desktop shape.
 
+## Who We Are ships without photographs, and that is a switch
+
+The comp draws every person card twice — Figma **"Headshot Bio"** (`5312:1454`,
+the picture card) and **"Bio Only"** (`5289:1368`, no picture, the name at the
+comp's 36/42 display size instead of the 18px label, the badge on the card's
+own bottom-right corner at 20/20). The earlier Who We Are frame `5173:1077`
+is the whole page in bio-only form, and it is what the site launches with:
+VLF has no photographs of its people, and the placeholder was one stock
+portrait standing in for four named men — which `PersonGrid` then announced
+as that person, because a card's alt text IS the name.
+
+`person_grid.primary.headshots` (Boolean, default **false**) picks the card.
+Off is the launch and is also what a document authored before the field
+reads, so nothing had to be edited in Prismic. Turning it on when the real
+headshots arrive brings back the picture card, the square photo above the
+20px-padded block, and the photograph in the bio pop-up — no code follows.
+The leadership card is a square, the board card 200px tall, both from the
+comp. Both designs are in the a11y fixtures, so axe sees both palettes.
+
 ## The donation form's labels are code, its copy is content
 
 `DonationForm` is one slice that IS the donate page — the comp has no

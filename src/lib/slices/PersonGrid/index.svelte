@@ -35,6 +35,15 @@
   let labelTag = $derived(hasHeading ? "h3" : "h2");
   let nameTag = $derived(hasHeading ? "h4" : "h3");
 
+  // The comp draws each card twice — Figma "Headshot Bio" (5312:1454) and
+  // "Bio Only" (5289:1368) — and this Boolean picks which. It is OFF for the
+  // launch, and a document authored before the field reads the same way:
+  // VLF has no photographs of its people yet, and the placeholder was a
+  // stock portrait standing in for four named men, announced by PersonGrid
+  // as that person. Switching it on when the real headshots arrive is the
+  // whole change; the photo card below is the one the site shipped with.
+  let photos = $derived(slice.primary.headshots === true);
+
   // A leadership card opens its bio on click — the comp's "+" is on every
   // card, and a bio not yet written shows the name, role and address alone.
   // A board card has no "+" in the comp, so it opens only when a bio exists.
@@ -123,10 +132,11 @@
     {#if people.length}
       <ul class="flex min-w-0 flex-1 flex-wrap gap-[30px] {board ? 'md:items-center' : ''}">
         {#each people as person, i (i)}
+          {@const photo = photos && isFilled.image(person.headshot)}
           <li
             class="group relative flex w-full flex-col overflow-hidden rounded-[20px] sm:w-[calc((100%-30px)/2)] md:w-[calc((100%-60px)/3)] {board
               ? 'bg-background'
-              : 'bg-green-deep'}"
+              : 'bg-green-deep'} {photo ? '' : board ? 'min-h-[200px]' : 'aspect-square'}"
           >
             <div
               aria-hidden="true"
@@ -136,29 +146,34 @@
               style="background-image: url('/texture-grain.webp')"
             ></div>
 
-            <div class="relative aspect-square w-full overflow-hidden">
-              {#if isFilled.image(person.headshot)}
+            {#if photo}
+              <div class="relative aspect-square w-full overflow-hidden">
                 <HeroBackgroundImage
                   image={person.headshot}
                   preload={false}
                   class="h-full w-full object-cover"
                 />
-              {/if}
-              {#if opens(person)}
-                <img
-                  src="/icons/plus-circle.svg"
-                  alt=""
-                  aria-hidden="true"
-                  class="absolute right-0 bottom-0 h-[25px] w-[25px] opacity-50 motion-safe:transition-[width,height] group-hover:h-[30px] group-hover:w-[30px] group-focus-within:h-[30px] group-focus-within:w-[30px]"
-                />
-              {/if}
-            </div>
+                {#if opens(person)}
+                  <img
+                    src="/icons/plus-circle.svg"
+                    alt=""
+                    aria-hidden="true"
+                    class="absolute right-0 bottom-0 h-[25px] w-[25px] opacity-50 motion-safe:transition-[width,height] group-hover:h-[30px] group-hover:w-[30px] group-focus-within:h-[30px] group-focus-within:w-[30px]"
+                  />
+                {/if}
+              </div>
+            {/if}
 
             <div class="relative flex flex-col gap-2.5 p-5">
               {#if person.name}
+                <!-- Without a photograph the NAME is the card, at the comp's
+                     36/42 display size instead of the 18px label the photo
+                     card sets under its picture. -->
                 <svelte:element
                   this={nameTag}
-                  class="t-label-lg {board ? 'text-green-btn' : 'text-green'}"
+                  class="{photo ? 't-label-lg' : 't-stat'} {board
+                    ? 'text-green-btn'
+                    : 'text-green'}"
                 >
                   {person.name}
                 </svelte:element>
@@ -187,6 +202,18 @@
                 </a>
               {/if}
             </div>
+
+            {#if !photo && opens(person)}
+              <!-- The comp's badge sits at the card's own bottom-right corner
+                   when there is no picture to hang it off (Figma "Bio Only"
+                   5289:1368: 20 from both edges). -->
+              <img
+                src="/icons/plus-circle.svg"
+                alt=""
+                aria-hidden="true"
+                class="absolute right-5 bottom-5 h-[25px] w-[25px] opacity-50 motion-safe:transition-[width,height] group-hover:h-[30px] group-hover:w-[30px] group-focus-within:h-[30px] group-focus-within:w-[30px]"
+              />
+            {/if}
 
             {#if opens(person)}
               <!-- Last in the card so its name reads after the card's own
@@ -229,7 +256,7 @@
       style="background-image: url('/texture-grain.webp')"
     ></div>
     <div class="relative flex flex-col gap-[30px] md:flex-row md:items-start">
-      {#if isFilled.image(current.headshot)}
+      {#if photos && isFilled.image(current.headshot)}
         <!-- Hidden on a phone: the visitor tapped this very face on the card,
              and at 390px the square photo pushed the name, role and bio off
              the screen. The comp's two-column pop-up is a desktop shape. -->
@@ -243,7 +270,7 @@
           />
         </div>
       {/if}
-      <div class="flex min-w-0 flex-col gap-10 md:p-5">
+      <div class="flex min-w-0 flex-col gap-10 md:p-5 {photos ? '' : 'max-w-[680px]'}">
         <div class="flex flex-col gap-2.5">
           {#if current.name}
             <h2 id={bioNameId} class="t-label-lg text-green">
