@@ -31,8 +31,15 @@ describe("LangToggle", () => {
     expect(link.getAttribute("href")).toBe("/es/about");
     expect(link.getAttribute("hreflang")).toBe("es");
     expect(link.hasAttribute("data-sveltekit-noscroll")).toBe(true);
-    // Named by the language it leads to, not by the EN/ES inside it.
-    expect(link.getAttribute("aria-label")).toBe("Español");
+    // Named by the EN/ES it SHOWS, and described by where it goes. An
+    // aria-label of "Español" replaced the visible label with words that are
+    // not in it — axe's label-content-name-mismatch (WCAG 2.5.3), and a
+    // voice-control user says what they can see.
+    expect(link.hasAttribute("aria-label")).toBe(false);
+    const desc = container.querySelector(`#${link.getAttribute("aria-describedby")}`);
+    expect(desc?.textContent).toBe("Español");
+    expect(desc?.getAttribute("lang")).toBe("es");
+    expect(desc?.className).toContain("sr-only");
     expect(link.className).toContain("text-background");
   });
 
@@ -61,5 +68,25 @@ describe("LangToggle", () => {
   it("leaves the pill unnamed when no name is given", () => {
     const { container } = render(LangToggle, { lang: "en", switchTo: es });
     expect(toggle(container).querySelector("[aria-current]")?.getAttribute("style")).toBeNull();
+  });
+
+  it("takes focus back after a press, and never on a plain render", async () => {
+    // Kit resets focus to <body> after a client-side navigation, and the side
+    // the visitor pressed has become the marked span — so without this a
+    // keyboard switch lands nowhere.
+    const { container, rerender } = render(LangToggle, { lang: "en", switchTo: es });
+    const link = () => container.querySelector("a")!;
+    expect(document.activeElement).not.toBe(link());
+
+    // A render with a new locale but no press must not steal focus.
+    await rerender({
+      lang: "es",
+      switchTo: { lang: "en" as const, href: "/about", label: "English", short: "EN" },
+    });
+    expect(document.activeElement).not.toBe(link());
+
+    link().click();
+    await rerender({ lang: "en", switchTo: es });
+    expect(document.activeElement).toBe(link());
   });
 });

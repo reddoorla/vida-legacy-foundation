@@ -123,9 +123,18 @@
                 {/if}
               </div>
             {:else if item.href}
+              <!-- The hit box is grown by 8px above and below with a pseudo
+                   element, NOT with padding: `.t-label` trims its box to cap
+                   height (8.41px here), and the comp's baselines come off that
+                   box. So the target is 24.4px against WCAG 2.5.8's 24, with
+                   14px still clear between neighbours at the 38.41px row
+                   pitch, and not a pixel of layout moves. -->
               <a
                 {...linkAttrs(item.href)}
-                class="{toneClass(item)} {rowClass(item, itemIndex)} w-fit hover:opacity-70"
+                class="{toneClass(item)} {rowClass(
+                  item,
+                  itemIndex,
+                )} relative w-fit before:absolute before:inset-x-0 before:-top-[8px] before:-bottom-[8px] before:content-[''] hover:opacity-70"
               >
                 {item.text}
               </a>

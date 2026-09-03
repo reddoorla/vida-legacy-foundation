@@ -22,6 +22,14 @@
      *  it (`ui(lang).close`) — a Spanish dialog announcing "Close" is the
      *  same bug as an English one announcing "Cerrar". */
     closeLabel?: string;
+    /** Where focus goes if the native restore has nothing to give it back to.
+     *  A <dialog> returns focus to whatever was focused when it opened — but
+     *  the contact modal is opened from a CANCELLED navigation, and the link
+     *  that started it is often gone by then (the nav menu closes and unmounts
+     *  it), so the browser has nowhere to go and drops the visitor at <body>.
+     *  Read lazily, at close time, so the caller can name an element that did
+     *  not exist when the modal opened. */
+    restoreFocus?: () => HTMLElement | null | undefined;
     children?: Snippet;
   }
 
@@ -34,11 +42,36 @@
     bodyClass = "p-8",
     labelledby,
     closeLabel = "Close",
+    restoreFocus,
     children,
   }: ModalProps = $props();
 
   let dialogEl: HTMLDialogElement | undefined = $state();
   let backdropEl: HTMLElement | undefined = $state();
+  let sheetEl: HTMLElement | undefined = $state();
+
+  // Whether the sheet has content below its own fold. The sheet is
+  // max-h-[90vh] overflow-y-auto, so a form taller than that scrolls — but
+  // silently: at 1440x600 the contact form's submit button was sliced in half
+  // by the sheet's bottom edge, and at 320x568 it was below the clip
+  // altogether, with the panel ending flush under the message field and
+  // nothing at all to say more was there. This draws the edge.
+  let moreBelow = $state(false);
+  function measureScroll() {
+    const el = sheetEl;
+    moreBelow = !!el && el.scrollHeight - el.clientHeight - el.scrollTop > 1;
+  }
+  $effect(() => {
+    if (!open || !sheetEl) return;
+    measureScroll();
+    if (typeof ResizeObserver === "undefined") return;
+    // The sheet resizes with the viewport, and its content with the form's
+    // own state (an alert appearing, the confirmation replacing the fields).
+    const ro = new ResizeObserver(measureScroll);
+    ro.observe(sheetEl);
+    for (const child of sheetEl.children) ro.observe(child);
+    return () => ro.disconnect();
+  });
 
   // No use:trapFocus here: showModal() already gives native focus containment,
   // Escape handling, and focus restore — adding the action would double-trap.
@@ -61,6 +94,12 @@
   function settle() {
     if (dialogEl?.open) dialogEl.close();
     onclose?.();
+    // The native restore runs on close() above. If it had nothing to give
+    // focus back to, the document is left focused on <body> — pick it up.
+    if (document.activeElement === document.body) {
+      const back = restoreFocus?.();
+      if (back?.isConnected) back.focus();
+    }
   }
 
   // Escape: the native cancel would close the dialog on the spot; take it
@@ -110,6 +149,8 @@
       transition:fade|global={{ duration: 200 }}
     >
       <div
+        bind:this={sheetEl}
+        onscroll={measureScroll}
         class="relative max-h-[90vh] w-full overflow-y-auto rounded-lg bg-white shadow-xl {dialogClass} {passedClasses}"
         transition:fly|global={{ y: 20, duration: 300 }}
         onoutroend={settle}
@@ -125,6 +166,16 @@
         <div class={bodyClass}>
           {@render children?.()}
         </div>
+        {#if moreBelow}
+          <!-- Sticky, not absolute: an absolutely-positioned cue inside a
+               scroll box scrolls away with the content it is meant to point
+               at. It is a shadow rather than a colour so it reads on any
+               panel ground (the fleet's white sheet, this site's cream). -->
+          <div
+            aria-hidden="true"
+            class="pointer-events-none sticky bottom-0 -mt-10 h-10 bg-gradient-to-b from-transparent to-black/20"
+          ></div>
+        {/if}
       </div>
     </div>
   {/if}

@@ -511,6 +511,14 @@ main > section.hero-band:first-child {
   text-transform: inherit;
 }
 
+/* The bar's no-JS entry list (Nav.svelte). Hidden until the <noscript> rule
+   in the bar itself reveals it — the list has to live outside the <noscript>,
+   because a browser running scripts parses that element's content as raw text
+   and real markup in there would not survive hydration. */
+.nav-nojs {
+  display: none;
+}
+
 /* ---- Slide-over sections ----------------------------------------------------
    The comp pins some bands while the next one scrolls up over them (Figma
    "sticky scrolls" on the lead paragraph, the full-bleed photograph and the

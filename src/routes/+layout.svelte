@@ -66,6 +66,10 @@
     if (nav.type !== "link" || !nav.to || !CONTACT_PATHS.has(nav.to.url.pathname)) return;
     if (isLanguageSwitch(nav.to.url)) return;
     nav.cancel();
+    // Remember the link that asked for it, so focus has somewhere to go when
+    // the dialog closes (see $lib/contact-modal).
+    contactModal.returnFocus =
+      document.activeElement instanceof HTMLElement ? document.activeElement : null;
     contactModal.open = true;
   });
 

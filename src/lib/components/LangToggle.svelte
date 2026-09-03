@@ -32,6 +32,25 @@
     viewName,
   }: Props = $props();
 
+  const uid = $props.id();
+  const descId = `${uid}-target`;
+
+  // Focus follows a press. Kit resets focus to <body> after every client-side
+  // navigation, so without this the visitor who switched language with the
+  // keyboard lands at the top of the document with nothing focused — and the
+  // side they pressed has become the marked span, so there is nothing to
+  // restore to either. Only after a real press: on a fresh load `lang` is
+  // already what it is, and stealing focus there would be its own bug.
+  let el = $state<HTMLAnchorElement | null>(null);
+  let pressed = false;
+  $effect(() => {
+    // Read `lang` so the effect re-runs when the switch lands.
+    void lang;
+    if (!pressed) return;
+    pressed = false;
+    el?.focus();
+  });
+
   // The EN | ES toggle — the one deliberate addition to the comp's bar, and
   // the same control inside the open menu. A pill in the donate button's
   // clothes, as a switch: the active locale wears the button couple, the
@@ -65,7 +84,7 @@
      anywhere on the pill — the marked side included — goes to the other
      language. (Only the inactive half used to be clickable.) The current
      locale is still marked with aria-current, and the link is named by the
-     language it leads to rather than by the "EN"/"ES" inside it.
+     "EN"/"ES" it shows, with the language it leads to as its description.
 
      Without a target — a page whose translation is not published, the dev
      pages — nothing is a link, because a dead switch would send the prerender
@@ -99,15 +118,25 @@
 <div role="group" aria-label={ui(lang).language} class="w-fit {passedClasses}">
   {#if switchTo}
     <a
+      bind:this={el}
       href={switchTo.href}
       hreflang={switchTo.lang}
-      lang={switchTo.lang}
-      aria-label={switchTo.label}
+      aria-describedby={descId}
       data-sveltekit-noscroll
+      onclick={() => (pressed = true)}
+      onkeydown={(e) => {
+        if (e.key === "Enter" || e.key === " ") pressed = true;
+      }}
       class="{TRACK} {TOGGLE[tone].track} hover:opacity-80 motion-safe:transition-opacity"
     >
       {@render segments()}
     </a>
+    <!-- The link is NAMED by what it says — "EN ES" — and DESCRIBED by where
+         it goes. It used to be named "Español", which replaces the visible
+         label with words that are not in it: axe's label-content-name-mismatch
+         (WCAG 2.5.3), and a real problem for anyone driving the page by voice,
+         who says what they can see. -->
+    <span id={descId} lang={switchTo.lang} class="sr-only">{switchTo.label}</span>
   {:else}
     <div class="{TRACK} {TOGGLE[tone].track}">
       {@render segments()}

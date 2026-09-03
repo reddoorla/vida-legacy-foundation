@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import { render, fireEvent, cleanup } from "@testing-library/svelte";
+import { render, fireEvent, cleanup, within } from "@testing-library/svelte";
 import Nav from "./Nav.svelte";
 
 // jsdom has no WAAPI (Element.animate), so we report reduced motion: the
@@ -137,7 +137,7 @@ describe("Nav — the bar", () => {
   });
 
   it("marks the current locale on the toggle and links the other only when given a target", async () => {
-    const { container, rerender, getByLabelText, getByRole } = render(Nav, {
+    const { container, rerender, getByRole } = render(Nav, {
       items,
       tone: "onDark",
     });
@@ -153,10 +153,14 @@ describe("Nav — the bar", () => {
       tone: "onDark",
       switchTo: { lang: "es", href: "/es/about", label: "Español", short: "ES" },
     });
-    const link = getByLabelText("Español");
+    // Named by the "EN ES" it shows and described by where it goes, so the
+    // accessible name never replaces the visible label (WCAG 2.5.3).
+    const link = container.querySelector<HTMLAnchorElement>('[role="group"] a')!;
     expect(link.getAttribute("href")).toBe("/es/about");
     expect(link.getAttribute("hreflang")).toBe("es");
-    expect(link.getAttribute("lang")).toBe("es");
+    expect(container.querySelector(`#${link.getAttribute("aria-describedby")}`)?.textContent).toBe(
+      "Español",
+    );
     // The link IS the track: press anywhere on the pill and you switch.
     expect(link.querySelectorAll("span")).toHaveLength(2);
     expect(link.querySelector("[aria-current]")?.textContent?.trim()).toBe("EN");
@@ -223,12 +227,15 @@ describe("Nav — the menu", () => {
   });
 
   it("opens external entries in a new tab and routes in the same one", async () => {
-    const { getByLabelText, getByText } = render(Nav, { items });
+    // Scoped to the dialog: the bar also carries a hidden copy of the same
+    // entries for a visitor without scripts.
+    const { getByLabelText, getByRole } = render(Nav, { items });
     await fireEvent.click(getByLabelText("Open menu"));
-    const donate = getByText("Donate").closest("a")!;
+    const menu = within(getByRole("dialog"));
+    const donate = menu.getByText("Donate").closest("a")!;
     expect(donate.getAttribute("target")).toBe("_blank");
     expect(donate.getAttribute("rel")).toBe("noopener noreferrer");
-    const contact = getByText("Contact Us").closest("a")!;
+    const contact = menu.getByText("Contact Us").closest("a")!;
     expect(contact.getAttribute("href")).toBe("/contact");
     expect(contact.hasAttribute("target")).toBe(false);
   });
@@ -446,5 +453,34 @@ describe("Nav on a phone", () => {
     await fireEvent.click(getByLabelText("Abrir el menú"));
     const dialog = getByRole("dialog", { name: "Menú" });
     expect(dialog.querySelector('[aria-label="Cerrar el menú"]')).not.toBeNull();
+  });
+
+  it("renders the entries in the bar for a visitor without scripts", () => {
+    // NavMenu is not in the DOM until the hamburger is clicked, so without
+    // JavaScript the bar offered a control that announces a menu and does
+    // nothing. The <noscript> block lists the entries instead and hides the
+    // button that cannot work. (A browser running scripts never parses any
+    // of this.)
+    const { container } = render(Nav, { items });
+    const fallback = container.querySelector(".nav-nojs")!;
+    expect(fallback).not.toBeNull();
+    const links = [...fallback.querySelectorAll("a")];
+    expect(links.map((a) => a.textContent?.trim())).toEqual(
+      items.filter((i) => i.href).map((i) => i.label),
+    );
+    expect(links.every((a) => a.getAttribute("href"))).toBe(true);
+    // The rule that reveals the list lives in app.html (see the note in the
+    // component); what this holds is that the list is rendered, hidden, and
+    // complete.
+    expect(fallback.className).toContain("nav-nojs");
+  });
+
+  it("opens links out of the site in a new tab in the no-JS list too", () => {
+    const { container } = render(Nav, {
+      items: [{ label: "Donate", href: "https://secure.lglforms.com/x" }],
+    });
+    const a = container.querySelector(".nav-nojs a")!;
+    expect(a.getAttribute("target")).toBe("_blank");
+    expect(a.getAttribute("rel")).toBe("noopener noreferrer");
   });
 });
