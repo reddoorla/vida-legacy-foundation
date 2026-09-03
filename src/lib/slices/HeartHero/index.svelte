@@ -277,7 +277,7 @@
         <HeroBackgroundImage
           image={slice.primary.image}
           portrait={PORTRAIT_HERO_ASPECT}
-          portraitMedia="(max-width: 767px) and (prefers-reduced-motion: no-preference)"
+          portraitMedia="(max-width: 767px)"
           class="h-full w-full object-cover"
         />
       </div>

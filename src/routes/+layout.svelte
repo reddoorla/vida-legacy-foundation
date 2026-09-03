@@ -5,7 +5,7 @@
   import { repositoryName } from "$lib/prismicio";
   import "../app.css";
   import Seo from "$lib/components/Seo.svelte";
-  import { composeTitle, DEFAULT_OG_IMAGE } from "$lib/seo";
+  import { composeTitle, organizationJsonLd, DEFAULT_OG_IMAGE, SITE_NAME } from "$lib/seo";
   import LandscapeModal from "$lib/components/LandscapeModal.svelte";
   import ContactModal from "$lib/components/ContactModal.svelte";
   import { contactModal } from "$lib/contact-modal.svelte";
@@ -43,6 +43,46 @@
     })),
   );
   const switchTo = $derived(switchTarget(lang, page.data.alternates, page.url.pathname));
+
+  // Who the site belongs to, for the search engines and the knowledge panel —
+  // an NGO, its logo, and the phone and address the footer already carries, so
+  // the two cannot say different things. Emitted once, from the layout, so
+  // every page has it; `page.url.origin` keeps it correct on the preview host
+  // as well as the real domain.
+  const orgJsonLd = $derived(
+    organizationJsonLd({
+      type: "NGO",
+      name: SITE_NAME,
+      url: new URL(localizePath("/", lang), page.url.origin).href,
+      logo: new URL("/logo-lockup.svg", page.url.origin).href,
+      ...orgContact(),
+    }),
+  );
+
+  // The phone and the postal address, read out of the footer's own rows.
+  function orgContact() {
+    const rows = (siteConfig.footer.columns ?? []).flatMap((c) => c.items);
+    const tel = rows.find((i) => "href" in i && i.href?.startsWith("tel:"));
+    const telephone = tel && "href" in tel ? tel.href?.replace(/^tel:/, "") : undefined;
+    const postal = rows.find(
+      (i) =>
+        "text" in i && typeof i.text === "string" && /\n[A-Za-z .]+, [A-Z]{2} \d{5}/.test(i.text),
+    );
+    const address = (() => {
+      if (!postal || !("text" in postal) || typeof postal.text !== "string") return undefined;
+      const [streetAddress, cityLine] = postal.text.split("\n");
+      const m = cityLine?.match(/^(.*), ([A-Z]{2}) (\d{5})$/);
+      return m
+        ? {
+            streetAddress,
+            addressLocality: m[1],
+            addressRegion: m[2],
+            postalCode: m[3],
+          }
+        : undefined;
+    })();
+    return { ...(telephone ? { telephone } : {}), ...(address ? { address } : {}) };
+  }
 
   // The one navigation that is not a page change: the same page in the other
   // language (see onNavigate below, and LangToggle).
@@ -117,6 +157,7 @@
   url={page.url}
   locale={page.data.ogLocale ?? LOCALES[lang].og}
   {alternates}
+  jsonLd={orgJsonLd}
 />
 <a
   href="#main-content"

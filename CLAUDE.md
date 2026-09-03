@@ -210,10 +210,17 @@ comp's own 282.5px column, so it wraps even in the comp's frame — and the
 pill's 40px min-height swallows both lines without growing.
 
 `pnpm test:a11y` gates all of this, so a regression fails CI rather than
-shipping — and the footer renders on every audited route, so its contrast is
-genuinely covered. But the gate only sees rendered routes. Do not assign
-`--color-green` or `--color-coral` to text in a slice and assume review will
-catch it.
+shipping — **but read what it actually audits before trusting it.** The gate's
+route list is the fleet's default and this repo adds nothing to it
+(`pkg.reddoor.a11yRoutes` is absent), so axe runs over `/dev/a11y-fixtures`
+and `/dev/animate-in` and nothing else; `/` is only visited for a hydration
+smoke. No real page of the site is measured. That is why the fixtures page
+carries in-flow renders of the chrome — the nav in all three tones over the
+grounds each one really sits on, the open menu, the Spanish chrome and the
+contact panel — because those are the only way those palettes reach axe at
+all. Anything you add to a slice reaches the gate ONLY if you add it there
+too. Do not assign `--color-green` or `--color-coral` to text in a slice and
+assume review will catch it.
 
 ## Fonts — the shared kit `noj4tji`
 

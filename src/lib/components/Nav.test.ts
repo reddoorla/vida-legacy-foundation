@@ -53,7 +53,11 @@ const navLinks = [
 
 /** A stand-in for the layout's <main>: Nav measures its first child to decide
  *  when the bar has scrolled onto its own ground. */
-function mountMain(bottom: () => number) {
+function mountMain(bottom: () => number, height = 0) {
+  // Only one at a time: Nav reads getElementById("main-content"), so a
+  // left-over from an earlier test in the same file would be the one it
+  // measures.
+  document.getElementById("main-content")?.remove();
   const main = document.createElement("main");
   main.id = "main-content";
   const first = document.createElement("section");
@@ -64,7 +68,7 @@ function mountMain(bottom: () => number) {
   main.append(first, document.createElement("section"));
   document.body.appendChild(main);
   vi.spyOn(first, "getBoundingClientRect").mockImplementation(
-    () => ({ bottom: bottom() }) as DOMRect,
+    () => ({ bottom: bottom(), height }) as DOMRect,
   );
   return main;
 }
@@ -482,5 +486,27 @@ describe("Nav on a phone", () => {
     const a = container.querySelector(".nav-nojs a")!;
     expect(a.getAttribute("target")).toBe("_blank");
     expect(a.getAttribute("rel")).toBe("noopener noreferrer");
+  });
+
+  it("swaps when a runway's stage releases, not when the runway ends", async () => {
+    // HeartHero is 260vh of scroll driving a stage pinned at the top of the
+    // screen. Waiting for the SECTION's bottom edge left the bar wearing the
+    // hero's cream lockup for another screen and a half — over the cream
+    // headline of the section after it. A first slice taller than the
+    // viewport is measured by where its stage releases instead.
+    let bottom = 2340;
+    mountMain(() => bottom, 2340);
+    const { container } = render(Nav, { items, tone: "default" });
+    const nav = container.querySelector("nav")!;
+
+    // The stage is still on screen (bottom 1200 - one 768px screen = 432).
+    bottom = 1200;
+    await scrollTo(1140);
+    expect(nav.dataset.scrolled).toBe("false");
+
+    // It has released: bottom 800 - 768 = 32, under the bar.
+    bottom = 800;
+    await scrollTo(1540);
+    expect(nav.dataset.scrolled).toBe("true");
   });
 });

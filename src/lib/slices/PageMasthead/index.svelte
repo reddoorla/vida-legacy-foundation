@@ -97,7 +97,7 @@
           image={slice.primary.image}
           preload={true}
           portrait={PORTRAIT_HERO_ASPECT}
-          portraitMedia="(max-width: 767px) and (prefers-reduced-motion: no-preference)"
+          portraitMedia="(max-width: 767px)"
           class="h-full w-full object-cover"
         />
         <!-- The comp's own gradient: tonal, not a legibility scrim. -->

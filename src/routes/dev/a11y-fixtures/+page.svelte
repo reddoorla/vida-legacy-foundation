@@ -4,8 +4,27 @@
   import Accordion from "$lib/components/Accordion.svelte";
   import BrandIcon from "$lib/components/BrandIcon.svelte";
   import Modal from "$lib/components/Modal.svelte";
+  import Nav from "$lib/components/Nav.svelte";
   import NavMenu from "$lib/components/NavMenu.svelte";
+  import type { NavTone } from "$lib/nav-tone";
   import ContactModal from "$lib/components/ContactModal.svelte";
+
+  // The nav's real entries, in both languages — the href-less one included,
+  // since it renders as text rather than a link and has its own contrast.
+  // Every href points at this page: the prerender crawler follows what it
+  // renders, and a dead internal link here would fail the build.
+  const navItems = [
+    { label: "Who We Are", href: "" },
+    { label: "Donate", href: "https://example.org/donate" },
+    { label: "Contact Us", href: "#nav-menu-heading" },
+    { label: "Become a Donor", href: "https://example.org/register" },
+  ];
+  const navItemsEs = [
+    { label: "Quiénes somos", href: "" },
+    { label: "Donar", href: "https://example.org/donate" },
+    { label: "Contáctenos", href: "#nav-menu-heading" },
+    { label: "Conviértase en donante", href: "https://example.org/register" },
+  ];
   import Form from "$lib/components/Form.svelte";
   import Field from "$lib/components/Field.svelte";
   import HeroBackgroundImage from "$lib/components/HeroBackgroundImage.svelte";
@@ -600,6 +619,16 @@
   };
 </script>
 
+<!-- Internal tooling, not a page of the site. robots.txt disallows these
+     paths, but that is a CRAWL directive: a disallowed URL still gets indexed
+     if anything external links to it, and the self-referencing canonical is
+     the only index signal otherwise present. This is the index directive.
+     netlify.toml sends the same thing as a header, so the two hold whether or
+     not this page's HTML is what a crawler reads. -->
+<svelte:head>
+  <meta name="robots" content="noindex, nofollow" />
+</svelte:head>
+
 <!-- NOT a <main>: src/routes/+layout.svelte already renders one, and nesting a
      second is a duplicate-landmark violation. It also capped every full-bleed
      slice below to max-w-3xl, so nothing laid out the way it actually ships. -->
@@ -657,16 +686,53 @@
            textured dark green are audited. Its entries mirror site-config,
            including the href-less one that renders as text. -->
       <div class="relative h-[520px] overflow-hidden">
-        <NavMenu
-          inline
-          onClose={() => {}}
-          entries={[
-            { label: "Who We Are", href: "" },
-            { label: "Donate", href: "https://example.org/donate" },
-            { label: "Contact Us", href: "#nav-menu-heading" },
-            { label: "Become a Donor", href: "https://example.org/register" },
-          ]}
+        <NavMenu inline onClose={() => {}} entries={navItems} />
+      </div>
+    </section>
+
+    <section aria-labelledby="nav-tones-heading" class="space-y-4">
+      <h2 id="nav-tones-heading" class="text-xl font-semibold">Navigation bar, every tone</h2>
+      <!-- The bar the layout mounts is only ever audited in ONE state: the
+           default tone, in English, at the top of the fixtures page. Its other
+           two tones are the ones the comp actually opens on — the all-cream
+           lockup over HeartHero and the cream-and-green one over a masthead —
+           and each carries its own hamburger colour and its own EN|ES pill
+           couple. They are rendered here over the grounds they really sit on,
+           so axe measures those pairings instead of nobody measuring them.
+           `pathname` is this page, so no link points anywhere that would fail
+           the prerender crawl. -->
+      {#each [{ tone: "onGreen", ground: "bg-green" }, { tone: "onDark", ground: "bg-green-deep" }, { tone: "default", ground: "bg-background" }] as variant (variant.tone)}
+        <div class="relative h-[90px] overflow-hidden {variant.ground}">
+          <Nav
+            items={navItems}
+            tone={variant.tone as NavTone}
+            pathname="/dev/a11y-fixtures"
+            lang="en"
+            switchTo={{ lang: "es", href: "/dev/a11y-fixtures", label: "Español", short: "ES" }}
+          />
+        </div>
+      {/each}
+    </section>
+
+    <section aria-labelledby="es-chrome-heading" class="space-y-4">
+      <h2 id="es-chrome-heading" class="text-xl font-semibold">Spanish chrome</h2>
+      <!-- Every audited route is English, so the Spanish chrome — longer
+           labels in the same boxes, the toggle marked the other way round,
+           the menu's own words — has never been in front of axe. -->
+      <div class="relative h-[90px] overflow-hidden bg-background">
+        <Nav
+          items={navItemsEs}
+          tone="default"
+          pathname="/dev/a11y-fixtures"
+          lang="es"
+          switchTo={{ lang: "en", href: "/dev/a11y-fixtures", label: "English", short: "EN" }}
         />
+      </div>
+      <div class="relative h-[520px] overflow-hidden">
+        <NavMenu inline lang="es" onClose={() => {}} entries={navItemsEs} />
+      </div>
+      <div class="max-w-[640px]">
+        <ContactModal inline lang="es" />
       </div>
     </section>
 
