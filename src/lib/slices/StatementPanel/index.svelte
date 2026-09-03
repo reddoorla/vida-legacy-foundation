@@ -59,6 +59,12 @@
     background-color: var(--color-background);
   }
 
+  /* The comp's panel runs its paragraphs 40 apart (its auto-layout gap),
+     not the body's 1em. */
+  .panel :global(p + p) {
+    margin-top: 40px;
+  }
+
   /* The statement is a real h2 for document structure at the comp's lead
      style (`t-lead`, 24px Light clamping to 20px on a phone) — 20px is body
      size, which is why the colour is the -aa green. */

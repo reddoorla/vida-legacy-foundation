@@ -154,7 +154,7 @@
   contentClass="max-w-[1440px] px-6 pt-20 pb-10 md:px-20 md:pt-30 md:pb-15"
 >
   {#if hasHeading}
-    <h1 class="donation-heading text-green-btn font-heading leading-[1.35] md:ml-auto md:w-[74.4%]">
+    <h1 class="t-display text-green-btn md:ml-auto md:w-[74.4%]">
       {slice.primary.heading}
     </h1>
   {/if}
@@ -162,49 +162,59 @@
   {#if !showForm}
     <!-- Links out — the interim page while the form has no backend: the
          comp's eyebrow and intro, then the hosted form and PayPal as two
-         buttons, in the column the form card would occupy (the CtaBanner
-         onCream idiom: a statement and its buttons, right-aligned). -->
+         buttons, together in the box the form card occupies in the comp
+         (x=408, 950 wide, 30 of padding, the grain at 25% difference — the
+         statement panel's vocabulary), 100 under the heading. An allowed
+         departure: the comp puts the eyebrow and intro in the left column
+         beside the form, but with no form there is nothing to sit beside. -->
     <div
-      class="text-green-btn flex flex-col items-start gap-5 md:ml-auto md:w-[74.4%] {hasHeading
+      class="donation-box relative overflow-hidden rounded-[20px] md:ml-auto md:w-[74.2%] {hasHeading
         ? 'mt-15 md:mt-25'
         : ''}"
     >
-      {#if slice.primary.eyebrow}
-        <h2 class="font-heading text-lg font-normal tracking-[1.5px] uppercase">
-          {slice.primary.eyebrow}
-        </h2>
-      {/if}
-      {#if isFilled.richText(slice.primary.body)}
-        <div class="richtext-block max-w-[578px] text-base leading-6">
-          <RichTextBody field={slice.primary.body} />
-        </div>
-      {/if}
-      {#if hasFormLink || hasPaypal}
-        <div class="flex flex-wrap gap-2.5">
-          {#if hasFormLink}
-            <PrismicLink field={slice.primary.form_link} class={pill}>
-              {slice.primary.form_label}
-              <img
-                src="/icons/arrow-right-dark.svg"
-                alt=""
-                aria-hidden="true"
-                class="h-3.5 w-2.5 -rotate-90"
-              />
-            </PrismicLink>
-          {/if}
-          {#if hasPaypal}
-            <PrismicLink field={slice.primary.paypal_link} class={pill}>
-              {slice.primary.paypal_label}
-              <img
-                src="/icons/arrow-right-dark.svg"
-                alt=""
-                aria-hidden="true"
-                class="h-3.5 w-2.5 -rotate-90"
-              />
-            </PrismicLink>
-          {/if}
-        </div>
-      {/if}
+      <div
+        aria-hidden="true"
+        class="pointer-events-none absolute inset-0 bg-cover bg-center opacity-25 mix-blend-difference"
+        style="background-image: url('/texture-grain.webp')"
+      ></div>
+      <div class="text-green-btn relative flex flex-col items-start gap-5 p-[30px]">
+        {#if slice.primary.eyebrow}
+          <h2 class="t-label-lg">
+            {slice.primary.eyebrow}
+          </h2>
+        {/if}
+        {#if isFilled.richText(slice.primary.body)}
+          <div class="richtext-block t-body max-w-[578px]">
+            <RichTextBody field={slice.primary.body} />
+          </div>
+        {/if}
+        {#if hasFormLink || hasPaypal}
+          <div class="flex flex-wrap gap-2.5">
+            {#if hasFormLink}
+              <PrismicLink field={slice.primary.form_link} class={pill}>
+                {slice.primary.form_label}
+                <img
+                  src="/icons/arrow-right-dark.svg"
+                  alt=""
+                  aria-hidden="true"
+                  class="h-3.5 w-2.5 -rotate-90"
+                />
+              </PrismicLink>
+            {/if}
+            {#if hasPaypal}
+              <PrismicLink field={slice.primary.paypal_link} class={pill}>
+                {slice.primary.paypal_label}
+                <img
+                  src="/icons/arrow-right-dark.svg"
+                  alt=""
+                  aria-hidden="true"
+                  class="h-3.5 w-2.5 -rotate-90"
+                />
+              </PrismicLink>
+            {/if}
+          </div>
+        {/if}
+      </div>
     </div>
   {:else}
     <div
@@ -214,7 +224,7 @@
     >
       <div class="text-green-btn flex flex-col gap-5 md:w-[297.5px] md:shrink-0 md:py-5">
         {#if slice.primary.eyebrow}
-          <h2 class="font-heading text-lg font-normal tracking-[1.5px] uppercase">
+          <h2 class="t-label-lg">
             {slice.primary.eyebrow}
           </h2>
         {/if}
@@ -450,11 +460,10 @@
 </ContentBand>
 
 <style>
-  /* The page title, at the display scale the comps set every page heading. */
-  .donation-heading {
-    font-size: clamp(2rem, 4.17vw, 3.75rem);
-    font-weight: 300;
+  .donation-box {
+    background-color: var(--color-background);
   }
+  /* The page title, at the display scale the comps set every page heading. */
 
   .panel {
     background-color: var(--color-background);
