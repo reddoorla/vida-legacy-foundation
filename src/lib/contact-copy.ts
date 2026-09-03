@@ -24,6 +24,13 @@ const COPY = {
     error: "Something went wrong sending your message. Please try again.",
     /** The action's 500: the ingest endpoint is not configured at all. */
     unavailable: "The form is unavailable right now. Please try again later.",
+    /** The page's meta description. Not authored in Prismic: this route has no
+     *  document, so its head copy lives with the rest of its words. The site's
+     *  DEFAULT_DESCRIPTION is deliberately empty (a generic line repeated on
+     *  every result is worse than none), so without this the contact pages
+     *  shipped with no description at all. */
+    metaDescription:
+      "Reach the Vida Legacy Foundation team in San Antonio: ask about financial relief for donor and recipient families, or about how to help.",
     call: "You can also call us at",
     name: "Name",
     email: "Email",
@@ -40,6 +47,8 @@ const COPY = {
     error: "Algo salió mal al enviar su mensaje. Por favor, inténtelo de nuevo.",
     unavailable:
       "El formulario no está disponible en este momento. Por favor, inténtelo más tarde.",
+    metaDescription:
+      "Comuníquese con Vida Legacy Foundation en San Antonio: pregúntenos por la asistencia económica para familias de donantes y receptores, o por cómo ayudar.",
     call: "También puede llamarnos al",
     name: "Nombre",
     email: "Correo electrónico",

@@ -22,4 +22,23 @@ describe("contactCopy", () => {
   it("keeps every key in step across locales", () => {
     expect(Object.keys(contactCopy("es")).sort()).toEqual(Object.keys(contactCopy("en")).sort());
   });
+
+  it("carries a meta description for a route Prismic does not author", () => {
+    // DEFAULT_DESCRIPTION is deliberately empty — a generic line repeated on
+    // every result is worse than none — so a static route that says nothing
+    // ships with no description at all. /contact and /es/contact did.
+    for (const lang of LANGS) {
+      const d = contactCopy(lang).metaDescription;
+      expect(d.length).toBeGreaterThan(80);
+      // Google truncates a snippet around 155-160 characters.
+      expect(d.length).toBeLessThanOrEqual(158);
+      expect(d).toContain("Vida Legacy Foundation");
+    }
+    // The client's own words, from content/es-website-content.txt and the
+    // live /es hero, not a translation of the English: "asistencia económica"
+    // and "familias de donantes y receptores".
+    expect(contactCopy("es").metaDescription).toContain("asistencia económica");
+    expect(contactCopy("es").metaDescription).toContain("familias de donantes y receptores");
+    expect(contactCopy("es").metaDescription).toMatch(/Comuníquese|Pregúntenos|pregúntenos/);
+  });
 });
