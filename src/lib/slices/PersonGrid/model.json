@@ -12,6 +12,15 @@
       "description": "An optional display heading, a labelled intro column, and a grid of headshot cards",
       "imageUrl": "",
       "primary": {
+        "style": {
+          "type": "Select",
+          "config": {
+            "label": "style",
+            "placeholder": "",
+            "options": ["leadership", "board"],
+            "default_value": "leadership"
+          }
+        },
         "heading": {
           "type": "StructuredText",
           "config": {
@@ -43,7 +52,10 @@
           "type": "Image",
           "config": {
             "label": "headshot",
-            "constraint": { "width": 592, "height": 592 },
+            "constraint": {
+              "width": 592,
+              "height": 592
+            },
             "thumbnails": []
           }
         },

@@ -53,14 +53,19 @@ describe("PageMasthead slice", () => {
     expect(container.querySelector("img")).not.toBeNull();
   });
 
-  it("reserves space for the fixed nav", () => {
-    // $lib/components/Nav is `fixed top-0` and takes no space in the flow, so
-    // the first slice on a page must reserve it. This is exactly why this is
-    // its own slice and not an ImageBand variation — a mid-page band must NOT
-    // pay this padding.
+  it("starts closed in the comp's window, on a sticky stage, with the copy held back", () => {
+    // The photograph opens from the comp's 1280x390 window under the bar to
+    // the full viewport as the runway scrolls — HeartHero's mechanics in this
+    // page's shape. Before any scroll the window is shut and the copy is in
+    // the DOM but not yet shown (opacity/transform only, never display).
     const { container } = render(PageMasthead, { props: { slice: make() } });
-    const band = container.querySelector("[data-slice-type='page_masthead'] > div");
-    expect(band?.className).toContain("pt-[70px]");
+    const stage = container.querySelector(".page-masthead-stage");
+    expect(stage?.getAttribute("style")).toContain("--opened: 0");
+    expect(stage?.className).not.toContain("fixed");
+    expect(container.querySelector(".masthead-window")).not.toBeNull();
+    const copy = container.querySelector(".masthead-copy");
+    expect(copy?.classList.contains("is-in")).toBe(false);
+    expect(copy?.querySelector("h1")).not.toBeNull();
   });
 
   it("preloads its image, unlike the mid-page bands", () => {

@@ -1224,6 +1224,17 @@ export type PageMastheadSlice = prismic.SharedSlice<"page_masthead", PageMasthea
  */
 export interface PersonGridSliceDefaultPrimary {
   /**
+   * style field in *PersonGrid → Default → Primary*
+   *
+   * - **Field Type**: Select
+   * - **Placeholder**: *None*
+   * - **Default Value**: leadership
+   * - **API ID Path**: person_grid.default.primary.style
+   * - **Documentation**: https://prismic.io/docs/fields/select
+   */
+  style: prismic.SelectField<"leadership" | "board", "filled">;
+
+  /**
    * heading field in *PersonGrid → Default → Primary*
    *
    * - **Field Type**: Rich Text

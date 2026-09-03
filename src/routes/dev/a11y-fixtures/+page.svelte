@@ -479,8 +479,9 @@
 
   // Two PersonGrid fixtures on purpose: the heading levels SHIFT with the
   // display heading (h2/h3/h4 with it, h2/h3 without), and rendering both is
-  // what lets axe's heading-order rule audit the promotion. Only the first
-  // person carries a bio, which is what draws the "+" trigger.
+  // what lets axe's heading-order rule audit the promotion. The second is the
+  // board style — the lighter cream band with page-cream cards and the -aa
+  // green copy — so both card palettes go in front of axe.
   const person = (name: string, role: string, withBio: boolean) => ({
     headshot: { url: placeholder.portrait, alt: name, dimensions: { width: 592, height: 592 } },
     name,
@@ -511,6 +512,7 @@
     ...personGridFixture,
     primary: {
       ...personGridFixture.primary,
+      style: "board",
       heading: [],
       label: "Board of Directors",
     },

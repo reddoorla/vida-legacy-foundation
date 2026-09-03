@@ -34,7 +34,7 @@
 >
   <div class="flex flex-col gap-[30px] md:flex-row md:items-start">
     {#if hasStatement}
-      <div class="statement text-green-mid-aa font-heading flex-1 leading-[1.45] md:py-5">
+      <div class="statement t-lead text-green-mid-aa flex-1 md:py-5">
         <RichTextBody field={slice.primary.statement} />
       </div>
     {/if}
@@ -46,7 +46,7 @@
           class="pointer-events-none absolute inset-0 bg-cover bg-center opacity-25 mix-blend-difference"
           style="background-image: url('/texture-grain.webp')"
         ></div>
-        <div class="richtext-block text-green-btn relative text-base leading-6">
+        <div class="richtext-block t-body text-green-btn relative">
           <RichTextBody field={slice.primary.body} />
         </div>
       </div>
@@ -59,13 +59,7 @@
     background-color: var(--color-background);
   }
 
-  /* The statement is a real h2 for document structure, but the comp sets it at
-     the H3 scale rather than the page's heading scale. Note the lower bound:
-     20px is body size, which is why the colour is the -aa green. */
-  .statement :global(h2) {
-    font-size: clamp(1.25rem, 1.67vw, 1.5rem);
-    line-height: inherit;
-    letter-spacing: 0;
-    font-weight: 300;
-  }
+  /* The statement is a real h2 for document structure at the comp's lead
+     style (`t-lead`, 24px Light clamping to 20px on a phone) — 20px is body
+     size, which is why the colour is the -aa green. */
 </style>
