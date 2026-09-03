@@ -46,11 +46,14 @@
 
   Inside the card the comp is 40 from the eyebrow's cap to the figures' cap,
   20 between a figure, its copy and the button, and four 282.5px columns
-  30 apart. The four columns hold only while the button fits one line, and
-  that is true at the comp's own width and no narrower: 282.5px of column
-  against a 279px pill at 1440, 242px at Tailwind's xl. So the grid goes 2x2
-  below 1440 rather than wrapping the button — the round-1 note asked for
-  exactly that ("go to a 2x2 grid before the register button wraps").
+  30 apart. Four columns from `xl` up, measured: the round-1 note asked for
+  "a 2x2 grid before the register button wraps", but the button does not fit
+  a column at ANY width — "Register to be an organ donor" needs 291px on one
+  line against the comp's own 282.5px column, so it takes two lines even in
+  the comp's frame, inside the pill's 40px min-height and without growing it.
+  Holding four columns for 1440 instead cost the client the layout on his own
+  screen: a maximized 1440 window is 1425 of viewport once the scrollbar is
+  paid, and 1425 fell to 2x2 (review round 4).
 -->
 <section
   data-slice-type={slice.slice_type}
@@ -75,7 +78,7 @@
         {/if}
 
         {#if stats.length}
-          <div class="grid gap-[30px] sm:grid-cols-2 wide:grid-cols-4">
+          <div class="grid gap-[30px] sm:grid-cols-2 xl:grid-cols-4">
             {#each stats as stat, i (i)}
               <div class="flex flex-col items-start gap-5">
                 {#if stat.value !== null}

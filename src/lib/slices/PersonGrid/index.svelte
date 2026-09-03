@@ -4,8 +4,18 @@
   import HeroBackgroundImage from "$lib/components/HeroBackgroundImage.svelte";
   import Modal from "$lib/components/Modal.svelte";
   import { isFilled, type Content } from "@prismicio/client";
+  import { DEFAULT_LANG, type Lang } from "$lib/locale";
+  import { ui } from "$lib/ui-copy";
 
-  let { slice }: { slice: Content.PersonGridSlice } = $props();
+  type Props = {
+    slice: Content.PersonGridSlice;
+    /** SliceZone context from the page loader: the document's locale names
+     *  the cards and the pop-up's close button (see $lib/ui-copy). The
+     *  people themselves come from Prismic already translated. */
+    context?: { lang?: Lang };
+  };
+  let { slice, context }: Props = $props();
+  const copy = $derived(ui(context?.lang ?? DEFAULT_LANG));
 
   let hasHeading = $derived(isFilled.richText(slice.primary.heading));
   let people = $derived((slice.items ?? []).filter((p) => p.name || isFilled.image(p.headshot)));
@@ -185,7 +195,7 @@
               <button
                 type="button"
                 onclick={() => (openIndex = i)}
-                aria-label="Read the bio for {person.name || 'this person'}"
+                aria-label={copy.readBio(person.name || copy.thisPerson)}
                 class="absolute inset-0 cursor-pointer rounded-[20px] focus-visible:outline-2 focus-visible:outline-offset-[-3px] focus-visible:outline-green"
               ></button>
             {/if}
@@ -207,6 +217,7 @@
     {open}
     onclose={close}
     labelledby={current.name ? bioNameId : undefined}
+    closeLabel={copy.close}
     dialogClass="max-w-[1200px]"
     class="bg-green-deep! relative overflow-hidden rounded-[20px]! shadow-none!"
     closeClass="text-green hover:text-background"

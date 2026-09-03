@@ -6,8 +6,9 @@ afterEach(() => cleanup());
 
 const es = { lang: "es" as const, href: "/es/about", label: "Español", short: "ES" };
 
-const toggle = (container: HTMLElement) =>
-  container.querySelector<HTMLElement>('[role="group"][aria-label="Language"]')!;
+// The group's accessible name is the PAGE's word for it ("Language" /
+// "Idioma"), so the selector matches the role alone.
+const toggle = (container: HTMLElement) => container.querySelector<HTMLElement>('[role="group"]')!;
 
 describe("LangToggle", () => {
   it("marks the current locale and renders both sides inert without a target", () => {

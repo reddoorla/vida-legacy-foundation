@@ -120,10 +120,13 @@ describe("LeadText slice", () => {
     } as never;
     const { container } = render(LeadText, { props: { slice: statement } });
     const section = container.querySelector("section")!;
-    expect(section.className).toContain("min-h-dvh");
-    expect(section.className).toContain("items-end");
     expect(section.className).toContain("bg-dark");
     expect(section.className).toContain("sticky-cover");
+    // It comes to rest at the BOTTOM of the screen (stickyCover reads the
+    // marker), and keeps the comp's height doing it — a full-screen band put
+    // the comp's 60px gap above the line at a whole viewport instead.
+    expect(section.className).toContain("sticky-cover--bottom");
+    expect(section.className).not.toContain("min-h-dvh");
   });
 
   it("renders no eyebrow heading in the statement variation", () => {

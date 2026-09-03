@@ -18,6 +18,10 @@
     /** id of the element that names the dialog (its heading) — without one a
      *  screen reader announces an anonymous dialog. */
     labelledby?: string;
+    /** The close button's accessible name. Pass the page locale's word for
+     *  it (`ui(lang).close`) — a Spanish dialog announcing "Close" is the
+     *  same bug as an English one announcing "Cerrar". */
+    closeLabel?: string;
     children?: Snippet;
   }
 
@@ -29,6 +33,7 @@
     closeClass = "text-dark/60 hover:text-dark",
     bodyClass = "p-8",
     labelledby,
+    closeLabel = "Close",
     children,
   }: ModalProps = $props();
 
@@ -113,7 +118,7 @@
           type="button"
           onclick={close}
           class="absolute top-4 right-4 transition cursor-pointer {closeClass}"
-          aria-label="Close"
+          aria-label={closeLabel}
         >
           <X size={20} />
         </button>

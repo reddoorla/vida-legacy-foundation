@@ -10,6 +10,12 @@
  *  bottom of the viewport instead. Heights change with content, viewport
  *  and fonts, so it is measured, not styled.
  *
+ *  `.sticky-cover--bottom` holds by its bottom edge at ANY height: the offset
+ *  is the full difference, positive for a short band. That is the homepage's
+ *  closing statement, which the client asked to come to rest at the bottom of
+ *  the screen rather than the top — the band itself keeps the comp's height
+ *  and the comp's 60px above the line, and only the resting edge changes.
+ *
  *  It also measures the footer after <main>. A sticky box is released at the
  *  end of its containing block, and the footer is outside <main> — so the
  *  closing panel would slide over the band and then the footer would push
@@ -35,8 +41,22 @@ export function stickyBands(main: ParentNode): HTMLElement[] {
   });
 }
 
-export function stickyTop(bandHeight: number, viewportHeight: number): number {
-  return Math.min(0, viewportHeight - bandHeight);
+/** Which edge of the band comes to rest against the viewport. */
+export type StickyAnchor = "top" | "bottom";
+
+export const BOTTOM_ANCHOR = "sticky-cover--bottom";
+
+export function anchorOf(band: Element): StickyAnchor {
+  return band.classList.contains(BOTTOM_ANCHOR) ? "bottom" : "top";
+}
+
+export function stickyTop(
+  bandHeight: number,
+  viewportHeight: number,
+  anchor: StickyAnchor = "top",
+): number {
+  const bottomEdge = viewportHeight - bandHeight;
+  return anchor === "bottom" ? bottomEdge : Math.min(0, bottomEdge);
 }
 
 /** The footer <main> is followed by, if any — the element whose height the
@@ -54,7 +74,10 @@ export const stickyCovers: Action<HTMLElement> = (main) => {
   function measure() {
     const vh = window.innerHeight;
     for (const band of bands) {
-      band.style.setProperty("--sticky-top", `${stickyTop(band.offsetHeight, vh)}px`);
+      band.style.setProperty(
+        "--sticky-top",
+        `${stickyTop(band.offsetHeight, vh, anchorOf(band))}px`,
+      );
     }
   }
 

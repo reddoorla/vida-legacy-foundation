@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { NavTone } from "$lib/nav-tone";
   import { DEFAULT_LANG, LANGS, LOCALES, type Lang, type SwitchTarget } from "$lib/locale";
+  import { ui } from "$lib/ui-copy";
 
   interface Props {
     /** The page's locale — the marked side. */
@@ -95,7 +96,7 @@
   {/each}
 {/snippet}
 
-<div role="group" aria-label="Language" class="w-fit {passedClasses}">
+<div role="group" aria-label={ui(lang).language} class="w-fit {passedClasses}">
   {#if switchTo}
     <a
       href={switchTo.href}

@@ -15,6 +15,7 @@
   import { loadSiteConfig, footerColumns } from "$lib/site-config";
   import { navToneFor } from "$lib/nav-tone";
   import { LANGS, LOCALES, langFromParam, localizePath, switchTarget } from "$lib/locale";
+  import { ui } from "$lib/ui-copy";
   import { disableSmoothScroll, restoreSmoothScroll } from "$lib/utils/instantNavScroll";
   import { stickyCovers } from "$lib/actions/stickyCover";
   import { prefersReducedMotion } from "$lib/transitions";
@@ -29,6 +30,10 @@
   // placeholder Footer), in the page's locale. A route's own page data takes
   // precedence in each chrome component.
   const siteConfig = $derived(loadSiteConfig(lang, data.publishedPages));
+
+  // The chrome's own words — the skip link here, the rest inside the
+  // components that own them (see $lib/ui-copy).
+  const copy = $derived(ui(lang));
 
   // hreflang needs absolute URLs; loaders hand over root-relative paths.
   const alternates = $derived(
@@ -113,7 +118,7 @@
   href="#main-content"
   class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-100 focus:bg-white focus:text-primary focus:px-4 focus:py-2 focus:rounded focus:shadow"
 >
-  Skip to main content
+  {copy.skipToContent}
 </a>
 <!-- Chrome renders from page data when a route supplies navLinks/footerColumns,
      else from the site-config stub. Each component applies its own
@@ -159,7 +164,7 @@
     style="background-image: url('/texture-grain.webp')"
   ></div>
 </TransitionOverlay>
-<LandscapeModal />
+<LandscapeModal {lang} />
 <ContactModal {lang} />
 {#if data.isPreviewSession}
   <PrismicPreview {repositoryName} />

@@ -4,6 +4,7 @@
   import TurnstileWidget from "$lib/components/TurnstileWidget.svelte";
   import { contactModal } from "$lib/contact-modal.svelte";
   import { DEFAULT_LANG, localizePath, type Lang } from "$lib/locale";
+  import { ui } from "$lib/ui-copy";
   import { loadSiteConfig } from "$lib/site-config";
   import { fade, slide } from "$lib/transitions";
   import { untrack } from "svelte";
@@ -318,6 +319,7 @@
   <Modal
     bind:open={contactModal.open}
     labelledby={headingId}
+    closeLabel={ui(lang).close}
     dialogClass="max-w-[640px]"
     class="bg-transparent! rounded-[20px]! shadow-none!"
     closeClass="text-green-btn hover:opacity-70 z-10"

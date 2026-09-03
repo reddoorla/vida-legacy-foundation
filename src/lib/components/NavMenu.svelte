@@ -3,6 +3,7 @@
   import { fade } from "$lib/transitions";
   import type { NavItem } from "$lib/site-config";
   import { DEFAULT_LANG, localizePath, type Lang, type SwitchTarget } from "$lib/locale";
+  import { ui } from "$lib/ui-copy";
   import LangToggle from "./LangToggle.svelte";
 
   interface Props {
@@ -31,6 +32,9 @@
     switchTo,
   }: Props = $props();
 
+  // The menu's own words in the page's language — see $lib/ui-copy.
+  const copy = $derived(ui(lang));
+
   // Only http(s) links open in a new tab; a route stays same-tab. The same
   // shape as Footer's, so target/rel cannot drift between the two.
   const isExternal = (href: string) => /^https?:\/\//i.test(href);
@@ -51,7 +55,7 @@
 <div
   role="dialog"
   aria-modal={inline ? undefined : "true"}
-  aria-label="Menu"
+  aria-label={copy.menu}
   class="{inline
     ? 'absolute'
     : 'fixed'} bg-green-deep inset-0 isolate z-60 flex flex-col overflow-y-auto"
@@ -71,7 +75,7 @@
       <a href={localizePath("/", lang)} onclick={onClose} class="flex items-center">
         <img
           src="/logo-lockup-on-dark.svg"
-          alt="Vida Legacy Foundation home"
+          alt={copy.homeLink}
           width="242"
           height="38"
           class="h-[30px] w-auto"
@@ -87,7 +91,7 @@
         <button
           type="button"
           class="text-green -mr-3 flex h-11 w-11 items-center justify-center"
-          aria-label="Close menu"
+          aria-label={copy.closeMenu}
           onclick={onClose}
         >
           <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">

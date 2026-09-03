@@ -71,6 +71,18 @@ const make = (primary: Record<string, unknown> = {}, items?: unknown[]) =>
 // auto-cleanup between renders, so an unscoped getBy* sees every earlier test's
 // DOM too and fails on duplicates.
 describe("PersonGrid slice", () => {
+  it("names the card and the pop-up's close button in the document's language", async () => {
+    // The people come from Prismic translated; these two labels are the
+    // component's own, so they follow SliceZone's locale context.
+    const { container } = render(PersonGrid, {
+      props: { slice: make(), context: { lang: "es" } },
+    });
+    const trigger = container.querySelector<HTMLButtonElement>("li button")!;
+    expect(trigger.getAttribute("aria-label")).toBe("Leer la biografía de Brooke Perucki");
+    await fireEvent.click(trigger);
+    expect(container.querySelector('dialog [aria-label="Cerrar"]')).not.toBeNull();
+  });
+
   it("sets slice data attributes", () => {
     const { container } = render(PersonGrid, { props: { slice: make() } });
     const section = container.querySelector("[data-slice-type='person_grid']");
