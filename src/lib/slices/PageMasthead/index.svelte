@@ -201,6 +201,16 @@
       aspect-ratio: 1440 / 860;
     }
 
+    /* Except on a phone, where the comp's landscape band is 224px tall and
+       the copy inside it overflowed into the fixed bar. Reduce Motion is a
+       mainstream setting; it must not cost the reader the headline. */
+    @media (width < 48rem) {
+      .page-masthead {
+        aspect-ratio: auto;
+        min-height: 100svh;
+      }
+    }
+
     .page-masthead-stage {
       position: static;
       height: 100%;
