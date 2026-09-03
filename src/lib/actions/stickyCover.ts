@@ -74,8 +74,17 @@ export function stickyTop(
  *  its own account (the homepage's full-bleed photograph, at the top of the
  *  screen), so it fills whatever the stack does not.
  *
+ *  Each member overlaps the one below it by `STACK_OVERLAP`. The heights are
+ *  fractional and the browser rounds a sticky offset, so butting the boxes
+ *  edge to edge left a sub-pixel seam at every joint — a hairline of the
+ *  pinned photograph showing between the bands. A pixel of overlap cannot be
+ *  seen (the section below is a later sibling, so it paints over it) and no
+ *  rounding can open it.
+ *
  *  Heights come from `height` so a test can supply them; jsdom lays nothing
  *  out. */
+export const STACK_OVERLAP = 1;
+
 export function coverRun(
   main: ParentNode,
   viewportHeight: number,
@@ -93,7 +102,7 @@ export function coverRun(
   for (let i = panel - 2; i >= 0 && stacked < viewportHeight; i--) {
     const el = sections[i];
     if (el.classList.contains("sticky-cover")) break;
-    top -= height(el);
+    top -= height(el) - STACK_OVERLAP;
     stacked += height(el);
     run.unshift({ el, top });
   }
@@ -122,18 +131,21 @@ export const stickyCovers: Action<HTMLElement> = (main) => {
     run = [];
   }
 
+  // The measured height, fractional: offsetHeight rounds to whole pixels, and
+  // a stack built from rounded heights leaves a sub-pixel seam at every joint
+  // for the page behind to show through. Falls back to offsetHeight where
+  // there is no layout at all (jsdom, where every rect is 0).
+  const height = (el: HTMLElement) => el.getBoundingClientRect().height || el.offsetHeight;
+
   function measure() {
     const vh = window.innerHeight;
     for (const band of bands) {
-      band.style.setProperty(
-        "--sticky-top",
-        `${stickyTop(band.offsetHeight, vh, anchorOf(band))}px`,
-      );
+      band.style.setProperty("--sticky-top", `${stickyTop(height(band), vh, anchorOf(band))}px`);
     }
     // The run's members are pinned by app.css off this attribute, so a page
     // without JavaScript simply has none of them.
     clearRun();
-    for (const { el, top } of coverRun(main, vh, (e) => e.offsetHeight)) {
+    for (const { el, top } of coverRun(main, vh, height)) {
       el.setAttribute("data-cover-run", "");
       el.style.setProperty("--sticky-top", `${top}px`);
       run.push(el);

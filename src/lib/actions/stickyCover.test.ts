@@ -86,10 +86,11 @@ describe("coverRun", () => {
       section("cta_banner", "onCream"),
     ]);
     // The statement rests at 900 - 300 = 600; stats holds its bottom against
-    // that (600 - 330), and the CTA against stats (270 - 400).
+    // that (600 - 330), and the CTA against stats (271 - 400) — each a pixel
+    // lower than flush, so no rounding can open a seam between them.
     expect(coverRun(m, 900, h)).toEqual([
-      { el: cta, top: -130 },
-      { el: stats, top: 270 },
+      { el: cta, top: -128 },
+      { el: stats, top: 271 },
     ]);
   });
 
