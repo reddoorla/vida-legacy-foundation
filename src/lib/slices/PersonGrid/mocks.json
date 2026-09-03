@@ -15,7 +15,9 @@
                   "type": "label",
                   "start": 12,
                   "end": 17,
-                  "data": { "label": "highlight" }
+                  "data": {
+                    "label": "highlight"
+                  }
                 }
               ]
             }
@@ -38,6 +40,11 @@
             }
           }
         ]
+      },
+      "style": {
+        "__TYPE__": "FieldContent",
+        "type": "Select",
+        "value": "leadership"
       }
     },
     "items": [
@@ -60,18 +67,39 @@
               "edit": {
                 "background": "transparent",
                 "zoom": 1,
-                "crop": { "x": 0, "y": 0 }
+                "crop": {
+                  "x": 0,
+                  "y": 0
+                }
               },
               "credits": null,
               "alt": "Brooke Perucki",
               "thumbnails": {}
             }
           ],
-          ["name", { "__TYPE__": "FieldContent", "type": "Text", "value": "Brooke Perucki" }],
-          ["role", { "__TYPE__": "FieldContent", "type": "Text", "value": "Executive Director" }],
+          [
+            "name",
+            {
+              "__TYPE__": "FieldContent",
+              "type": "Text",
+              "value": "Brooke Perucki"
+            }
+          ],
+          [
+            "role",
+            {
+              "__TYPE__": "FieldContent",
+              "type": "Text",
+              "value": "Executive Director"
+            }
+          ],
           [
             "email",
-            { "__TYPE__": "FieldContent", "type": "Text", "value": "brooke@vidalegacy.org" }
+            {
+              "__TYPE__": "FieldContent",
+              "type": "Text",
+              "value": "brooke@vidalegacy.org"
+            }
           ],
           [
             "bio",
@@ -109,14 +137,24 @@
               "edit": {
                 "background": "transparent",
                 "zoom": 1,
-                "crop": { "x": 0, "y": 0 }
+                "crop": {
+                  "x": 0,
+                  "y": 0
+                }
               },
               "credits": null,
               "alt": "Vilma Gonzalez",
               "thumbnails": {}
             }
           ],
-          ["name", { "__TYPE__": "FieldContent", "type": "Text", "value": "Vilma Gonzalez" }],
+          [
+            "name",
+            {
+              "__TYPE__": "FieldContent",
+              "type": "Text",
+              "value": "Vilma Gonzalez"
+            }
+          ],
           [
             "role",
             {
@@ -127,9 +165,19 @@
           ],
           [
             "email",
-            { "__TYPE__": "FieldContent", "type": "Text", "value": "vilma@vidalegacy.org" }
+            {
+              "__TYPE__": "FieldContent",
+              "type": "Text",
+              "value": "vilma@vidalegacy.org"
+            }
           ],
-          ["bio", { "__TYPE__": "StructuredTextContent", "value": [] }]
+          [
+            "bio",
+            {
+              "__TYPE__": "StructuredTextContent",
+              "value": []
+            }
+          ]
         ]
       },
       {
@@ -151,14 +199,24 @@
               "edit": {
                 "background": "transparent",
                 "zoom": 1,
-                "crop": { "x": 0, "y": 0 }
+                "crop": {
+                  "x": 0,
+                  "y": 0
+                }
               },
               "credits": null,
               "alt": "Holly Aldridge",
               "thumbnails": {}
             }
           ],
-          ["name", { "__TYPE__": "FieldContent", "type": "Text", "value": "Holly Aldridge" }],
+          [
+            "name",
+            {
+              "__TYPE__": "FieldContent",
+              "type": "Text",
+              "value": "Holly Aldridge"
+            }
+          ],
           [
             "role",
             {
@@ -169,9 +227,19 @@
           ],
           [
             "email",
-            { "__TYPE__": "FieldContent", "type": "Text", "value": "intake@vidalegacy.org" }
+            {
+              "__TYPE__": "FieldContent",
+              "type": "Text",
+              "value": "intake@vidalegacy.org"
+            }
           ],
-          ["bio", { "__TYPE__": "StructuredTextContent", "value": [] }]
+          [
+            "bio",
+            {
+              "__TYPE__": "StructuredTextContent",
+              "value": []
+            }
+          ]
         ]
       }
     ]

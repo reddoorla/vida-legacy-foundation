@@ -76,13 +76,17 @@ describe("PersonGrid slice", () => {
     expect(container.querySelector("h4")).toBeNull();
   });
 
-  it("draws the bio trigger only for people who have a bio", () => {
-    // The affordance must never lie: a "+" with nothing behind it is worse
-    // than no "+".
+  it("opens every leadership card, and a board card only when it has a bio", () => {
+    // The comp's "+" is on every leadership card (a bio not yet written opens
+    // to the name, role and address); its board cards carry no "+".
     const { container } = render(PersonGrid, { props: { slice: make() } });
     const triggers = container.querySelectorAll("li button");
-    expect(triggers.length).toBe(1);
+    expect(triggers.length).toBe(2);
     expect(triggers[0].textContent).toContain("Brooke Perucki");
+    const board = render(PersonGrid, { props: { slice: make({ style: "board" }) } });
+    const boardTriggers = board.container.querySelectorAll("li button");
+    expect(boardTriggers.length).toBe(1);
+    expect(boardTriggers[0].textContent).toContain("Brooke Perucki");
   });
 
   it("gives the bio trigger a real accessible name, not a bare icon", () => {
@@ -90,7 +94,24 @@ describe("PersonGrid slice", () => {
     const trigger = container.querySelector("li button");
     expect(trigger?.tagName).toBe("BUTTON");
     expect(trigger?.querySelector(".sr-only")?.textContent).toContain("Brooke Perucki");
-    expect(trigger?.querySelector("img")?.getAttribute("aria-hidden")).toBe("true");
+    expect(
+      trigger?.querySelector("img[src='/icons/plus-circle.svg']")?.getAttribute("aria-hidden"),
+    ).toBe("true");
+  });
+
+  it("paints the board style on the lighter cream with page-cream cards", () => {
+    // The comp's second group: the band is #fffbf4, the cards the page cream
+    // under the grain, the names the dark green, the copy the -aa green.
+    const { container } = render(PersonGrid, { props: { slice: make({ style: "board" }) } });
+    expect(container.querySelector("section")?.className).toContain("bg-cream");
+    const card = container.querySelector("li");
+    expect(card?.className).toContain("bg-background");
+    expect(container.querySelector("h4")?.className).toContain("text-green-btn");
+    // And leadership stays the dark card with green names.
+    const lead = render(PersonGrid, { props: { slice: make() } });
+    expect(lead.container.querySelector("section")?.className).toContain("bg-background");
+    expect(lead.container.querySelector("li")?.className).toContain("bg-green-deep");
+    expect(lead.container.querySelector("h4")?.className).toContain("text-green");
   });
 
   it("opens the bio dialog with the dark ground actually applied", async () => {
@@ -104,7 +125,7 @@ describe("PersonGrid slice", () => {
     await fireEvent.click(container.querySelector("li button")!);
     const panel = container.querySelector("dialog > div");
     expect(panel).not.toBeNull();
-    expect(panel?.className).toContain("bg-green-deep");
+    expect(panel?.className).toContain("bg-green-deep!");
     expect(container.querySelector("dialog")?.textContent).toContain("Brooke Perucki bio copy.");
   });
 
