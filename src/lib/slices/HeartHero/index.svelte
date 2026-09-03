@@ -458,6 +458,28 @@
       height: 100%;
     }
 
+    /* That `height: 100%` resolves against the band, and on a phone the band
+       has only a min-height — indefinite, so the percentage computes to
+       `auto`, and since every child of the stage is absolutely positioned the
+       box collapses to ZERO. Layout survives it: the mask is positioned
+       against the section rather than the stage, so the collapse is
+       invisible. Measurement does not. `heartEndPct` reads this box, saw a
+       height of 0 and fell back to the comp's 187.2%, which on a 390x664
+       phone is a 702x612 heart in a 664-tall band — its cleft and its point
+       both on screen with green showing around them. That is the exact
+       failure the height ratio was introduced to end, surviving in the one
+       path where the stage had no height to measure.
+
+       It must come BELOW the rule above, not inside the band's own phone
+       block higher up: a media query adds no specificity, so at an equal
+       (0,2,0) the later declaration wins and `height: 100%` would simply take
+       it back. It did, for one build. */
+    @media (width < 48rem) {
+      .heart-hero-stage {
+        height: 100svh;
+      }
+    }
+
     .reveal,
     .hero-bar,
     .texture-full {
