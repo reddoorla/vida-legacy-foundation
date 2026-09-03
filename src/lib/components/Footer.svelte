@@ -54,12 +54,17 @@
   // Typographic role → classes. Colour only; every value is measured against
   // the cream ground in app.css. `fine` uses --color-green-mid-aa, NOT the
   // design's #527e01, which is 4.47:1 and fails AA at this size.
+  // The rows are the comp's 12px label style (app.css `t-label`: Book, 1.45,
+  // tracked, cap-trimmed) — the trim is what makes the 30/15px gaps below
+  // measure as the comp's. A row keeps its line breaks: the comp sets the
+  // rights line and the street address as two-line rows, at the style's own
+  // line pitch, and `\n` in the config is that break.
   const TONE: Record<string, string> = {
-    detail: "text-primary font-heading text-xs tracking-[1.5px] uppercase",
-    fine: "text-green-mid-aa font-button text-[10px] leading-[1.5] tracking-[1px] uppercase",
+    detail: "text-primary t-label whitespace-pre-line",
+    fine: "text-green-mid-aa font-button text-[10px] leading-[1.5] tracking-[1px] uppercase whitespace-pre-line",
   };
   const toneClass = (item: FooterText) =>
-    (item.tone && TONE[item.tone]) ?? "text-dark font-heading text-xs tracking-[1.5px] uppercase";
+    (item.tone && TONE[item.tone]) ?? "text-dark t-label whitespace-pre-line";
 
   // Rows sit 30px apart, except a `tight` row which hugs the one above at 15px
   // so a label and its detail lines read as one group. The first row in a

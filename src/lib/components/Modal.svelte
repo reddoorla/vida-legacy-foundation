@@ -54,12 +54,17 @@
   }
 </script>
 
+<!-- m-auto + a calc width, NOT w-full mx-4: the preflight zeroes every
+     margin, and a modal dialog is `inset: 0` — with margin 0 it sits in the
+     top-left corner, and with side margins plus a 100% width it is
+     over-constrained and the browser drops the right edge, so the sheet sat
+     flush left. Auto margins on all four sides centre it both ways. -->
 <dialog
   bind:this={dialogEl}
   onclose={close}
   onclick={handleBackdropClick}
   aria-labelledby={labelledby}
-  class="bg-transparent p-0 w-full mx-4 backdrop:bg-black/50 backdrop:backdrop-blur-sm open:animate-[fade-in_200ms_ease-out] {dialogClass}"
+  class="bg-transparent p-0 m-auto w-[calc(100%-2rem)] backdrop:bg-black/40 backdrop:backdrop-blur-sm open:animate-[fade-in_200ms_ease-out] {dialogClass}"
 >
   <div
     class="relative bg-white rounded-lg shadow-xl w-full max-h-[90vh] overflow-y-auto {passedClasses}"

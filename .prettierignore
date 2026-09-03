@@ -11,3 +11,6 @@ src/prismicio-types.d.ts
 # Untracked agency process artifacts (see .gitignore).
 docs/superpowers/
 scratchpad/
+
+# Local notes, untracked.
+NOTES.md

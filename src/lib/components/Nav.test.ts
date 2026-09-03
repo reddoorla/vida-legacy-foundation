@@ -132,9 +132,17 @@ describe("Nav — the bar", () => {
     );
   });
 
-  it("renders the language switch only when given a target", async () => {
-    const { container, rerender, getByLabelText } = render(Nav, { items, tone: "onDark" });
+  it("marks the current locale on the toggle and links the other only when given a target", async () => {
+    const { container, rerender, getByLabelText, getByRole } = render(Nav, {
+      items,
+      tone: "onDark",
+    });
     expect(container.querySelector("a[hreflang]")).toBeNull();
+    // Without a target the other side is inert, but still shown: the visitor
+    // can always see which version of the site they are on.
+    const group = getByRole("group", { name: "Language" });
+    expect(group.querySelector("[aria-current]")?.textContent?.trim()).toBe("EN");
+    expect(group.querySelector("[aria-disabled]")?.textContent?.trim()).toBe("ES");
 
     await rerender({
       items,
@@ -148,6 +156,22 @@ describe("Nav — the bar", () => {
     expect(link.textContent?.trim()).toBe("ES");
     // Same colouring as the hamburger on that ground.
     expect(link.className).toContain("text-background");
+  });
+
+  it("links the lockup to the locale's own home", () => {
+    const { getByAltText } = render(Nav, { items, lang: "es" });
+    expect(getByAltText("Vida Legacy Foundation home").closest("a")?.getAttribute("href")).toBe(
+      "/es",
+    );
+  });
+
+  it("marks ES as current on a Spanish page and flips the couple on the green hero", () => {
+    const { getByRole } = render(Nav, { items, lang: "es", tone: "onGreen" });
+    const current = getByRole("group", { name: "Language" }).querySelector("[aria-current]");
+    expect(current?.textContent?.trim()).toBe("ES");
+    expect(current?.getAttribute("lang")).toBe("es");
+    // Green on green is no switch: the active side wears dark-on-green there.
+    expect(current?.className).toContain("bg-green-btn");
   });
 
   it("exposes the menu state on the trigger", async () => {
