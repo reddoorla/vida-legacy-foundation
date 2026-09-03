@@ -6,6 +6,12 @@
   import { DEFAULT_LANG, localizePath, type Lang } from "$lib/locale";
   import { ui } from "$lib/ui-copy";
   import { contactCopy } from "$lib/contact-copy";
+  import {
+    validationCopy,
+    validateForm,
+    focusFirstInvalid,
+    fieldError,
+  } from "$lib/form-validation";
   import { loadSiteConfig } from "$lib/site-config";
   import { fade, slide } from "$lib/transitions";
   import { untrack } from "svelte";
@@ -92,6 +98,29 @@
   $effect(() => {
     if (submitted) confirmationEl?.focus();
   });
+  // Field-level errors the PAGE writes, in the page's language — the browser's
+  // own bubbles are in the BROWSER's language and are not in the
+  // accessibility tree as errors. See $lib/form-validation.
+  const invalidCopy = $derived(validationCopy(lang));
+  let errors = $state<Record<string, string>>({});
+  let formEl = $state<HTMLFormElement | null>(null);
+  const errId = (name: string) => `${uid}-${name}-error`;
+
+  // `novalidate` is set from an effect, so it only ever applies where scripts
+  // are running and the page can do the job itself. Without them the inputs'
+  // own `required` / `type="email"` still guard the form.
+  $effect(() => {
+    formEl?.setAttribute("novalidate", "");
+  });
+
+  // Once a field has been reported, clear it the moment it is put right, so
+  // the message does not sit under a field the visitor has already fixed.
+  function recheck(e: Event) {
+    const el = e.currentTarget as HTMLInputElement | HTMLTextAreaElement;
+    if (!errors[el.name]) return;
+    if (!fieldError(el, invalidCopy)) errors = { ...errors, [el.name]: "" };
+  }
+
   let alertEl = $state<HTMLElement | null>(null);
   $effect(() => {
     if (!errorMessage) return;
@@ -113,6 +142,18 @@
   reset the fields — the one thing a visitor must not lose after a failed
   submit.
 -->
+<!-- One field's error, in a real element the field points at — not the
+     browser's bubble, which is transient, one at a time, and in the browser's
+     own language. `role="alert"` so it is announced when it appears; the
+     accent red is 10.67:1 on the cream panel (measured in app.css). -->
+{#snippet fieldMessage(name: string)}
+  {#if errors[name]}
+    <p id={errId(name)} role="alert" class="text-accent text-sm leading-5">
+      {errors[name]}
+    </p>
+  {/if}
+{/snippet}
+
 {#snippet panel()}
   <div class="relative overflow-hidden rounded-[20px] bg-background">
     <div
@@ -160,10 +201,22 @@
         {/if}
 
         <form
+          bind:this={formEl}
           method="POST"
           {action}
           class="flex flex-col gap-[30px]"
-          use:enhance={() => {
+          use:enhance={({ cancel, formElement }) => {
+            // Inside enhance, not an onsubmit handler: enhance's own listener
+            // calls preventDefault and posts immediately, so a separate
+            // handler could not stop it.
+            const found = validateForm(formElement, invalidCopy);
+            if (Object.keys(found).length > 0) {
+              errors = found;
+              cancel();
+              focusFirstInvalid(formElement, found);
+              return;
+            }
+            errors = {};
             submitting = true;
             errorMessage = "";
             return async ({ result }) => {
@@ -210,12 +263,16 @@
               class="vlf-field"
               id={id("name")}
               name="name"
+              aria-invalid={errors["name"] ? "true" : undefined}
+              aria-describedby={errors["name"] ? errId("name") : undefined}
+              oninput={recheck}
               type="text"
               autocomplete="name"
               required
               autofocus={!inline}
               bind:value={name}
             />
+            {@render fieldMessage("name")}
           </div>
           <div class="flex flex-col gap-[5px]">
             <label class="vlf-label" for={id("email")}>
@@ -227,11 +284,15 @@
               class="vlf-field"
               id={id("email")}
               name="email"
+              aria-invalid={errors["email"] ? "true" : undefined}
+              aria-describedby={errors["email"] ? errId("email") : undefined}
+              oninput={recheck}
               type="email"
               autocomplete="email"
               required
               bind:value={email}
             />
+            {@render fieldMessage("email")}
           </div>
           <div class="flex flex-col gap-[5px]">
             <label class="vlf-label" for={id("phone")}>{copy.phone}</label>
@@ -239,10 +300,14 @@
               class="vlf-field"
               id={id("phone")}
               name="phone"
+              aria-invalid={errors["phone"] ? "true" : undefined}
+              aria-describedby={errors["phone"] ? errId("phone") : undefined}
+              oninput={recheck}
               type="tel"
               autocomplete="tel"
               bind:value={phoneValue}
             />
+            {@render fieldMessage("phone")}
           </div>
           <div class="flex flex-col gap-[5px]">
             <label class="vlf-label" for={id("message")}>
@@ -254,10 +319,14 @@
               class="vlf-field vlf-field--area"
               id={id("message")}
               name="message"
+              aria-invalid={errors["message"] ? "true" : undefined}
+              aria-describedby={errors["message"] ? errId("message") : undefined}
+              oninput={recheck}
               rows="4"
               maxlength={5000}
               required
               bind:value={message}></textarea>
+            {@render fieldMessage("message")}
           </div>
 
           <!-- Renders nothing until PUBLIC_TURNSTILE_SITE_KEY is set. Inside the
