@@ -32,6 +32,39 @@ export function heartEndPct(stageWidth: number, stageHeight: number): number {
   return Math.max(HEART_END_PCT, needed);
 }
 
+/** Should the hero play its own opening?
+ *
+ *  Erik, on Discord (2026-09-03): "Do we need some sort of indicator on the
+ *  hero to scroll down so that people know what to do?" — Nicole: "Or it
+ *  opens on its own", "i think we can have it open on its own". So it does:
+ *  two seconds after a visitor lands at the top of the page, the runway
+ *  scrolls itself far enough that the heart has opened and the copy and the
+ *  buttons are in.
+ *
+ *  Every condition here is a way of saying "only for a visitor who has just
+ *  arrived and not moved": reduced motion is already on the open frame and
+ *  must never be scrolled for; it runs once a session; a page that is not at
+ *  the top belongs to a reader who is already reading; a hero that is not the
+ *  first thing in the document is not a hero (the a11y fixtures render one
+ *  half way down the page); and a runway that does not exist cannot be
+ *  played. */
+export function shouldAutoOpen(state: {
+  reducedMotion: boolean;
+  alreadyPlayed: boolean;
+  scrollY: number;
+  /** The section's distance from the top of the DOCUMENT. */
+  documentTop: number;
+  /** Section height minus the viewport — the scroll the opening is spread over. */
+  runway: number;
+}): boolean {
+  const { reducedMotion, alreadyPlayed, scrollY, documentTop, runway } = state;
+  if (reducedMotion || alreadyPlayed || runway <= 0) return false;
+  return documentTop <= AUTO_OPEN_EPSILON && scrollY <= AUTO_OPEN_EPSILON;
+}
+
+/** A few pixels of slack: a restored scroll position is rarely exactly 0. */
+export const AUTO_OPEN_EPSILON = 4;
+
 /** Does an open heart of `pct` cover a `w`x`h` stage? Used by the tests. */
 export function heartCovers(pct: number, w: number, h: number): boolean {
   const maskW = (pct / 100) * w;
