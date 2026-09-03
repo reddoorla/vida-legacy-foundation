@@ -12,11 +12,16 @@
 </script>
 
 <!--
-  Figma 5249:1133. Two columns on the #263b02 ground:
-    left   297.5px (20.66%), STICKY — it holds while the right column scrolls
-    right  the icon card (#172303 + the site's grain at 20% plus-lighter),
-           rounded at the top, with the feature photo joined beneath it so the
-           pair reads as one rounded block
+  Figma 5249:1133. Two columns on the #263b02 ground, 40px apart:
+    left   297.5px (23.24% of the 1280 grid), STICKY — it holds while the
+           right column scrolls
+    right  942.5px: the icon card (#172303 + the site's grain at 20%
+           plus-lighter), rounded at the top, with the feature photo joined
+           beneath it so the pair reads as one rounded block
+
+  In the comp the TOSA grid (SectionGrid onDark) sits 40px under the photo
+  inside this same band, and the band pays 120 below it. Split across the two
+  slices: this pays the 40, the grid pays the 120.
 
   The grain is the same file the hero uses (verified byte-identical to the
   comp's own card texture), so it costs no extra bytes here.
@@ -31,21 +36,19 @@
   class="bg-green-btn w-full"
 >
   <div
-    class="mx-auto flex w-full max-w-[1440px] flex-col gap-10 px-6 pb-16 md:flex-row md:items-start md:px-20 md:pb-30"
+    class="mx-auto flex w-full max-w-[1440px] flex-col gap-10 px-6 pb-10 md:flex-row md:items-start md:px-20"
   >
     {#if slice.primary.eyebrow || hasBody}
       <div
-        class="intro text-background flex flex-col gap-5 pt-16 md:w-[20.66%] md:shrink-0 md:py-30"
+        class="intro text-background flex flex-col gap-5 pt-16 md:w-[23.24%] md:shrink-0 md:py-30"
       >
         {#if slice.primary.eyebrow}
-          <h2
-            class="font-heading text-[clamp(0.9375rem,1.25vw,1.125rem)] tracking-[1.5px] uppercase"
-          >
+          <h2 class="t-label-lg">
             {slice.primary.eyebrow}
           </h2>
         {/if}
         {#if hasBody}
-          <div class="richtext-block text-base leading-6">
+          <div class="richtext-block t-body">
             <RichTextBody field={slice.primary.body} />
           </div>
         {/if}
@@ -78,14 +81,17 @@
                     decoding="async"
                   />
                 {/if}
-                {#if col.title}
-                  <p class="text-green font-heading text-[0.75rem] tracking-[1.5px] uppercase">
-                    {col.title}
-                  </p>
-                {/if}
-                {#if col.description}
-                  <p class="text-background text-base leading-6">{col.description}</p>
-                {/if}
+                <!-- 20 under the icon, 10 between the title and its copy. -->
+                <div class="flex flex-col gap-2.5">
+                  {#if col.title}
+                    <p class="t-label text-green">
+                      {col.title}
+                    </p>
+                  {/if}
+                  {#if col.description}
+                    <p class="t-body text-background">{col.description}</p>
+                  {/if}
+                </div>
               </div>
             {/each}
           </div>

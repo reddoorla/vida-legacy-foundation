@@ -81,6 +81,16 @@ describe("SectionGrid onDark variation", () => {
     expect(link?.getAttribute("href")).toBe("https://example.com/about");
   });
 
+  it("sits in the columns band's right-hand column unless asked to fill", () => {
+    const { container, rerender } = render(SectionGrid, { props: { slice: onDark as never } });
+    const grid = container.querySelector(".grid-card")?.parentElement;
+    expect(grid?.className).toContain("md:w-[73.63%]");
+    rerender({ slice: { ...onDark, primary: { ...onDark.primary, layout: "fill" } } as never });
+    expect(container.querySelector(".grid-card")?.parentElement?.className).not.toContain(
+      "md:w-[73.63%]",
+    );
+  });
+
   it("does NOT fall through to the media-inferred modes", () => {
     // The regression this guards: these items carry text and no media, which
     // the mode heuristic reads as "copy" — a stacked column, not a card grid.

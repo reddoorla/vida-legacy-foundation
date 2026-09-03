@@ -53,8 +53,12 @@
   //
   // The heart's two sizes ARE specified: the mask is 669.436px wide at rest and
   // 2696.08px in Variant4, against a 1440px band — 46.49% opening to 187.2%.
+  // So is where it sits: at rest its top is at 173 of 860 (the mask's 584px
+  // leaves 276 to place, and 173 of that is 62.7%); open, it is centred.
   const HEART_START_PCT = 46.49;
   const HEART_END_PCT = 187.2;
+  const HEART_START_Y = 62.7;
+  const HEART_END_Y = 50;
   const HEART_OPEN_THROUGH = 0.55; // heart fully open this far through the runway
   const COPY_AT = 0.6;
   const CTAS_AT = 0.74;
@@ -117,7 +121,15 @@
       : HEART_START_PCT +
           Math.min(progress / HEART_OPEN_THROUGH, 1) * (HEART_END_PCT - HEART_START_PCT),
   );
+  let heartY = $derived(
+    reducedMotion
+      ? HEART_END_Y
+      : HEART_START_Y + Math.min(progress / HEART_OPEN_THROUGH, 1) * (HEART_END_Y - HEART_START_Y),
+  );
   let copyIn = $derived(reducedMotion || progress >= COPY_AT);
+  // The bar arrives with the calls to action: Variant3 holds it just below
+  // the frame (y=860 of 860) and Variant4 has it in place — at rest the hero
+  // is the full viewport of green and heart, nothing else.
   let ctasIn = $derived(reducedMotion || progress >= CTAS_AT);
 </script>
 
@@ -157,7 +169,10 @@
     </div>
 
     {#if hasImage}
-      <div class="heart-mask absolute inset-0" style="--heart-size: {heartSize}%">
+      <div
+        class="heart-mask absolute inset-0"
+        style="--heart-size: {heartSize}%; --heart-y: {heartY}%"
+      >
         <HeroBackgroundImage image={slice.primary.image} class="h-full w-full object-cover" />
       </div>
     {/if}
@@ -170,9 +185,7 @@
 
     <div class="hero-copy reveal absolute" class:is-in={copyIn}>
       {#if slice.primary.eyebrow}
-        <p
-          class="text-light font-heading text-[clamp(0.8125rem,1.25vw,1.125rem)] tracking-[1.5px] uppercase"
-        >
+        <p class="t-label-lg text-light">
           {slice.primary.eyebrow}
         </p>
       {/if}
@@ -184,10 +197,7 @@
       {#if ctas.length}
         <div class="reveal flex flex-wrap gap-5" class:is-in={ctasIn}>
           {#each ctas as cta, i (i)}
-            <PrismicLink
-              field={cta.cta_link}
-              class="bg-green-btn text-green font-button inline-flex h-10 items-center justify-center rounded-full px-3.75 text-[10px] tracking-[1px] uppercase"
-            >
+            <PrismicLink field={cta.cta_link} class="vlf-pill vlf-pill--dark">
               {cta.cta_label}
             </PrismicLink>
           {/each}
@@ -195,7 +205,10 @@
       {/if}
     </div>
 
-    <div class="hero-bar bg-green-btn absolute inset-x-0 bottom-0 flex items-center justify-center">
+    <div
+      class="hero-bar bg-green-btn absolute inset-x-0 bottom-0 flex items-center justify-center"
+      class:is-in={ctasIn}
+    >
       <img src="/arrow-down.svg" alt="" aria-hidden="true" class="hero-arrow" />
     </div>
   </div>
@@ -219,8 +232,8 @@
     mask-image: url("/heart-mask.png");
     -webkit-mask-repeat: no-repeat;
     mask-repeat: no-repeat;
-    -webkit-mask-position: center;
-    mask-position: center;
+    -webkit-mask-position: center var(--heart-y, 50%);
+    mask-position: center var(--heart-y, 50%);
     /* Width drives it; height follows the mask's own 669.436/584 aspect. */
     -webkit-mask-size: var(--heart-size) auto;
     mask-size: var(--heart-size) auto;
@@ -252,15 +265,28 @@
     }
   }
 
+  /* The comp's headline: 40/50, Light — its box trimmed to the caps like
+     every Extended style in the comp, so the 40px gaps either side of it
+     measure cap-to-baseline. */
   .hero-heading :global(h1),
   .hero-heading :global(h2) {
     font-size: clamp(1.5rem, 2.78vw, 2.5rem);
     line-height: 1.25;
+    font-weight: 300;
+    text-box: trim-both cap alphabetic;
   }
 
+  /* Off the bottom edge until the calls to action are in, then it rises with
+     them (the same 700ms as the copy). */
   .hero-bar {
     height: 11.63%;
     min-height: 3.5rem;
+    transform: translateY(100%);
+    transition: transform 700ms ease-out;
+  }
+
+  .hero-bar.is-in {
+    transform: none;
   }
 
   .hero-arrow {
@@ -308,6 +334,7 @@
     }
 
     .reveal,
+    .hero-bar,
     .texture-full {
       transition: none;
     }

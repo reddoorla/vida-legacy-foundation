@@ -20,6 +20,12 @@
   let dark = $derived(
     slice.variation === "onDark" ? (slice.primary as Content.SectionGridSliceOnDarkPrimary) : null,
   );
+  // The comp sets the onDark grid in the right-hand column of the columns
+  // band above it — 942.5 of the 1280 grid, from x=417.5, so the cards line
+  // up under the icon card — and `layout` lets an author fill the grid
+  // instead. Float right is the comp and the default; a document authored
+  // before the field reads the same way.
+  let fill = $derived(("layout" in slice.primary ? slice.primary.layout : null) === "fill");
   // `columns` belongs to the default variation only — onDark lays out on a
   // fixed card width, so it has no column count to honour.
   let columns = $derived("columns" in slice.primary ? (slice.primary.columns ?? 3) : 3);
@@ -57,7 +63,7 @@
   sliceType={slice.slice_type}
   variation={slice.variation}
   sectionClass={onDark ? "bg-green-btn" : ""}
-  contentClass={onDark ? "max-w-[1440px] px-6 pb-30 md:px-20" : "max-w-7xl px-6 py-16"}
+  contentClass={onDark ? "max-w-[1440px] px-6 pb-16 md:px-20 md:pb-30" : "max-w-7xl px-6 py-16"}
 >
   {#if isFilled.richText(slice.primary.heading)}
     <div class="mb-10 text-center">
@@ -66,10 +72,16 @@
   {/if}
 
   {#if onDark}
-    <div class="flex flex-wrap gap-[30px]">
+    <!-- Figma 5249:1173: three 294px cards across the 942.5 column, 30
+         apart — sized as thirds of the column rather than fixed, so a
+         viewport that loses 15px to a classic scrollbar still lays out 3-up
+         (at the comp's 1440 the third is exactly 294). 40 above the copy and
+         60 below it (the card's 40 plus the copy block's own 20), 20 between
+         heading and copy. Comp measurements, cap-to-baseline. -->
+    <div class="flex flex-wrap gap-[30px] {fill ? 'w-full' : 'md:ml-auto md:w-[73.63%]'}">
       {#each items as item (item)}
         <div
-          class="grid-card relative flex w-full flex-col items-center overflow-hidden rounded-[20px] px-5 py-10 text-center sm:w-[294px]"
+          class="grid-card relative flex w-full flex-col items-center overflow-hidden rounded-[20px] px-5 pt-10 pb-15 text-center sm:w-[calc((100%-30px)/2)] md:w-[calc((100%-60px)/3)]"
         >
           <div
             aria-hidden="true"
@@ -77,12 +89,10 @@
             style="background-image: url('/texture-grain.webp')"
           ></div>
           <div class="relative flex flex-col gap-5">
-            <div
-              class="grid-card-heading text-green font-heading text-xs tracking-[1.5px] uppercase"
-            >
+            <div class="grid-card-heading t-label text-green">
               <PrismicRichText field={item.item_heading} />
             </div>
-            <div class="text-background text-base leading-6">
+            <div class="t-body text-background">
               <RichTextBody field={item.item_body} />
             </div>
           </div>
@@ -93,15 +103,14 @@
         <!-- The closing cell is deliberately NOT a card: in the comp it sits in
              the grid flow but carries no ground, so the CTA reads as the end of
              the sequence rather than one more point in it. -->
-        <div class="flex w-full flex-col justify-center gap-5 py-5 sm:w-[294px]">
-          <div class="text-background text-base leading-6">
+        <div
+          class="flex w-full flex-col justify-center gap-5 py-5 sm:w-[calc((100%-30px)/2)] md:w-[calc((100%-60px)/3)]"
+        >
+          <div class="t-body text-background">
             <RichTextBody field={dark.outro} />
           </div>
           {#if dark.cta_label && isFilled.link(dark.cta_link)}
-            <PrismicLink
-              field={dark.cta_link}
-              class="bg-green-deep text-green font-button inline-flex h-10 w-fit items-center justify-center gap-2.5 rounded-full px-3.75 text-[10px] tracking-[1px] uppercase"
-            >
+            <PrismicLink field={dark.cta_link} class="vlf-pill vlf-pill--deep">
               {dark.cta_label}
               <img
                 src="/icons/arrow-right.svg"
@@ -205,15 +214,6 @@
     background-color: var(--color-green-deep);
   }
 
-  /* The item heading is a real h3/h4 for document structure, but the comp sets
-     it at the small tracked label size — so the typographic scale is overridden
-     here rather than the element being downgraded to a <p>. */
-  .grid-card-heading :global(h3),
-  .grid-card-heading :global(h4) {
-    font-size: inherit;
-    line-height: 1.45;
-    letter-spacing: inherit;
-    text-transform: inherit;
-    font-weight: 400;
-  }
+  /* The item heading is a real h3/h4 for document structure at the comp's
+     small tracked label style — `t-label` gives the style to the element. */
 </style>

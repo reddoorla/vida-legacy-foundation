@@ -55,6 +55,11 @@
             }
           }
         ]
+      },
+      "layout": {
+        "__TYPE__": "FieldContent",
+        "type": "Select",
+        "value": "float right"
       }
     },
     "items": []

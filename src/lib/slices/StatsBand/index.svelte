@@ -43,6 +43,12 @@
 
   The band's own pt-[30px] is the second half of the 60px gap the comp puts
   between this and the CtaBanner onDark above it, which pays the first half.
+
+  Inside the card the comp is 40 from the eyebrow's cap to the figures' cap,
+  20 between a figure, its copy and the button, and four 282.5px columns
+  30 apart. The four columns hold only while the button fits one line: at
+  lg the column is 178px against the 217px pill, so the grid goes 2x2 below
+  xl (1340) rather than wrapping the button.
 -->
 <section
   data-slice-type={slice.slice_type}
@@ -61,33 +67,28 @@
         {#if slice.primary.eyebrow}
           <!-- The eyebrow names the section, and nothing else here is a
                heading (the figures are data), so it is the section's h2. -->
-          <h2 class="text-background font-heading text-xs tracking-[1.5px] uppercase">
+          <h2 class="t-label text-background">
             {slice.primary.eyebrow}
           </h2>
         {/if}
 
         {#if stats.length}
-          <div class="grid gap-[30px] sm:grid-cols-2 lg:grid-cols-4">
+          <div class="grid gap-[30px] sm:grid-cols-2 xl:grid-cols-4">
             {#each stats as stat, i (i)}
               <div class="flex flex-col items-start gap-5">
                 {#if stat.value !== null}
-                  <p
-                    class="text-green font-heading text-[clamp(1.75rem,2.5vw,2.25rem)] leading-[1.17]"
-                  >
+                  <p class="t-stat text-green">
                     <CountUp value={stat.value} suffix={joinSuffix(stat.suffix)} />
                   </p>
                 {/if}
                 {#if stat.description}
-                  <p class="text-background text-base leading-6">{stat.description}</p>
+                  <p class="t-body text-background">{stat.description}</p>
                 {/if}
                 {#if hasCta && i === stats.length - 1}
                   <!-- The comp hangs the CTA off the last figure rather than
                        giving it its own cell, so it stays with the column even
                        when the grid reflows to 2-up or 1-up. -->
-                  <PrismicLink
-                    field={slice.primary.cta_link}
-                    class="bg-green-btn text-green font-button inline-flex h-10 w-fit items-center justify-center gap-2.5 rounded-full px-3.75 text-[10px] tracking-[1px] uppercase"
-                  >
+                  <PrismicLink field={slice.primary.cta_link} class="vlf-pill vlf-pill--dark">
                     {slice.primary.cta_label}
                     <img
                       src="/icons/arrow-right.svg"

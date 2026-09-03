@@ -108,6 +108,18 @@ describe("HeartHero slice", () => {
     expect(copy?.querySelector("a")).not.toBeNull();
   });
 
+  it("holds the bar off the bottom edge until the calls to action are in", () => {
+    // At rest the comp's hero is the full frame of green and heart; the bar
+    // arrives with Variant4's buttons. The heart also sits at the comp's
+    // resting height (62.7% of the free space), centring as it opens.
+    const { container } = render(HeartHero, { props: { slice } });
+    const bar = container.querySelector(".hero-bar");
+    expect(bar?.classList.contains("is-in")).toBe(false);
+    expect(container.querySelector(".heart-mask")?.getAttribute("style")).toContain(
+      "--heart-y: 62.7%",
+    );
+  });
+
   it("drops a CTA that has a label but no link", () => {
     const partial = {
       ...slice,

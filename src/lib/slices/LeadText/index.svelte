@@ -12,6 +12,7 @@
       primary: {
         eyebrow?: string | null;
         body: RichTextField;
+        layout?: "float right" | "fill" | null;
       };
     };
   };
@@ -31,25 +32,39 @@
   // highlight idiom set at page scale on the night-blue ground, with no
   // eyebrow. Contrast on #01263f: #fdf5e8 14.37:1, #9cbf5b 7.42:1.
   let statement = $derived(slice.variation === "statement");
+
+  // The comp sets both VLF variations in the page's right-hand column —
+  // 952.5px of the 1280 grid, from x=407.5 — and `layout` lets an author
+  // fill the grid instead. Float right is the default because it is the
+  // comp; a missing value (a document authored before the field) reads
+  // the same way.
+  let fill = $derived(slice.primary.layout === "fill");
+  let column = $derived(fill ? "w-full" : "md:ml-auto md:w-[74.4%]");
 </script>
 
 <!-- A labelled lead paragraph: a small eyebrow above the opening copy. Plain,
-     token-driven styling so a site can restyle it freely. -->
+     token-driven styling so a site can restyle it freely.
+
+     Both VLF variations are `sticky-cover` bands: the comp pins them
+     ("sticky scrolls") while the next band slides up over them — see the
+     slide-over note in app.css. The comp's vertical rhythm is 60px above
+     the paragraph and none below it for onDark (the columns band that
+     follows pays its own 120), and 60 above / 120 below for the statement. -->
 <ContentBand
   sliceType={slice.slice_type}
   variation={slice.variation}
-  sectionClass={statement ? "bg-dark" : onDark ? "bg-green-btn" : ""}
+  sectionClass={statement ? "bg-dark sticky-cover" : onDark ? "bg-green-btn sticky-cover" : ""}
   contentClass={statement
-    ? "max-w-[1440px] px-6 pt-16 pb-24 md:px-20 md:pt-15 md:pb-30"
+    ? "max-w-[1440px] px-6 pt-10 pb-16 md:px-20 md:pt-[60px] md:pb-30"
     : onDark
-      ? "richtext-block max-w-5xl px-6 py-16 md:px-20 md:pt-[60px] md:pb-24"
+      ? "max-w-[1440px] px-6 pt-10 md:px-20 md:pt-[60px]"
       : "richtext-block max-w-2xl px-6 py-10"}
 >
   {#if slice.primary.eyebrow}
     <!-- The eyebrow names the section → it's the section heading (h2). -->
     <h2
       class={onDark
-        ? "text-light font-heading mb-6 text-sm tracking-[1.5px] uppercase"
+        ? `t-label text-light mb-5 ${column}`
         : "text-secondary mb-3 text-sm font-semibold tracking-wide uppercase"}
     >
       {slice.primary.eyebrow}
@@ -57,9 +72,9 @@
   {/if}
   <div
     class={statement
-      ? "lead-statement text-background font-heading leading-[1.35] md:ml-auto md:w-[74.4%]"
+      ? `lead-statement t-display text-background ${column}`
       : onDark
-        ? "lead-on-dark text-background font-heading text-[clamp(1.125rem,1.67vw,1.5rem)] leading-[1.45]"
+        ? `lead-on-dark richtext-block t-lead text-background ${column}`
         : "text-lg"}
   >
     <RichTextBody field={slice.primary.body} />
@@ -74,18 +89,12 @@
     color: var(--color-green);
   }
 
-  /* The statement's copy IS the section heading, so it renders as a real h2 —
-     but at the page's display scale rather than the h2 rule's. */
-  .lead-statement :global(h2) {
-    font-size: clamp(2rem, 4.17vw, 3.75rem);
-    line-height: inherit;
-    letter-spacing: 0;
-    font-weight: 300;
-  }
-
   /* The comp breaks the line exactly at the highlight, so the highlight is the
      break: a block-level span both colours the phrase and starts its own line,
-     which keeps the break editorial instead of hard-coded. */
+     which keeps the break editorial instead of hard-coded. The statement's
+     copy IS the section heading — a real h2 (or a paragraph, if the author
+     typed one) at the display style, which `t-display` gives whichever
+     element carries it. */
   .lead-statement :global(.highlight) {
     color: var(--color-green);
     display: block;

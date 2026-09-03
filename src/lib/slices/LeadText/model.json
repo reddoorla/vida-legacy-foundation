@@ -53,6 +53,15 @@
             "multi": "paragraph,strong,em,hyperlink",
             "labels": ["highlight"]
           }
+        },
+        "layout": {
+          "type": "Select",
+          "config": {
+            "label": "layout",
+            "placeholder": "",
+            "options": ["float right", "fill"],
+            "default_value": "float right"
+          }
         }
       },
       "items": {}
@@ -73,6 +82,15 @@
             "allowTargetBlank": true,
             "single": "heading2",
             "labels": ["highlight"]
+          }
+        },
+        "layout": {
+          "type": "Select",
+          "config": {
+            "label": "layout",
+            "placeholder": "",
+            "options": ["float right", "fill"],
+            "default_value": "float right"
           }
         }
       },

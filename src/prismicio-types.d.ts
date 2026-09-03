@@ -342,6 +342,17 @@ export interface CtaBannerSliceOnDarkPrimary {
    * - **Documentation**: https://prismic.io/docs/fields/link
    */
   buttonLink: prismic.LinkField<string, string, unknown, prismic.FieldState, never>;
+
+  /**
+   * layout field in *CtaBanner → OnDark → Primary*
+   *
+   * - **Field Type**: Select
+   * - **Placeholder**: *None*
+   * - **Default Value**: float right
+   * - **API ID Path**: cta_banner.onDark.primary.layout
+   * - **Documentation**: https://prismic.io/docs/fields/select
+   */
+  layout: prismic.SelectField<"float right" | "fill", "filled">;
 }
 
 /**
@@ -400,6 +411,17 @@ export interface CtaBannerSliceOnCreamPrimary {
    * - **Documentation**: https://prismic.io/docs/fields/link
    */
   buttonLink: prismic.LinkField<string, string, unknown, prismic.FieldState, never>;
+
+  /**
+   * layout field in *CtaBanner → OnCream → Primary*
+   *
+   * - **Field Type**: Select
+   * - **Placeholder**: *None*
+   * - **Default Value**: float right
+   * - **API ID Path**: cta_banner.onCream.primary.layout
+   * - **Documentation**: https://prismic.io/docs/fields/select
+   */
+  layout: prismic.SelectField<"float right" | "fill", "filled">;
 }
 
 /**
@@ -946,6 +968,17 @@ export interface LeadTextSliceOnDarkPrimary {
    * - **Documentation**: https://prismic.io/docs/fields/rich-text
    */
   body: prismic.RichTextField;
+
+  /**
+   * layout field in *LeadText → OnDark → Primary*
+   *
+   * - **Field Type**: Select
+   * - **Placeholder**: *None*
+   * - **Default Value**: float right
+   * - **API ID Path**: lead_text.onDark.primary.layout
+   * - **Documentation**: https://prismic.io/docs/fields/select
+   */
+  layout: prismic.SelectField<"float right" | "fill", "filled">;
 }
 
 /**
@@ -974,6 +1007,17 @@ export interface LeadTextSliceStatementPrimary {
    * - **Documentation**: https://prismic.io/docs/fields/rich-text
    */
   body: prismic.RichTextField;
+
+  /**
+   * layout field in *LeadText → Statement → Primary*
+   *
+   * - **Field Type**: Select
+   * - **Placeholder**: *None*
+   * - **Default Value**: float right
+   * - **API ID Path**: lead_text.statement.primary.layout
+   * - **Documentation**: https://prismic.io/docs/fields/select
+   */
+  layout: prismic.SelectField<"float right" | "fill", "filled">;
 }
 
 /**
@@ -1460,6 +1504,17 @@ export interface SectionGridSliceOnDarkPrimary {
    * - **Documentation**: https://prismic.io/docs/fields/link
    */
   cta_link: prismic.LinkField<string, string, unknown, prismic.FieldState, never>;
+
+  /**
+   * layout field in *SectionGrid → OnDark → Primary*
+   *
+   * - **Field Type**: Select
+   * - **Placeholder**: *None*
+   * - **Default Value**: float right
+   * - **API ID Path**: section_grid.onDark.primary.layout
+   * - **Documentation**: https://prismic.io/docs/fields/select
+   */
+  layout: prismic.SelectField<"float right" | "fill", "filled">;
 }
 
 /**

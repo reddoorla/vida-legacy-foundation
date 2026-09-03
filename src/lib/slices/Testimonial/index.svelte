@@ -58,16 +58,14 @@
       {#if slice.primary.quote || slice.primary.name}
         <figure class="flex flex-col justify-center gap-5 md:w-[23.7%] md:shrink-0 md:py-5">
           {#if slice.primary.quote}
-            <blockquote
-              class="text-primary font-heading text-[clamp(1.125rem,1.67vw,1.5rem)] leading-[1.45]"
-            >
+            <blockquote class="t-lead text-primary">
               <p>{slice.primary.quote}</p>
             </blockquote>
           {/if}
           {#if slice.primary.name}
             <!-- The em dash is chrome, so the CMS stores the name bare and
                  every attribution is punctuated identically. -->
-            <figcaption class="text-dark text-base leading-6">— {slice.primary.name}</figcaption>
+            <figcaption class="t-body text-dark">— {slice.primary.name}</figcaption>
           {/if}
         </figure>
       {/if}

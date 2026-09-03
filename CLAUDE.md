@@ -121,10 +121,8 @@ What is NOT done, in the order it blocks things:
    (Donate → the LGL form) or to no link at all (`Who we are` renders a `<p>`
    in the footer and a `<span>` in the menu). Publishing the page is the
    whole change; no code follows. A previewed release sees its own links.
-4. `DEFAULT_OG_IMAGE` unset — every share is imageless. Needs a 1200×630
-   `static/og-default.png`.
-5. Netlify site + `FORMS_INGEST_URL` / `FORMS_INGEST_TOKEN` (docs/NEW-SITE.md).
-6. **The donation form ships hidden.** `DonationForm` (Figma `5328:1611`)
+4. Netlify site + `FORMS_INGEST_URL` / `FORMS_INGEST_TOKEN` (docs/NEW-SITE.md).
+5. **The donation form ships hidden.** `DonationForm` (Figma `5328:1611`)
    keeps the comp's form behind a `show_form` Boolean that defaults to off:
    the donate page renders the heading and intro with two buttons out to
    LGL's hosted form and PayPal. Flipping the Boolean in Prismic draws the
@@ -279,9 +277,42 @@ disappears on a dark tab bar. 16px stays marginal regardless of inset.
 
 ## Still template defaults
 
-`DEFAULT_OG_IMAGE` is intentionally unset — shipping the starter's card would
-leak Reddoor branding onto a client site. Needs a 1200×630 `og-default.png`.
-`src/lib/site-config.json` now carries the real footer and nav.
+None that matter: `static/og-default.png` is the VLF lockup on cream (1200×630,
+shipped in PR #4) and `src/lib/site-config.json` carries the real footer and
+nav. `DEFAULT_OG_IMAGE` points at the card.
+
+## Matching the comp is measured, not eyeballed
+
+The review standard is "match the Figma" at the comp's 1440 width — positions,
+sizes and type within a few pixels, with responsive lenience. Two comp facts
+decide most of it and are invisible in a screenshot:
+
+- **Figma trims its Pragmatica Extended text boxes to cap height and
+  baseline.** A 12px label is an 8px box, a 60px line a 42px one, so every
+  gap the comp specifies is cap-to-baseline. The `t-*` utilities in `app.css`
+  (`t-display`, `t-stat`, `t-lead`, `t-label-lg`, `t-label`, `t-label-sm`,
+  `t-body`) are the comp's text styles with `text-box-trim` on the Extended
+  ones, and a slice takes a style by name instead of re-deriving it. Body
+  copy and button labels are not trimmed in the comp and are not here.
+- **The comp pins bands** ("sticky scrolls") so the next one slides up over
+  them: the lead paragraph, the full-bleed photo and the closing statement on
+  the homepage, the board section on Who We Are. A `.sticky-cover` section —
+  and, by rule, whichever section precedes `CtaBanner onCream` — is pinned,
+  every slice section is positioned so tree order paints later ones over it,
+  and `$lib/actions/stickyCover` (on `<main>`) measures each band so a tall
+  one holds by its bottom edge. `CtaBanner onCream` is a full-bleed cream
+  panel on a transparent section: its rounded corners show the pinned band
+  through, whatever colour that band is.
+
+The VLF variations that sit in the comp's right-hand column (952.5 of the
+1280 grid, from x=407.5) carry a `layout` Select — `float right` (the comp,
+and what a document authored before the field gets) or `fill`.
+
+`scripts/figma-compare/` is the harness: comp geometry and renders from
+Figma's REST API, the rendered site measured the same way with Playwright,
+and the two matched by text content. README in the folder. Run it before a
+PR that touches layout or type and read the deltas; the Figma file key and
+token stay in the environment.
 
 ## Two locales, one route tree
 
@@ -328,10 +359,14 @@ The three lockup files in `static/` are the same shipped SVG with each
 variant's fills — `navbar-white` really does set `FOUNDATION` and the heart to
 `#FFFFFF`, not cream — not redraws.
 
-**One deliberate departure from the comp:** `navbar-white` draws a cream
+**Two deliberate departures from the comp:** `navbar-white` draws a cream
 hamburger on the green hero, which is 1.93:1 against `#9cbf5b`. A logo is
 exempt from contrast rules; a control is not (1.4.11 wants 3:1). The hamburger
 there is `--color-green-btn`, the design's own dark-on-green pairing at 5.86.
+And the bar carries an EN | ES toggle the comp does not have — a pill in the
+donate button's clothes, the current locale marked, the other side a link
+only when its page exists (an inert label otherwise, so the visitor still
+sees which version they are on). The lockup links to the locale's own home.
 
 The open menu (`5314:1679`) is `NavMenu`, extracted so the a11y fixtures can
 render it in-flow (`inline`) — the real one is not in the DOM until opened, so

@@ -33,6 +33,12 @@
   let light = $derived(
     slice.variation === "onCream" ? (slice.primary as Content.CtaBannerSliceOnCreamPrimary) : null,
   );
+  // The comp sets both VLF variations in the page's right-hand column
+  // (955 of the 1280 grid, from x=405); `layout` lets an author fill the
+  // grid instead. Float right is the default because it is the comp, and a
+  // document authored before the field reads the same way.
+  const fill = $derived(("layout" in slice.primary ? slice.primary.layout : null) === "fill");
+
   // `background` belongs to the default variation only.
   const background = $derived(
     ("background" in slice.primary ? slice.primary.background : null) ?? "light",
@@ -74,40 +80,37 @@
     Vertical rhythm: the comp runs pt-80 / gap-60 / pb-60 across this band AND
     the stats card below it, which ships as its own slice so an author can drop
     either one alone. The 60px gap is therefore split 30/30 across the facing
-    edges — this pays pb-[30px], StatsBand pays pt-[30px].
+    edges — this pays pb-[30px], StatsBand pays pt-[30px]. Inside the column
+    the block is 20px apart throughout, with the statement capped at the
+    comp's 680 and the paragraph at its 578.
   -->
   <ContentBand
     sliceType={slice.slice_type}
     variation={slice.variation}
     sectionClass="bg-dark"
-    contentClass="flex max-w-[1440px] flex-col items-center px-6 pt-16 pb-[30px] md:px-20 md:pt-20"
+    contentClass="max-w-[1440px] px-6 pt-16 pb-[30px] md:px-20 md:pt-20"
   >
-    <div class="flex w-full max-w-[680px] flex-col items-start gap-5">
+    <div class="flex flex-col items-start gap-5 {fill ? 'w-full' : 'md:ml-auto md:w-[74.4%]'}">
       {#if dark.eyebrow}
         <!-- A label, NOT the section heading: unlike LeadText/IconColumns this
              variation carries a real heading sentence below, and promoting the
              eyebrow too would put two h2s in one section. -->
-        <p class="text-green font-heading text-xs tracking-[1.5px] uppercase">
+        <p class="t-label text-green">
           {dark.eyebrow}
         </p>
       {/if}
       {#if isFilled.richText(slice.primary.heading)}
-        <div
-          class="cta-statement text-background font-heading text-[clamp(1.25rem,1.67vw,1.5rem)] leading-[1.45]"
-        >
+        <div class="cta-statement t-lead text-background max-w-[680px]">
           <RichTextBody field={slice.primary.heading} />
         </div>
       {/if}
       {#if isFilled.richText(dark.body)}
-        <div class="richtext-block text-background max-w-[578px] text-base leading-6">
+        <div class="richtext-block t-body text-background max-w-[578px]">
           <RichTextBody field={dark.body} />
         </div>
       {/if}
       {#if hasButton}
-        <PrismicLink
-          field={slice.primary.buttonLink}
-          class="bg-green-btn text-green font-button inline-flex h-10 w-fit items-center justify-center rounded-full px-3.75 text-[10px] tracking-[1px] uppercase"
-        >
+        <PrismicLink field={slice.primary.buttonLink} class="vlf-pill vlf-pill--dark">
           {slice.primary.buttonLabel}
         </PrismicLink>
       {/if}
@@ -115,8 +118,13 @@
   </ContentBand>
 {:else if cream && light}
   <!--
-    Figma 5249:1286. The cream panel rounds off the dark band above it, so the
-    <section> stays dark and the CONTENT box carries the ground and the corner.
+    Figma 5249:1286. The page's closing panel: full-bleed cream with the 80px
+    rounded top, sliding up over the band before it (that band is pinned by
+    app.css's slide-over rule, and this section is TRANSPARENT so the corners
+    show the pinned band through — navy on the homepage, the lighter cream of
+    the board section on Who We Are). The panel is the full viewport width,
+    not the 1440 content box: on a wider screen the comp's ground runs edge
+    to edge, and only the copy sits on the grid.
 
     Contrast on #fdf5e8, measured:
       #263b02 eyebrow + statement  11.35:1
@@ -125,38 +133,39 @@
         heading and nowhere else on cream.
       button #9cbf5b + #263b02 — the design's couple inverted, still 5.86:1
 
-    Pays pb-10 (40px): the comp's 80px gap to the testimonial row below is
-    split 40/40, since the two ship as separate slices.
+    Pays pt-25 (the comp's 100) and pb-10 (40px): the comp's 80px gap to the
+    testimonial row below is split 40/40, since the two ship as separate
+    slices.
   -->
-  <ContentBand
-    sliceType={slice.slice_type}
-    variation={slice.variation}
-    sectionClass="bg-dark"
-    contentClass="bg-background max-w-[1440px] rounded-t-[40px] px-6 pt-16 pb-10 md:rounded-t-[80px] md:px-20 md:pt-25"
+  <section
+    data-slice-type={slice.slice_type}
+    data-slice-variation={slice.variation}
+    class="w-full bg-transparent"
   >
-    <div class="flex flex-col items-start gap-10 md:ml-auto md:w-[74.6%]">
-      {#if light.eyebrow}
-        <!-- A label, not the section heading — same call as onDark: the
-             statement below is the real h2. -->
-        <p class="text-green-btn font-heading text-xs tracking-[1.5px] uppercase">
-          {light.eyebrow}
-        </p>
-      {/if}
-      {#if isFilled.richText(slice.primary.heading)}
-        <div class="cta-display text-green-btn font-heading leading-[1.35]">
-          <RichTextBody field={slice.primary.heading} />
+    <div class="closing-panel bg-background w-full rounded-t-[40px] md:rounded-t-[80px]">
+      <div class="mx-auto w-full max-w-[1440px] px-6 pt-16 pb-10 md:px-20 md:pt-25">
+        <div class="flex flex-col items-start gap-10 {fill ? 'w-full' : 'md:ml-auto md:w-[74.6%]'}">
+          {#if light.eyebrow}
+            <!-- A label, not the section heading — same call as onDark: the
+                 statement below is the real h2. -->
+            <p class="t-label text-green-btn">
+              {light.eyebrow}
+            </p>
+          {/if}
+          {#if isFilled.richText(slice.primary.heading)}
+            <div class="cta-display t-display text-green-btn">
+              <RichTextBody field={slice.primary.heading} />
+            </div>
+          {/if}
+          {#if hasButton}
+            <PrismicLink field={slice.primary.buttonLink} class="vlf-pill">
+              {slice.primary.buttonLabel}
+            </PrismicLink>
+          {/if}
         </div>
-      {/if}
-      {#if hasButton}
-        <PrismicLink
-          field={slice.primary.buttonLink}
-          class="bg-green text-green-btn font-button inline-flex h-10 w-fit items-center justify-center rounded-full px-3.75 text-[10px] tracking-[1px] uppercase"
-        >
-          {slice.primary.buttonLabel}
-        </PrismicLink>
-      {/if}
+      </div>
     </div>
-  </ContentBand>
+  </section>
 {:else}
   <!-- A closing call-to-action band: one headline, one link. Deliberately
      unstyled beyond the theme tokens — the heading's size comes from the
@@ -184,27 +193,11 @@
 {/if}
 
 <style>
-  /* The statement is a real h2/h3 for document structure, but the comp sets it
-     at the H3 body scale rather than the page's heading scale — so the
-     typographic scale is overridden here rather than the element downgraded. */
-  .cta-statement :global(h2),
-  .cta-statement :global(h3) {
-    font-size: inherit;
-    line-height: inherit;
-    letter-spacing: inherit;
-    font-weight: 400;
-  }
-
-  /* onCream sets the same statement at page-display scale instead. */
-  .cta-display :global(h2) {
-    font-size: clamp(2rem, 4.17vw, 3.75rem);
-    line-height: inherit;
-    letter-spacing: 0;
-    font-weight: 300;
-  }
-
-  /* #527e01 on cream is 4.47:1 — large text only. It is safe HERE because this
-     heading is display scale and nothing else on the cream ground uses it. */
+  /* The statements are real h2/h3s for document structure at the comp's lead
+     and display styles — `t-lead` / `t-display` give the style to whichever
+     element carries the text. #527e01 on cream is 4.47:1 — large text only.
+     It is safe HERE because this heading is display scale and nothing else
+     on the cream ground uses it. */
   .cta-display :global(.highlight) {
     color: var(--color-green-mid);
   }
