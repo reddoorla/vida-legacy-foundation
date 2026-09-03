@@ -80,7 +80,7 @@
   // keyboard visitor is never left tabbing to an off-screen control.
   // `translate` (not `transform`) is the property Tailwind v4 animates for
   // -translate-y-full, and it is what the bar's transition names.
-  const MOBILE_QUERY = "(max-width: 767px)";
+  const MOBILE_QUERY = "(width < 768px)";
   const SCROLL_EPSILON = 4;
   let hiddenBar = $state(false);
   // Seeded on mount from the real offset: a back-navigation restores the

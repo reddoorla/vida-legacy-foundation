@@ -54,9 +54,13 @@ export function stickyTop(
   bandHeight: number,
   viewportHeight: number,
   anchor: StickyAnchor = "top",
+  navHeight = 0,
 ): number {
   const bottomEdge = viewportHeight - bandHeight;
-  return anchor === "bottom" ? bottomEdge : Math.min(0, bottomEdge);
+  // A band holds BELOW the bar, not under it — sliding under cost it the
+  // spacing the comp draws above its own content. `navHeight` is 0 where the
+  // bar does not stay (below 768px, and without JS): app.css's `--nav-h`.
+  return anchor === "bottom" ? bottomEdge : Math.min(navHeight, bottomEdge);
 }
 
 /** The sections the closing cream panel rolls up over, and where each one
@@ -111,6 +115,7 @@ export function coverRun(
   main: ParentNode,
   viewportHeight: number,
   height: (el: HTMLElement) => number,
+  navHeight = 0,
 ): Cover {
   const sections = Array.from(main.children).filter(
     (el): el is HTMLElement => el instanceof HTMLElement && el.tagName === "SECTION",
@@ -118,30 +123,39 @@ export function coverRun(
   const panel = sections.findIndex((el) => el.matches(CLOSING));
   if (panel < 1) return EMPTY;
   const anchor = sections[panel - 1];
-  const anchorTop = stickyTop(height(anchor), viewportHeight, anchorOf(anchor));
+  const anchorTop = stickyTop(height(anchor), viewportHeight, anchorOf(anchor), navHeight);
   let top = anchorTop;
   let stacked = height(anchor);
+  // The screen the stack has to fill starts under the bar, not at the top of
+  // the viewport: the bar paints the cream it is standing on.
+  const screen = viewportHeight - navHeight;
   const run: { el: HTMLElement; top: number }[] = [];
   // Whether the walk ran into a band that is pinned on its own account. That
   // is the only case where a stack short of the top shows something held
   // still behind it; run out of sections instead and what is above simply
   // scrolls, and growing the anchor would freeze a screen for no reason.
   let blocked = false;
-  for (let i = panel - 2; i >= 0 && stacked < viewportHeight; i--) {
+  for (let i = panel - 2; i >= 0 && stacked < screen; i--) {
     const el = sections[i];
     if (el.classList.contains("sticky-cover")) {
       blocked = true;
       break;
     }
     top -= height(el) - STACK_OVERLAP;
-    stacked += height(el);
+    // The COVERED extent, not the sum of the boxes: each joint overlaps by
+    // STACK_OVERLAP, so counting full heights let the walk stop believing it
+    // had filled the screen while the stack's real top edge was still a
+    // pixel-and-a-bit short — and that exit meets no pinned band, so it pays
+    // no slack to close it. Under the bar the hairline was invisible; resting
+    // at the bar's bottom edge it put the photograph in the open.
+    stacked += height(el) - STACK_OVERLAP;
     run.unshift({ el, top });
   }
-  // `top` is now the stack's own top edge. Left above zero with a pinned band
-  // behind it, that is a strip of the photograph across the top of the held
-  // screen — only possible under a bottom anchor, since a top one is already
-  // clamped to 0.
-  const slack = blocked && anchorOf(anchor) === "bottom" ? Math.max(0, top) : 0;
+  // `top` is now the stack's own top edge. Left below the bar's own bottom
+  // with a pinned band behind it, that is a strip of the photograph across
+  // the top of the held screen — only possible under a bottom anchor, since a
+  // top one is already clamped there.
+  const slack = blocked && anchorOf(anchor) === "bottom" ? Math.max(0, top - navHeight) : 0;
   return {
     anchor,
     anchorTop: anchorTop - slack,
@@ -191,9 +205,18 @@ export const stickyCovers: Action<HTMLElement> = (main) => {
   const height = (el: HTMLElement) =>
     (el.getBoundingClientRect().height || el.offsetHeight) - (el === slackEl ? slackPx : 0);
 
+  // The bar's height, from app.css's `--nav-h` — the one place it is written.
+  // Zero below 768px (the bar leaves) and zero in jsdom, which resolves no
+  // custom properties, so a test that does not ask for one measures as before.
+  function navHeight(): number {
+    const raw = getComputedStyle(document.documentElement).getPropertyValue("--nav-h");
+    return parseFloat(raw) || 0;
+  }
+
   function measure() {
     const vh = window.innerHeight;
-    const cover = coverRun(main, vh, height);
+    const nav = navHeight();
+    const cover = coverRun(main, vh, height, nav);
     if (slackEl && slackEl !== cover.anchor) clearSlack();
     if (cover.anchor && cover.slack) {
       slackEl = cover.anchor;
@@ -204,7 +227,7 @@ export const stickyCovers: Action<HTMLElement> = (main) => {
     }
     for (const band of bands) {
       const top =
-        band === cover.anchor ? cover.anchorTop : stickyTop(height(band), vh, anchorOf(band));
+        band === cover.anchor ? cover.anchorTop : stickyTop(height(band), vh, anchorOf(band), nav);
       band.style.setProperty("--sticky-top", `${top}px`);
     }
     // The run's members are pinned by app.css off this attribute, so a page

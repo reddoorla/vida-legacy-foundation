@@ -370,7 +370,7 @@ describe("Nav on a phone", () => {
   // narrow viewport, and drive scrollY by hand.
   function narrowViewport(narrow: boolean) {
     window.matchMedia = ((query: string) => ({
-      matches: narrow && query === "(max-width: 767px)",
+      matches: narrow && query === "(width < 768px)",
       media: query,
       addEventListener: () => {},
       removeEventListener: () => {},

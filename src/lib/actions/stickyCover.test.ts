@@ -35,6 +35,19 @@ describe("stickyTop", () => {
     expect(stickyTop(1098, 900, "bottom")).toBe(-198);
   });
 
+  it("rests a band below the bar rather than under it", () => {
+    // The bar is 70px and fixed; a band pinned at 0 slid under it and lost
+    // the spacing the comp draws above its own content.
+    expect(stickyTop(300, 900, "top", 70)).toBe(70);
+    // A band taller than the screen still holds its bottom edge on the
+    // viewport's — there is no room to give it.
+    expect(stickyTop(1098, 900, "top", 70)).toBe(-198);
+    // And one just short of the screen takes what is left, not the full 70.
+    expect(stickyTop(870, 900, "top", 70)).toBe(30);
+    // A bottom anchor rests on the bottom of the screen either way.
+    expect(stickyTop(303, 900, "bottom", 70)).toBe(597);
+  });
+
   it("reads the anchor off the band", () => {
     expect(anchorOf(section("lead_text", "statement"))).toBe("top");
     expect(anchorOf(section("lead_text", "statement", "sticky-cover sticky-cover--bottom"))).toBe(
@@ -126,6 +139,29 @@ describe("coverRun", () => {
     expect(cover.run.map((r) => r.el)).toEqual([cta, stats]);
   });
 
+  it("counts what the stack COVERS, not the sum of its boxes", () => {
+    // Each joint overlaps by a pixel, so summing the boxes let the walk stop
+    // believing the screen was full while the stack's top edge was still
+    // short of the bar — and that exit pays no slack, because it never met a
+    // pinned band. Under the bar the hairline was invisible; resting at the
+    // bar's bottom edge it showed the photograph. Heights and viewport are
+    // the ones the review reproduced it at.
+    const cta = section("cta_banner", "onDark");
+    const stats = section("stats_band");
+    const statement = section("lead_text", "statement", "sticky-cover sticky-cover--bottom");
+    const [m, h] = main({ cta_banner: 318, stats_band: 327.61, lead_text: 303 }, [
+      section("image_band", "default", "sticky-cover"),
+      cta,
+      stats,
+      statement,
+      section("cta_banner", "onCream"),
+    ]);
+    const cover = coverRun(m, 1018, h, 70);
+    // 1018 - 70 = 948 of screen against 318 + 327.61 + 303 = 948.61 of boxes:
+    // the sum clears it, the covered extent (946.61) does not.
+    expect(cover.run[0]?.top).toBeLessThanOrEqual(70);
+  });
+
   it("never grows a band that holds by its top edge", () => {
     // Who We Are's board section: a top anchor is already clamped to 0, so
     // the stack cannot come up short and there is nothing to pay for.
@@ -138,6 +174,28 @@ describe("coverRun", () => {
     const cover = coverRun(m, 1400, h);
     expect(cover.slack).toBe(0);
     expect(cover.anchorTop).toBe(0);
+  });
+
+  it("leaves the bar's own room at the top of the held screen", () => {
+    // Same 1151px screen, with the bar staying put: the stack has to reach
+    // the bar's bottom edge, not the top of the screen, so it grows by 70
+    // less — and the strip it used to leave is behind the bar, which is
+    // painting the same cream the page is standing on.
+    const cta = section("cta_banner", "onDark");
+    const stats = section("stats_band");
+    const statement = section("lead_text", "statement", "sticky-cover sticky-cover--bottom");
+    const [m, h] = main({ cta_banner: 400, stats_band: 330, lead_text: 300 }, [
+      section("image_band", "default", "sticky-cover"),
+      cta,
+      stats,
+      statement,
+      section("cta_banner", "onCream"),
+    ]);
+    const cover = coverRun(m, 1151, h, 70);
+    expect(cover.slack).toBe(53);
+    expect(cover.run[0]?.top).toBe(70);
+    // The band still ends on the bottom of the screen: 798 + 300 + 53.
+    expect(cover.anchorTop + 300 + cover.slack).toBe(1151);
   });
 
   it("stops at a band that is already holding on its own", () => {
