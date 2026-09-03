@@ -158,7 +158,7 @@
                     src="/icons/plus-circle.svg"
                     alt=""
                     aria-hidden="true"
-                    class="absolute right-0 bottom-0 h-[25px] w-[25px] opacity-50 motion-safe:transition-[width,height] group-hover:h-[30px] group-hover:w-[30px] group-focus-within:h-[30px] group-focus-within:w-[30px]"
+                    class="person-open-cue absolute right-0 bottom-0 h-[25px] w-[25px] opacity-50 motion-safe:transition-[width,height] group-hover:h-[30px] group-hover:w-[30px] group-focus-within:h-[30px] group-focus-within:w-[30px]"
                   />
                 {/if}
               </div>
@@ -203,6 +203,26 @@
               {/if}
             </div>
 
+            {#if isFilled.richText(person.bio)}
+              <!-- The bio a script would have put in the pop-up. Without one
+                   the pop-up never exists, so this was not hidden but ABSENT —
+                   unreachable for a visitor and invisible to a crawler, which
+                   is every word anyone has written about these four people.
+                   Hidden by app.css and revealed by the <noscript> block in
+                   app.html: real markup inside a <noscript> is parsed as raw
+                   text by a browser running scripts and would not survive
+                   hydration. display:none also keeps it out of the
+                   accessibility tree, so the pop-up stays the single source
+                   for everyone who does have scripts. -->
+              <div
+                class="person-bio-nojs richtext-block t-body relative p-5 pt-0 {board
+                  ? 'text-green-mid-aa'
+                  : 'text-background'}"
+              >
+                <RichTextBody field={person.bio} />
+              </div>
+            {/if}
+
             {#if !photo && opens(person)}
               <!-- The comp's badge sits at the card's own bottom-right corner
                    when there is no picture to hang it off (Figma "Bio Only"
@@ -211,7 +231,7 @@
                 src="/icons/plus-circle.svg"
                 alt=""
                 aria-hidden="true"
-                class="absolute right-5 bottom-5 h-[25px] w-[25px] opacity-50 motion-safe:transition-[width,height] group-hover:h-[30px] group-hover:w-[30px] group-focus-within:h-[30px] group-focus-within:w-[30px]"
+                class="person-open-cue absolute right-5 bottom-5 h-[25px] w-[25px] opacity-50 motion-safe:transition-[width,height] group-hover:h-[30px] group-hover:w-[30px] group-focus-within:h-[30px] group-focus-within:w-[30px]"
               />
             {/if}
 
@@ -221,6 +241,7 @@
                    focus ring draws inside the rounded card, which clips. -->
               <button
                 type="button"
+                data-bio-toggle
                 onclick={() => (openIndex = i)}
                 aria-label={copy.readBio(person.name || copy.thisPerson)}
                 class="absolute inset-0 cursor-pointer rounded-[20px] focus-visible:outline-2 focus-visible:outline-offset-[-3px] focus-visible:outline-green"

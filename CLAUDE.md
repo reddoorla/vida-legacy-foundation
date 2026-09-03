@@ -651,6 +651,40 @@ opacity does not inherit as a computed value and the `<h1>`'s own is 1 while
 it is completely invisible. Both were verified by deleting the fix and
 watching the tests go red.
 
+### Three more things a script was supplying
+
+Same pattern, same two places: the element renders normally and hidden
+(`app.css`), and the FIRST `<noscript><style>` in app.html reveals it while
+hiding whatever control cannot work. That block doubles its classes, because
+it beats (0,1,0) rules in app.css; the runway block below it triples, because
+it beats (0,2,0) component-scoped ones. The unit test only holds the runway
+block to the triple bar.
+
+- **`CountUp` showed the count's starting zeros.** The visible layer is a
+  tween that begins at `startValue` and is run by `onMount`, so with no script
+  the stats band read "0+", "0 people", "0%", "0 lives" — not unanimated but
+  WRONG, and the `sr-only` sibling carried the truth all along, which is
+  exactly why nothing in the suite could see it. The component now renders two
+  candidates, `.countup-live` and `.countup-nojs`, BOTH `aria-hidden` so the
+  swap never changes what is announced. `.countup-live` stays first: the tests
+  address "the visible number" as the first `[aria-hidden]` element.
+- **`PersonGrid`'s bios existed only inside a pop-up a click creates**, so
+  without a script they were not hidden but absent — unreachable for a visitor
+  and invisible to a crawler. Each card renders `.person-bio-nojs` as well,
+  and `[data-bio-toggle]` (the overlay button, which would also swallow
+  selection of the bio under it) and `.person-open-cue` (the + badge, which
+  advertises a pop-up that cannot open) both go. **Nothing on `/about`
+  currently has a bio** — the four board members have none, and the three
+  leadership cards open on `!board` alone — so the only thing exercising this
+  path is `PersonGrid.test.ts` until one is authored.
+- **`PageMasthead`'s stage collapsed to zero** on a reduced-motion phone, the
+  same shape as HeartHero's below. Nothing reads that box, so nothing rendered
+  wrong; it is fixed so the next thing to measure it does not inherit the bug.
+
+Still outstanding, and NOT fixed: without a script the nav never swaps to its
+cream bar (the swap is measured from the DOM), so past the first section its
+links sit dark-on-navy over whatever the page is showing.
+
 ### The reduced-motion phone heart did not cover
 
 Separate bug, found the same afternoon. `.heart-hero-stage`'s `height: 100%`

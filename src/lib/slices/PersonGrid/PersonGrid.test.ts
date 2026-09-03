@@ -231,3 +231,44 @@ describe("PersonGrid slice", () => {
     expect(container.textContent).toContain("Leadership");
   });
 });
+
+describe("without JavaScript", () => {
+  // The bio exists ONLY inside a Modal that a click creates, so with no script
+  // to handle the click it was not hidden but absent — unreachable for a
+  // visitor and invisible to a crawler. The card renders it too now, hidden by
+  // app.css and revealed by the <noscript> block in app.html; it cannot live
+  // inside a <noscript> itself, because a browser running scripts parses that
+  // content as raw text and it would not survive hydration.
+  //
+  // Nothing on /about carries a bio today (the four board members have none and
+  // the three leadership cards open on `!board` alone), so this is the only
+  // thing that exercises the path until one is authored.
+  it("renders each bio on the card, for a visitor who cannot open the pop-up", () => {
+    const { container } = render(PersonGrid, {
+      props: { slice: make({}, [person("Ada Lovelace", true), person("Grace Hopper", true)]) },
+    });
+    const bios = [...container.querySelectorAll(".person-bio-nojs")];
+    expect(bios.map((b) => b.textContent?.trim())).toEqual([
+      "Ada Lovelace bio copy.",
+      "Grace Hopper bio copy.",
+    ]);
+  });
+
+  it("leaves out a bio nobody wrote, rather than an empty block", () => {
+    const { container } = render(PersonGrid, {
+      props: { slice: make({}, [person("Ada Lovelace")]) },
+    });
+    expect(container.querySelectorAll(".person-bio-nojs").length).toBe(0);
+  });
+
+  it("marks the two controls that do nothing without a script", () => {
+    // The overlay button cannot open anything and would swallow selection of
+    // the bio underneath it; the + badge advertises a pop-up that cannot
+    // happen. app.html hides both, the same way it hides the nav's hamburger.
+    const { container } = render(PersonGrid, {
+      props: { slice: make({}, [person("Ada Lovelace", true)]) },
+    });
+    expect(container.querySelectorAll("[data-bio-toggle]").length).toBe(1);
+    expect(container.querySelectorAll(".person-open-cue").length).toBe(1);
+  });
+});
