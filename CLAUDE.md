@@ -60,6 +60,18 @@ fleet-maintenance sessions (reddoor-maintenance) also open PRs here, so:
 - **Never hand-roll `scrollTo`** — use `$lib/utils/instantNavScroll`.
 - **Never redraw an asset in CSS** when the real file is downloadable. Ship the
   file.
+- **Never write `%sveltekit.head%` — or a comment terminator — inside a
+  comment in `src/app.html`.** SvelteKit substitutes the FIRST occurrence of
+  the placeholder and only the first, so a mention in prose takes the whole
+  head and the real placeholder below renders literally. And the injected head
+  markup carries Svelte's hydration markers, one of which is a comment that
+  ends — which ends the enclosing comment too, spilling the rest of the
+  sentence into the page as visible text and the head tags into `<body>`.
+  Both shipped, an hour apart (the second while explaining the first), and
+  neither is a console error, an axe violation or a type error, so the suite
+  said nothing. `tests/smoke/pages.spec.ts` now fails on either — the load-
+  bearing assertion is "no head tags loose in the body", not the placeholder
+  string — and `src/app-html.test.ts` fails on the first.
 - **Svelte empties a `<style>` written anywhere in a component**, not just at
   the top level — it is taken as the component's style block. And a browser
   running scripts parses `<noscript>` content as raw TEXT, so real markup in

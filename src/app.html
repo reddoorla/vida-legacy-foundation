@@ -34,9 +34,24 @@
          'unsafe-inline'; this needs no nonce.
 
          The class is doubled deliberately: app.css's `.nav-nojs { display:
-         none }` arrives in %sveltekit.head%, AFTER this block, so an equal
-         specificity would lose on order. Doubling it wins wherever the two
-         end up. -->
+         none }` arrives with the app's own head markup, BELOW this block, so
+         an equal specificity would lose on order. Doubling it wins wherever
+         the two end up.
+
+         Two things must never appear in a comment in this file, and both
+         bit within an hour of each other:
+
+         1. The head placeholder's own name. SvelteKit substitutes the FIRST
+            occurrence and only the first, so a mention in prose takes the
+            whole head, and the real one below is left to render literally.
+         2. A comment terminator. The injected head markup carries Svelte's
+            hydration markers, and one of them is a comment that ENDS — which
+            ends this one too, spilling the rest of the sentence into the
+            document as visible text and the head tags into the body. Writing
+            the terminator here to explain that did it a second time.
+
+         tests/smoke/pages.spec.ts fails on either now, and
+         src/app-html.test.ts on the first. -->
     <noscript>
       <style>
         .nav-nojs.nav-nojs {
