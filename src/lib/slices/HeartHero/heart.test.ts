@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { heartEndPct, heartCovers, HEART_END_PCT } from "./heart";
+import { heartEndPct, heartCovers, HEART_END_PCT, shouldAutoOpen } from "./heart";
 
 describe("heartEndPct", () => {
   it("reproduces the comp's own end size on the comp's band", () => {
@@ -36,5 +36,38 @@ describe("heartEndPct", () => {
   it("falls back to the comp's size before the stage is measured", () => {
     expect(heartEndPct(0, 0)).toBe(HEART_END_PCT);
     expect(heartEndPct(1440, 0)).toBe(HEART_END_PCT);
+  });
+});
+
+describe("shouldAutoOpen", () => {
+  // Erik and Nicole asked for the hero to open on its own rather than wait for
+  // a visitor to know to scroll (Discord, 2026-09-03).
+  const arrived = {
+    reducedMotion: false,
+    alreadyPlayed: false,
+    scrollY: 0,
+    documentTop: 0,
+    runway: 1500,
+  };
+
+  it("plays for a visitor who has just arrived at the top", () => {
+    expect(shouldAutoOpen(arrived)).toBe(true);
+    // A restored scroll position is rarely exactly 0.
+    expect(shouldAutoOpen({ ...arrived, scrollY: 3, documentTop: 2 })).toBe(true);
+  });
+
+  it("never scrolls a reduced-motion visitor, who is already on the open frame", () => {
+    expect(shouldAutoOpen({ ...arrived, reducedMotion: true })).toBe(false);
+  });
+
+  it("runs once, and never for a reader who has already moved", () => {
+    expect(shouldAutoOpen({ ...arrived, alreadyPlayed: true })).toBe(false);
+    expect(shouldAutoOpen({ ...arrived, scrollY: 200 })).toBe(false);
+  });
+
+  it("ignores a hero that is not the top of the page, or has no runway", () => {
+    // The a11y fixtures render one half way down a page of components.
+    expect(shouldAutoOpen({ ...arrived, documentTop: 900 })).toBe(false);
+    expect(shouldAutoOpen({ ...arrived, runway: 0 })).toBe(false);
   });
 });

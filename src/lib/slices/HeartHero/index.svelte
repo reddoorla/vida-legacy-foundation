@@ -5,7 +5,7 @@
   import { isFilled } from "@prismicio/client";
   import type { Content } from "@prismicio/client";
   import { TEXTURE_LQIP } from "./texture-lqip";
-  import { heartEndPct } from "./heart";
+  import { AUTO_OPEN_EPSILON, heartEndPct, shouldAutoOpen } from "./heart";
 
   let { slice }: { slice: Content.HeartHeroSlice } = $props();
 
@@ -112,6 +112,79 @@
       window.removeEventListener("resize", onScroll);
       if (frame) cancelAnimationFrame(frame);
     };
+  });
+
+  // The hero opens itself for a visitor who has just arrived (see
+  // `shouldAutoOpen`): after a beat, the runway is scrolled for them, through
+  // the CTA frame so the whole sequence has played. Any wheel, touch, key or
+  // pointer cancels it on the spot — it is a suggestion, not a ride.
+  const AUTO_OPEN_DELAY = 2000; // the beat before it starts
+  const AUTO_OPEN_MS = 1800; // and how long it takes
+  const AUTO_OPEN_THROUGH = 0.8; // past CTAS_AT: heart, copy and buttons are in
+  const AUTO_OPEN_KEY = "vlf:hero-opened";
+
+  $effect(() => {
+    if (reducedMotion || !sectionEl) return;
+    let played = true;
+    try {
+      played = sessionStorage.getItem(AUTO_OPEN_KEY) === "1";
+    } catch {
+      // Private mode or a blocked store: treat it as already played rather
+      // than replaying the opening on every navigation back to the home page.
+    }
+    const rect = sectionEl.getBoundingClientRect();
+    if (
+      !shouldAutoOpen({
+        reducedMotion,
+        alreadyPlayed: played,
+        scrollY: window.scrollY,
+        documentTop: rect.top + window.scrollY,
+        runway: rect.height - window.innerHeight,
+      })
+    )
+      return;
+
+    let raf = 0;
+    const timer = window.setTimeout(play, AUTO_OPEN_DELAY);
+    const cancel = () => {
+      window.clearTimeout(timer);
+      if (raf) cancelAnimationFrame(raf);
+      raf = 0;
+      // app.css sets `scroll-behavior: smooth` on <html>, which would animate
+      // every step of our own animation on top of it.
+      document.documentElement.style.scrollBehavior = "";
+      for (const type of GESTURES) window.removeEventListener(type, cancel);
+    };
+    const GESTURES = ["wheel", "touchstart", "keydown", "pointerdown"] as const;
+    for (const type of GESTURES) window.addEventListener(type, cancel, { passive: true });
+
+    function play() {
+      const el = sectionEl;
+      if (!el || window.scrollY > AUTO_OPEN_EPSILON) return cancel();
+      const r = el.getBoundingClientRect();
+      const runway = r.height - window.innerHeight;
+      if (runway <= 0) return cancel();
+      try {
+        sessionStorage.setItem(AUTO_OPEN_KEY, "1");
+      } catch {
+        // Nothing to remember it by; the guards above still hold within a page.
+      }
+      const from = window.scrollY;
+      const to = r.top + from + runway * AUTO_OPEN_THROUGH;
+      const started = performance.now();
+      document.documentElement.style.scrollBehavior = "auto";
+      const step = (now: number) => {
+        const t = Math.min((now - started) / AUTO_OPEN_MS, 1);
+        // Ease out: it leaves quickly and settles, so it reads as the page
+        // showing itself rather than as a scroll being taken from you.
+        window.scrollTo(0, from + (to - from) * (1 - Math.pow(1 - t, 3)));
+        if (t < 1) raf = requestAnimationFrame(step);
+        else cancel();
+      };
+      raf = requestAnimationFrame(step);
+    }
+
+    return cancel;
   });
 
   // Reduced motion lands on the FINAL frame, not the first. The hero carries

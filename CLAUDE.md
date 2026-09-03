@@ -461,6 +461,22 @@ green (not the fleet's black) and takes a `skip` predicate: the contact link is
 cancelled into the modal, and a cancelled navigation never fires
 `afterNavigate`, so without the skip the overlay would come up and stay.
 
+## The hero opens itself
+
+Erik, in the client channel (2026-09-03): "Do we need some sort of indicator
+on the hero to scroll down so that people know what to do?" — Nicole: "Or it
+opens on its own", and then "i think we can have it open on its own". So
+`HeartHero` plays its own opening: two seconds after a visitor lands at the
+top of the home page, it scrolls the runway for them over 1.8s, through 80%
+of it — past `CTAS_AT`, so the heart has opened and the copy and the buttons
+are in — and then hands the scroll back. Any wheel, touch, key or pointer
+cancels it on the spot; it runs once per session (`sessionStorage`); and a
+reduced-motion visitor never sees it, because that hero is already on the
+open frame. `shouldAutoOpen` in `HeartHero/heart.ts` holds every condition
+and is unit-tested; one of them — the hero must be the top of the document —
+is what keeps it from scrolling the a11y fixtures page, which renders a hero
+half way down.
+
 ## Mobile is not the comp scaled down
 
 The comps are 1440x860 landscape and every full-bleed measurement in them is a
