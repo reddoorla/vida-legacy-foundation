@@ -568,12 +568,36 @@ opens on its own", and then "i think we can have it open on its own". So
 top of the home page, it scrolls the runway for them over 1.8s, through 80%
 of it — past `CTAS_AT`, so the heart has opened and the copy and the buttons
 are in — and then hands the scroll back. Any wheel, touch, key or pointer
-cancels it on the spot; it runs once per session (`sessionStorage`); and a
-reduced-motion visitor never sees it, because that hero is already on the
-open frame. `shouldAutoOpen` in `HeartHero/heart.ts` holds every condition
-and is unit-tested; one of them — the hero must be the top of the document —
-is what keeps it from scrolling the a11y fixtures page, which renders a hero
-half way down.
+cancels it on the spot; and a reduced-motion visitor never sees it, because
+that hero is already on the open frame. `shouldAutoOpen` in
+`HeartHero/heart.ts` holds every condition and is unit-tested; one of them —
+the hero must be the top of the document — is what keeps it from scrolling
+the a11y fixtures page, which renders a hero half way down.
+
+**The session mark does not survive a refresh, deliberately.** It exists so
+the opening does not replay on every soft navigation back to the home page,
+and it still does that. But frame 0 of this hero is a green field with a
+small closed heart and NOTHING else — the eyebrow, the heading, both calls to
+action and the bar are all revealed by scroll progress — so a visitor who
+refreshed at the top of the page was stranded on an empty hero for the rest
+of the session, which is the exact state the opening was added to prevent.
+`playedThisSession` discards the mark when Navigation Timing says `reload`.
+That is safe because the mark is not the guard that matters: `shouldAutoOpen`
+still requires the visitor to be at the top, so a refresh anywhere else —
+scroll restored mid-runway, heart already open — declines on the scroll test
+and nobody reading has the page moved under them. Measured on a production
+build (a dev server is useless for this: Vite's HMR reloads the page, so
+every load reports `reload`): first arrival plays, refresh-at-top plays,
+refresh-mid-page leaves the scroll at 1400, back-to-home does not replay.
+
+Frame 0 is still reachable two other ways, both known: a same-session back
+navigation to the home page that lands at the top (bfcache normally restores
+the open hero instead, so this needs a real document reload), and a visitor
+without JavaScript, for whom `progress` never advances and the copy stays at
+`opacity: 0` — it is in the DOM, so crawlers and screen readers get it, but
+it is invisible and no amount of scrolling reveals it. The `<noscript><style>`
+in app.html that reveals the nav's entry list is the mechanism if that is
+ever worth closing.
 
 ## Mobile is not the comp scaled down
 

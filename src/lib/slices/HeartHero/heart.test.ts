@@ -1,5 +1,11 @@
 import { describe, it, expect } from "vitest";
-import { heartEndPct, heartCovers, HEART_END_PCT, shouldAutoOpen } from "./heart";
+import {
+  heartEndPct,
+  heartCovers,
+  HEART_END_PCT,
+  playedThisSession,
+  shouldAutoOpen,
+} from "./heart";
 
 describe("heartEndPct", () => {
   it("reproduces the comp's own end size on the comp's band", () => {
@@ -69,5 +75,29 @@ describe("shouldAutoOpen", () => {
     // The a11y fixtures render one half way down a page of components.
     expect(shouldAutoOpen({ ...arrived, documentTop: 900 })).toBe(false);
     expect(shouldAutoOpen({ ...arrived, runway: 0 })).toBe(false);
+  });
+});
+
+describe("playedThisSession", () => {
+  // The mark is what stops the opening replaying on every soft navigation back
+  // to the home page. It is NOT meant to survive a refresh: a visitor who
+  // reloads at the top of the page lands on frame 0 — closed heart, no eyebrow,
+  // no heading, no buttons, no bar — and the mark used to hold them there for
+  // the rest of the session.
+  it("keeps the mark across a soft navigation back to the home page", () => {
+    expect(playedThisSession("1", "navigate")).toBe(true);
+    expect(playedThisSession("1", "back_forward")).toBe(true);
+    // No Navigation Timing entry at all (an old browser, jsdom): trust the mark.
+    expect(playedThisSession("1", undefined)).toBe(true);
+  });
+
+  it("discards the mark on a reload, so the refreshed hero opens again", () => {
+    expect(playedThisSession("1", "reload")).toBe(false);
+  });
+
+  it("is unplayed when there is no mark, however the page was reached", () => {
+    for (const type of ["navigate", "reload", "back_forward", undefined]) {
+      expect(playedThisSession(null, type)).toBe(false);
+    }
   });
 });
