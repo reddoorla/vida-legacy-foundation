@@ -32,6 +32,22 @@ const COPY = {
     thisPerson: "this person",
     /** The phone-in-landscape cover. */
     portraitPlease: "Please switch to portrait mode",
+    /** The error page. A 404 is the only status a visitor routinely meets, and
+     *  the message SvelteKit carries with it is written for a log, in English —
+     *  so the page says its own words instead of rendering that one. */
+    pageNotFound: "We couldn't find that page.",
+    somethingWentWrong: "Something went wrong.",
+    goHome: "Go home",
+    /** Slider's controls (no production slice uses it yet — the fixtures do). */
+    playSlides: "Play slides",
+    pauseSlides: "Pause slides",
+    previousSlide: "Previous slide",
+    nextSlide: "Next slide",
+    goToSlide: (n: number) => `Go to slide ${n}`,
+    slideCount: (n: number, total: number) => `Slide ${n} of ${total}`,
+    slideRange: (from: number, to: number, total: number) =>
+      `Slides ${from} through ${to} of ${total}`,
+    ofCount: (n: number, total: number) => `${n} of ${total}`,
   },
   es: {
     skipToContent: "Saltar al contenido principal",
@@ -44,8 +60,29 @@ const COPY = {
     readBio: (name: string) => `Leer la biografía de ${name}`,
     thisPerson: "esta persona",
     portraitPlease: "Por favor, gire su dispositivo a la posición vertical",
+    pageNotFound: "No pudimos encontrar esa página.",
+    somethingWentWrong: "Algo salió mal.",
+    goHome: "Ir al inicio",
+    playSlides: "Reproducir las diapositivas",
+    pauseSlides: "Pausar las diapositivas",
+    previousSlide: "Diapositiva anterior",
+    nextSlide: "Diapositiva siguiente",
+    goToSlide: (n: number) => `Ir a la diapositiva ${n}`,
+    slideCount: (n: number, total: number) => `Diapositiva ${n} de ${total}`,
+    slideRange: (from: number, to: number, total: number) =>
+      `Diapositivas ${from} a ${to} de ${total}`,
+    ofCount: (n: number, total: number) => `${n} de ${total}`,
   },
-} as const satisfies Record<Lang, Record<string, string | ((name: string) => string)>>;
+} as const satisfies Record<
+  Lang,
+  Record<
+    string,
+    | string
+    | ((a: never) => string)
+    | ((a: never, b: never) => string)
+    | ((a: never, b: never, c: never) => string)
+  >
+>;
 
 export type UiCopy = (typeof COPY)[Lang];
 

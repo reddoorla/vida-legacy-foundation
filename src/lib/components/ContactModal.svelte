@@ -5,6 +5,7 @@
   import { contactModal } from "$lib/contact-modal.svelte";
   import { DEFAULT_LANG, localizePath, type Lang } from "$lib/locale";
   import { ui } from "$lib/ui-copy";
+  import { contactCopy } from "$lib/contact-copy";
   import { loadSiteConfig } from "$lib/site-config";
   import { fade, slide } from "$lib/transitions";
   import { untrack } from "svelte";
@@ -33,39 +34,9 @@
     result = null,
   }: Props = $props();
 
-  // The contact page's copy, both locales; field NAMES stay English — they
-  // are the ingest payload keys the route's action reads.
-  const COPY = {
-    en: {
-      heading: "Contact us",
-      lede: "Send us a message and we'll get back to you.",
-      success: "Thanks — your message is on its way. We'll be in touch soon.",
-      error: "Something went wrong sending your message. Please try again.",
-      call: "You can also call us at",
-      name: "Name",
-      email: "Email",
-      phone: "Phone",
-      message: "Message",
-      send: "Send message",
-      sending: "Sending…",
-      required: "(required)",
-    },
-    es: {
-      heading: "Contáctenos",
-      lede: "Envíenos un mensaje y nos pondremos en contacto con usted.",
-      success: "Gracias, su mensaje va en camino. Nos comunicaremos pronto.",
-      error: "Algo salió mal al enviar su mensaje. Por favor, inténtelo de nuevo.",
-      call: "También puede llamarnos al",
-      name: "Nombre",
-      email: "Correo electrónico",
-      phone: "Teléfono",
-      message: "Mensaje",
-      send: "Enviar mensaje",
-      sending: "Enviando…",
-      required: "(obligatorio)",
-    },
-  } as const;
-  const copy = $derived(COPY[lang]);
+  // The panel's words, shared with the route's action so a server-side
+  // failure answers in the language the visitor is reading ($lib/contact-copy).
+  const copy = $derived(contactCopy(lang));
 
   // The phone number the footer already carries, so it is written once.
   const phone = $derived.by(() => {

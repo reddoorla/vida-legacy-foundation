@@ -106,4 +106,16 @@ describe("footerColumns", () => {
     const emptyConfig: SiteConfig = { nav: { items: [] }, footer: { socials: [] } };
     expect(footerColumns(undefined, emptyConfig)).toBeUndefined();
   });
+
+  it("names the contact route the same way in the Spanish nav and footer", () => {
+    // They drifted: the footer said "Contacto" (the client copy's section
+    // HEADING) where the nav and the client's own link list say "Contáctenos".
+    const es = loadSiteConfig("es");
+    const nav = es.nav.items.find((i) => i.href === "/es/contact")?.label;
+    const footer = (es.footer.columns ?? [])
+      .flatMap((c) => c.items)
+      .find((i) => "href" in i && i.href === "/es/contact");
+    expect(nav).toBe("Contáctenos");
+    expect(footer && "text" in footer ? footer.text : null).toBe("Contáctenos");
+  });
 });

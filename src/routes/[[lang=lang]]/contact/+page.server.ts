@@ -1,6 +1,7 @@
 import { env } from "$env/dynamic/private";
 import { createIngestAction } from "@reddoorla/maintenance/forms";
-import { langFromParam } from "$lib/locale";
+import { LANGS, langFromParam, type Lang } from "$lib/locale";
+import { contactCopy } from "$lib/contact-copy";
 import type { Actions, PageServerLoad } from "./$types";
 
 // The root layout sets `prerender = "auto"`; a form `action` cannot run on a
@@ -19,9 +20,18 @@ export const load: PageServerLoad = ({ params }) => {
   };
 };
 
-export const actions: Actions = {
-  default: createIngestAction({
+// The action's own failure copy is built per REQUEST, in the request's locale.
+// `createIngestAction` freezes `unavailableMessage` / `errorMessage` at
+// construction and defaults them to English, so a single action meant the
+// Spanish form answered a failed submit in English while every other word on
+// the page was Spanish. The strings are the panel's own ($lib/contact-copy),
+// so the two can never drift.
+const ingestFor = (lang: Lang) => {
+  const copy = contactCopy(lang);
+  return createIngestAction({
     formType: "contact",
+    unavailableMessage: copy.unavailable,
+    errorMessage: copy.error,
     getConfig: () => ({
       url: env.FORMS_INGEST_URL,
       token: env.FORMS_INGEST_TOKEN,
@@ -39,5 +49,16 @@ export const actions: Actions = {
       // recognizes it and routes the submission away from every real sink.
       testMode: form.get("testMode")?.toString() === "true" || undefined,
     }),
-  }),
+  });
+};
+
+// One action per locale, built once; the request picks the one whose words
+// match the page it was posted from.
+const INGEST = Object.fromEntries(LANGS.map((l) => [l, ingestFor(l)])) as Record<
+  Lang,
+  ReturnType<typeof ingestFor>
+>;
+
+export const actions: Actions = {
+  default: (event) => INGEST[langFromParam(event.params.lang)](event),
 };
