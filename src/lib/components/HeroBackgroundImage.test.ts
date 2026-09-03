@@ -81,3 +81,37 @@ describe("HeroBackgroundImage", () => {
     expect(document.head.querySelector("link[rel='preload']")).toBeNull();
   });
 });
+
+describe("HeroBackgroundImage — the phone's crop", () => {
+  it("adds a portrait <source> and keeps the landscape <img> as the fallback", () => {
+    const { container } = render(HeroBackgroundImage, {
+      image: prismicImage(),
+      portrait: 16 / 9,
+    });
+    const source = container.querySelector("picture source")!;
+    expect(source.getAttribute("media")).toBe("(max-width: 767px)");
+    expect(source.getAttribute("srcset")).toContain("fit=crop");
+    expect(source.getAttribute("srcset")).toContain("crop=faces%2Ccenter");
+    expect(source.getAttribute("srcset")).toContain("1170w");
+    const img = container.querySelector("picture img")!;
+    expect(img.getAttribute("srcset")).toContain("2560w");
+    expect(img.getAttribute("srcset")).not.toContain("fit=crop");
+  });
+
+  it("preloads exactly the file the picture will pick, per viewport", () => {
+    render(HeroBackgroundImage, { image: prismicImage(), portrait: 16 / 9 });
+    const links = [...document.head.querySelectorAll<HTMLLinkElement>("link[rel='preload']")];
+    expect(links).toHaveLength(2);
+    const phone = links.find((l) => l.media === "(max-width: 767px)")!;
+    expect(phone.getAttribute("imagesrcset")).toContain("fit=crop");
+    const desktop = links.find((l) => l.media !== "(max-width: 767px)")!;
+    expect(desktop.media).toBe("not all and (max-width: 767px)");
+    expect(desktop.getAttribute("imagesrcset")).not.toContain("fit=crop");
+  });
+
+  it("renders a bare <img> when no portrait aspect is asked for", () => {
+    const { container } = render(HeroBackgroundImage, { image: prismicImage() });
+    expect(container.querySelector("picture")).toBeNull();
+    expect(container.querySelector("img")).not.toBeNull();
+  });
+});

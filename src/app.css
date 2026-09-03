@@ -2,10 +2,22 @@
 @import "tailwindcss";
 
 @theme {
+  /* NOTE: `--screen-*` is Tailwind v3 naming and v4 IGNORES it — the site
+     really runs on v4's defaults (sm 640, md 768, lg 1024, xl 1280). Left as
+     it is because every measured breakpoint in the slices was matched against
+     those defaults; renaming them to `--breakpoint-*` moves every `sm:` on the
+     site and needs its own pass against the comp. */
   --screen-sm: 560px;
   --screen-md: 768px;
   --screen-lg: 1024px;
   --screen-xl: 1340px;
+
+  /* The comp's own width, as a real v4 breakpoint — in REM, like v4's own.
+     Two ways to get this wrong, both measured in the built CSS: an arbitrary
+     variant (`min-[1440px]:`) and a px-valued custom breakpoint are BOTH
+     emitted before the rem-valued defaults, so `sm:grid-cols-2` would win
+     over the 4-column rule at every width. 90rem sorts where it belongs. */
+  --breakpoint-wide: 90rem;
 
   --color-transparent: transparent;
   --color-current: currentColor;
@@ -302,16 +314,22 @@ main > section.hero-band:first-child {
   align-items: center;
   justify-content: center;
   gap: 10px;
-  height: 40px;
+  /* min-height, not height, and never wider than its column: a long label
+     (the stats band's "register to be an organ donor" is 281px) has to WRAP
+     and let the pill grow, not overrun the card — at 320px it hung 69px past
+     the edge. Two lines still fit inside the 40px pill. */
+  min-height: 40px;
   width: fit-content;
+  max-width: 100%;
+  text-align: center;
   /* 1px more below than above: Extended Book's caps sit half a pixel high
      when the line box is centred (measured at 4x with
      scripts/figma-compare/ink.mjs), and the eye reads capitals by their own
      centre. A label never wraps: the comp's longest ("register to be an
      organ donor") is a 240px run in a 270px pill, and a grid cell that is a
-     few pixels short would otherwise break it into two lines. */
+     few pixels short would otherwise break it into two lines — which is why
+     the stats grid goes 2-up below 1340 rather than squeezing the column. */
   padding: 0 15px 1px;
-  white-space: nowrap;
   border-radius: 9999px;
   background-color: var(--color-green);
   color: var(--color-green-btn);
@@ -519,6 +537,18 @@ main + footer {
 ::view-transition-old(root),
 ::view-transition-new(root) {
   animation-duration: 350ms;
+}
+
+/* The toggle's marked pill is lifted out of that crossfade and morphed from
+   one side of the track to the other, so the switch reads as the control
+   moving rather than the whole bar dissolving; the label inside crossfades
+   EN -> ES as it travels. The names are set per toggle in LangToggle — the
+   bar and the open menu each get their own, because a duplicate
+   view-transition-name aborts the transition outright. */
+::view-transition-group(lang-pill-bar),
+::view-transition-group(lang-pill-menu) {
+  animation-duration: 350ms;
+  animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* Blur-up companion to $lib/components/Img.svelte. Outside @layer base so it

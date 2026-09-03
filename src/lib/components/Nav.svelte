@@ -1,15 +1,10 @@
 <script lang="ts">
+  import { untrack } from "svelte";
   import type { NavItem } from "$lib/site-config";
   import type { NavTone } from "$lib/nav-tone";
-  import {
-    DEFAULT_LANG,
-    LANGS,
-    LOCALES,
-    localizePath,
-    type Lang,
-    type SwitchTarget,
-  } from "$lib/locale";
+  import { DEFAULT_LANG, localizePath, type Lang, type SwitchTarget } from "$lib/locale";
   import NavMenu from "./NavMenu.svelte";
+  import LangToggle from "./LangToggle.svelte";
 
   interface NavLink {
     text: string;
@@ -64,6 +59,21 @@
   // The comp's bar is 70px tall (Figma 5314:2013).
   const NAV_HEIGHT = 70;
 
+  // Below md the bar LEAVES once the first section is behind you: these pages
+  // are short and few, and a fixed bar costs a tenth of a phone screen the
+  // whole way down. It comes back on any upward scroll, at the top of the
+  // page, and whenever something inside it takes focus (the CSS below) — so a
+  // keyboard visitor is never left tabbing to an off-screen control.
+  // `translate` (not `transform`) is the property Tailwind v4 animates for
+  // -translate-y-full, and it is what the bar's transition names.
+  const MOBILE_QUERY = "(max-width: 767px)";
+  const SCROLL_EPSILON = 4;
+  let hiddenBar = $state(false);
+  // Seeded on mount from the real offset: a back-navigation restores the
+  // scroll position, and against a 0 seed that reads as one huge downward
+  // gesture, hiding the bar before the visitor has touched anything.
+  let lastY = 0;
+
   // Transparent over the page's first slice (whose ground `tone` was chosen
   // for), and the cream bar with the default lockup from the moment that
   // slice's bottom edge passes under it. Measured from the DOM, not a fixed
@@ -75,6 +85,17 @@
     scrolled = first
       ? first.getBoundingClientRect().bottom <= NAV_HEIGHT
       : window.scrollY > NAV_HEIGHT;
+
+    const y = window.scrollY;
+    const narrow = window.matchMedia?.(MOBILE_QUERY).matches ?? false;
+    if (!narrow || !scrolled) {
+      hiddenBar = false;
+    } else if (y > lastY + SCROLL_EPSILON) {
+      hiddenBar = true;
+    } else if (y < lastY - SCROLL_EPSILON) {
+      hiddenBar = false;
+    }
+    if (Math.abs(y - lastY) > SCROLL_EPSILON) lastY = y;
   }
 
   $effect(() => {
@@ -86,6 +107,7 @@
         measure();
       });
     };
+    lastY = window.scrollY;
     measure();
     window.addEventListener("scroll", onScroll, { passive: true });
     window.addEventListener("resize", onScroll);
@@ -98,10 +120,16 @@
 
   // A route change closes the menu and re-measures against the new page once
   // it has rendered — next frame, because the new slices are not laid out yet
-  // when the pathname prop changes.
+  // when the pathname prop changes. Except the language switch: that is the
+  // same page in the other language, crossfaded in place, and a visitor who
+  // pressed the toggle inside the menu keeps the menu — its entries simply
+  // change language under them. A switch is a change to the path the toggle
+  // was offering; `switchTo` is read untracked so only the path re-runs this.
+  let seen = untrack(() => ({ pathname, switchHref: switchTo?.href }));
   $effect(() => {
-    void pathname;
-    isMenuOpen = false;
+    const isSwitch = pathname !== seen.pathname && pathname === seen.switchHref;
+    seen = { pathname, switchHref: untrack(() => switchTo?.href) };
+    if (!isSwitch) isMenuOpen = false;
     const frame = requestAnimationFrame(measure);
     return () => cancelAnimationFrame(frame);
   });
@@ -127,19 +155,6 @@
     onDark: "text-background",
     onGreen: "text-green-btn",
   };
-
-  // The language toggle — the one deliberate addition to the comp's bar. A
-  // pill in the donate button's clothes, as a switch: the active locale
-  // wears the button couple, the other side is a plain label in the tone's
-  // control colour. On the green hero the couple flips to dark-on-green,
-  // because green on green is no switch at all (both pairings 5.86:1).
-  const TOGGLE: Record<NavTone, { track: string; active: string }> = {
-    default: { track: "border-primary text-primary", active: "bg-green text-green-btn" },
-    onDark: { track: "border-background text-background", active: "bg-green text-green-btn" },
-    onGreen: { track: "border-green-btn text-green-btn", active: "bg-green-btn text-green" },
-  };
-  const SEGMENT =
-    "font-button inline-flex h-6 min-w-9 items-center justify-center rounded-full px-2 pb-[1px] text-[10px] tracking-[1.5px] uppercase";
 </script>
 
 <!-- Figma 5314:2013 (navbar-default), 5314:1743 (navbar) and 5314:1744
@@ -149,9 +164,10 @@
 <nav
   data-tone={effectiveTone}
   data-scrolled={scrolled}
-  class="fixed top-0 left-0 z-50 w-full motion-safe:transition-colors motion-safe:duration-300 {scrolled
+  data-hidden={hiddenBar}
+  class="fixed top-0 left-0 z-50 w-full focus-within:translate-y-0 motion-safe:transition-[background-color,translate] motion-safe:duration-300 {scrolled
     ? 'bg-background/95 backdrop-blur-sm'
-    : 'bg-transparent'}"
+    : 'bg-transparent'} {hiddenBar ? '-translate-y-full' : ''}"
 >
   <div
     class="mx-auto flex h-[70px] w-full max-w-[1440px] items-center justify-between px-6 md:px-20"
@@ -167,48 +183,9 @@
     </a>
 
     <div class="flex items-center gap-4">
-      <!-- The EN | ES toggle. The current locale is marked, not linked; the
-           other is a link only when its page exists (a dead switch would send
-           the prerender crawler into a 404), and otherwise an inert label so
-           the visitor still sees which version they are on. The visible label
-           is the short code; the link's accessible name is the language. -->
-      <div
-        role="group"
-        aria-label="Language"
-        class="flex h-[30px] items-center gap-[2px] rounded-full border p-[2px] {TOGGLE[
-          effectiveTone
-        ].track}"
-      >
-        {#each LANGS as code (code)}
-          {#if code === lang}
-            <span
-              aria-current="true"
-              lang={LOCALES[code].html}
-              class="{SEGMENT} {TOGGLE[effectiveTone].active}"
-            >
-              {LOCALES[code].short}
-            </span>
-          {:else if switchTo?.lang === code}
-            <!-- data-sveltekit-noscroll: the switch keeps the reader's place —
-                 the same page, the other text — and the layout crossfades it
-                 in place (see onNavigate there). -->
-            <a
-              href={switchTo.href}
-              hreflang={switchTo.lang}
-              lang={switchTo.lang}
-              aria-label={switchTo.label}
-              data-sveltekit-noscroll
-              class="{SEGMENT} hover:opacity-70 {ICON[effectiveTone]}"
-            >
-              {switchTo.short}
-            </a>
-          {:else}
-            <span aria-disabled="true" lang={LOCALES[code].html} class="{SEGMENT} opacity-50">
-              {LOCALES[code].short}
-            </span>
-          {/if}
-        {/each}
-      </div>
+      <!-- The EN | ES toggle (LangToggle) — the same control the open menu
+           carries. -->
+      <LangToggle {lang} {switchTo} tone={effectiveTone} viewName="lang-pill-bar" />
 
       {#if entries.length > 0}
         <!-- A 44px hit target around the comp's 20x16 glyph (Figma 5314:1993);

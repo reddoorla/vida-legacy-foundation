@@ -82,7 +82,7 @@
                     src={col.icon.url}
                     alt=""
                     aria-hidden="true"
-                    class="h-[133px] w-[133px] object-contain"
+                    class="h-24 w-24 object-contain sm:h-[133px] sm:w-[133px]"
                     loading="lazy"
                     decoding="async"
                   />

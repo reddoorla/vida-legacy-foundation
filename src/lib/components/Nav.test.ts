@@ -153,7 +153,9 @@ describe("Nav — the bar", () => {
     expect(link.getAttribute("href")).toBe("/es/about");
     expect(link.getAttribute("hreflang")).toBe("es");
     expect(link.getAttribute("lang")).toBe("es");
-    expect(link.textContent?.trim()).toBe("ES");
+    // The link IS the track: press anywhere on the pill and you switch.
+    expect(link.querySelectorAll("span")).toHaveLength(2);
+    expect(link.querySelector("[aria-current]")?.textContent?.trim()).toBe("EN");
     // Same colouring as the hamburger on that ground.
     expect(link.className).toContain("text-background");
   });
@@ -285,18 +287,47 @@ describe("Nav — the menu", () => {
     expect(queryByRole("dialog")).toBeNull();
   });
 
-  it("offers the language switch under the entries, by its full name", async () => {
+  it("carries the same toggle in the menu's own header row, and pressing it keeps the menu", async () => {
     const { getByLabelText, getByRole, queryByRole } = render(Nav, {
       items,
       switchTo: { lang: "es", href: "/es", label: "Español", short: "ES" },
     });
     await fireEvent.click(getByLabelText("Open menu"));
-    const link = Array.from(getByRole("dialog").querySelectorAll("a")).find(
-      (a) => a.getAttribute("hreflang") === "es",
-    )!;
-    expect(link.textContent?.trim()).toBe("Español");
+    const dialog = getByRole("dialog");
+    const group = dialog.querySelector('[role="group"][aria-label="Language"]')!;
+    expect(group.querySelector("[aria-current]")?.textContent?.trim()).toBe("EN");
+    const link = group.querySelector("a")!;
+    expect(link.getAttribute("hreflang")).toBe("es");
     expect(link.getAttribute("href")).toBe("/es");
+    // On the menu's dark ground the label side is cream.
+    expect(link.className).toContain("text-background");
+    // Where the bar keeps it: the header row, beside the close button — not
+    // adrift at the bottom of the menu.
+    const header = dialog.querySelector('[aria-label="Close menu"]')!.closest("div")!;
+    expect(header.contains(group)).toBe(true);
     await fireEvent.click(link);
+    expect(queryByRole("dialog")).not.toBeNull();
+  });
+
+  it("keeps the menu open across a language switch, and closes it on any other route", async () => {
+    const { getByLabelText, queryByRole, rerender } = render(Nav, {
+      items,
+      pathname: "/about",
+      lang: "en",
+      switchTo: { lang: "es", href: "/es/about", label: "Español", short: "ES" },
+    });
+    await fireEvent.click(getByLabelText("Open menu"));
+    expect(queryByRole("dialog")).not.toBeNull();
+    // The switch lands: the same page, the other locale.
+    await rerender({
+      items,
+      pathname: "/es/about",
+      lang: "es",
+      switchTo: { lang: "en", href: "/about", label: "English", short: "EN" },
+    });
+    expect(queryByRole("dialog")).not.toBeNull();
+    // A different page closes it.
+    await rerender({ items, pathname: "/es", lang: "es" });
     expect(queryByRole("dialog")).toBeNull();
   });
 
@@ -316,5 +347,67 @@ describe("Nav — the menu", () => {
     await fireEvent.click(getByLabelText("Open menu"));
     const nested = getByRole("dialog").querySelectorAll("li ul a");
     expect(Array.from(nested).map((a) => a.textContent?.trim())).toEqual(["Grants", "Education"]);
+  });
+});
+
+describe("Nav on a phone", () => {
+  // jsdom's matchMedia always answers false; stub it so the component sees a
+  // narrow viewport, and drive scrollY by hand.
+  function narrowViewport(narrow: boolean) {
+    window.matchMedia = ((query: string) => ({
+      matches: narrow && query === "(max-width: 767px)",
+      media: query,
+      addEventListener: () => {},
+      removeEventListener: () => {},
+      addListener: () => {},
+      removeListener: () => {},
+      onchange: null,
+      dispatchEvent: () => false,
+    })) as unknown as typeof window.matchMedia;
+  }
+
+  async function scrollTo(y: number) {
+    Object.defineProperty(window, "scrollY", { value: y, configurable: true });
+    window.dispatchEvent(new Event("scroll"));
+    await frame();
+  }
+
+  afterEach(() => {
+    // @ts-expect-error — restore jsdom's own implementation for other suites.
+    delete window.matchMedia;
+  });
+
+  it("leaves on the way down once the first section is past, and returns on the way up", async () => {
+    narrowViewport(true);
+    // The first section still covers the bar, then scrolls behind it.
+    let bottom = 500;
+    mountMain(() => bottom);
+    const { container } = render(Nav, { items });
+    const nav = container.querySelector("nav")!;
+
+    await scrollTo(200);
+    expect(nav.dataset.hidden).toBe("false");
+
+    bottom = -10;
+    await scrollTo(400);
+    expect(nav.dataset.hidden).toBe("true");
+    expect(nav.className).toContain("-translate-y-full");
+
+    // Scrolling up brings it back.
+    await scrollTo(300);
+    expect(nav.dataset.hidden).toBe("false");
+    expect(nav.className).not.toContain("-translate-y-full");
+
+    // And it can never be caught off-screen by the keyboard.
+    expect(nav.className).toContain("focus-within:translate-y-0");
+  });
+
+  it("keeps the bar on a wide viewport, however far down the page", async () => {
+    narrowViewport(false);
+    mountMain(() => -10);
+    const { container } = render(Nav, { items });
+    await scrollTo(400);
+    await scrollTo(900);
+    expect(container.querySelector("nav")!.dataset.hidden).toBe("false");
   });
 });

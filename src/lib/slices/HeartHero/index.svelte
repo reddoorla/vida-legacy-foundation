@@ -1,9 +1,11 @@
 <script lang="ts">
   import HeroBackgroundImage from "$lib/components/HeroBackgroundImage.svelte";
+  import { PORTRAIT_HERO_ASPECT } from "$lib/utils/image";
   import { PrismicLink, PrismicRichText } from "@prismicio/svelte";
   import { isFilled } from "@prismicio/client";
   import type { Content } from "@prismicio/client";
   import { TEXTURE_LQIP } from "./texture-lqip";
+  import { heartEndPct } from "./heart";
 
   let { slice }: { slice: Content.HeartHeroSlice } = $props();
 
@@ -56,7 +58,6 @@
   // So is where it sits: at rest its top is at 173 of 860 (the mask's 584px
   // leaves 276 to place, and 173 of that is 62.7%); open, it is centred.
   const HEART_START_PCT = 46.49;
-  const HEART_END_PCT = 187.2;
   const HEART_START_Y = 62.7;
   const HEART_END_Y = 50;
   const HEART_OPEN_THROUGH = 0.55; // heart fully open this far through the runway
@@ -64,6 +65,9 @@
   const CTAS_AT = 0.74;
 
   let sectionEl: HTMLElement | undefined = $state();
+  let stageEl: HTMLElement | undefined = $state();
+  let stageW = $state(0);
+  let stageH = $state(0);
   let progress = $state(0);
   let reducedMotion = $state(false);
   let frame = 0;
@@ -115,11 +119,33 @@
   // reduced-motion visitor on frame 1 would be a green field with no message
   // and nothing to act on. This is the opposite of what the image-only version
   // of this slice did — correct then, wrong the moment the hero gained copy.
+  // The open size: the comp's, or whatever this stage's shape needs — see
+  // ./heart.ts. Measured rather than chosen by a media query, because it
+  // follows the stage's aspect, and measured in BOTH modes since reduced
+  // motion lands on the open frame.
+  let endPct = $derived(heartEndPct(stageW, stageH));
+
+  $effect(() => {
+    const el = stageEl;
+    if (!el) return;
+    const measureStage = () => {
+      stageW = el.offsetWidth;
+      stageH = el.offsetHeight;
+    };
+    measureStage();
+    if (typeof ResizeObserver === "undefined") {
+      window.addEventListener("resize", measureStage);
+      return () => window.removeEventListener("resize", measureStage);
+    }
+    const ro = new ResizeObserver(measureStage);
+    ro.observe(el);
+    return () => ro.disconnect();
+  });
+
   let heartSize = $derived(
     reducedMotion
-      ? HEART_END_PCT
-      : HEART_START_PCT +
-          Math.min(progress / HEART_OPEN_THROUGH, 1) * (HEART_END_PCT - HEART_START_PCT),
+      ? endPct
+      : HEART_START_PCT + Math.min(progress / HEART_OPEN_THROUGH, 1) * (endPct - HEART_START_PCT),
   );
   let heartY = $derived(
     reducedMotion
@@ -149,7 +175,7 @@
   data-slice-variation={slice.variation}
   class="heart-hero bg-green relative isolate w-full"
 >
-  <div class="heart-hero-stage relative w-full overflow-hidden">
+  <div bind:this={stageEl} class="heart-hero-stage relative w-full overflow-hidden">
     <!-- Decorative grain. Blend + opacity live on the wrapper so they apply
          ONCE to the composited result — putting them on both layers would
          double-lighten during the cross-fade. -->
@@ -173,7 +199,14 @@
         class="heart-mask absolute inset-0"
         style="--heart-size: {heartSize}%; --heart-y: {heartY}%"
       >
-        <HeroBackgroundImage image={slice.primary.image} class="h-full w-full object-cover" />
+        <!-- portrait: a phone gets a face-aware, phone-shaped crop instead of
+             the landscape master magnified by object-cover. -->
+        <HeroBackgroundImage
+          image={slice.primary.image}
+          portrait={PORTRAIT_HERO_ASPECT}
+          portraitMedia="(max-width: 767px) and (prefers-reduced-motion: no-preference)"
+          class="h-full w-full object-cover"
+        />
       </div>
     {/if}
 

@@ -85,7 +85,10 @@
      the UA's centred fit-content box (the preflight zeroes margins, which put
      a fit-content dialog in the top-left corner). The dim + blur and the
      sheet mount inside it while open, and the Svelte transitions run on those:
-     the backdrop fades, the sheet rises in and drops out. -->
+     the backdrop fades, the sheet rises in and drops out. The transitions are
+     |global: a local intro only plays when its own {#if} toggles, and a Modal
+     that is itself created open — PersonGrid mounts one per opened bio — would
+     appear with no entrance at all. -->
 <dialog
   bind:this={dialogEl}
   onclose={handleNativeClose}
@@ -99,11 +102,11 @@
       bind:this={backdropEl}
       data-backdrop
       class="fixed inset-0 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm"
-      transition:fade={{ duration: 200 }}
+      transition:fade|global={{ duration: 200 }}
     >
       <div
         class="relative max-h-[90vh] w-full overflow-y-auto rounded-lg bg-white shadow-xl {dialogClass} {passedClasses}"
-        transition:fly={{ y: 20, duration: 300 }}
+        transition:fly|global={{ y: 20, duration: 300 }}
         onoutroend={settle}
       >
         <button

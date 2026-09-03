@@ -52,6 +52,44 @@ export function imgix(
   return u.toString();
 }
 
+/** Widths for the phone-shaped (portrait) art-directed source. A full-bleed
+ *  hero is as tall as the viewport there, so the delivered pixels must cover
+ *  a ~390–1170 CSS-pixel column at 1–3x, not the 480 the landscape ladder
+ *  would pick for the same box. */
+/** The shape a full-bleed hero takes on a phone: taller than 9:16, so
+ *  object-cover trims a little rather than leaving a gap at any handset. */
+export const PORTRAIT_HERO_ASPECT = 16 / 9;
+
+export const PORTRAIT_IMAGE_WIDTHS = [390, 480, 640, 780, 900, 1170];
+
+/**
+ * A face-aware PORTRAIT crop ladder for a Prismic (imgix) image: each
+ * candidate is cropped to `aspect` (height ÷ width) around any face imgix
+ * finds, falling back to the centre.
+ *
+ * Why: a landscape master dropped into a phone-shaped box is centre-cropped
+ * by `object-cover`, which both loses the composition (the about masthead
+ * framed the man's forehead) and magnifies whichever candidate the browser
+ * picked for the box's WIDTH — a 390px-wide file scaled 2.8x to cover a
+ * 664px-tall box. Cropping at the CDN fixes the framing and delivers real
+ * pixels.
+ *
+ * Returns `undefined` for non-Prismic URLs so the <source> can be omitted.
+ */
+export function portraitSrcset(
+  url: string | null | undefined,
+  aspect: number,
+  widths: number[] = PORTRAIT_IMAGE_WIDTHS,
+): string | undefined {
+  if (!isPrismicImageUrl(url)) return undefined;
+  return widths
+    .map(
+      (w) =>
+        `${imgix(url, { w, h: Math.round(w * aspect), fit: "crop", crop: "faces,center" })} ${w}w`,
+    )
+    .join(", ");
+}
+
 /**
  * Build a width-descriptor srcset for a Prismic image URL.
  * Returns `undefined` for non-Prismic URLs so the attribute can be omitted.
