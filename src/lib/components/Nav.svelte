@@ -104,10 +104,20 @@
     // pages fall back to the scroll offset. A page with slices keeps the
     // measured test, which is what stops the swap firing mid-hero.
     const single = main ? main.children.length < 2 : true;
-    scrolled =
-      first && !single
-        ? first.getBoundingClientRect().bottom <= NAV_HEIGHT
-        : window.scrollY > NAV_HEIGHT;
+    // The edge the bar is waiting for is the one the visitor SEES the first
+    // slice leave by — which is not the section's bottom when that section is
+    // a runway. HeartHero is 260vh of scroll driving a stage pinned at the
+    // top of the screen: its own bottom edge does not reach the bar until the
+    // stage has been gone for a screen and a half, and all that time the bar
+    // still wore the hero's cream lockup — over the cream headline of the
+    // section after it, cream on cream. So a first slice taller than the
+    // viewport is measured by where its stage releases (bottom, less one
+    // screen); anything shorter keeps its own bottom edge, which is the same
+    // number for it.
+    const box = first?.getBoundingClientRect();
+    const vh = window.innerHeight;
+    const release = box ? (box.height > vh ? box.bottom - vh : box.bottom) : 0;
+    scrolled = first && !single ? release <= NAV_HEIGHT : window.scrollY > NAV_HEIGHT;
 
     const y = window.scrollY;
     const narrow = window.matchMedia?.(MOBILE_QUERY).matches ?? false;

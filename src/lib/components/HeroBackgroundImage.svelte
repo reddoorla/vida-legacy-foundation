@@ -50,8 +50,11 @@
   const src = $derived(imgix(image?.url, { w: 1920 }));
   const candidates = $derived(srcset(image?.url));
   const portraitCandidates = $derived(portrait ? portraitSrcset(image?.url, portrait) : undefined);
-  // The <img>'s own fallback src for a phone, so a browser that ignores the
-  // <source> (or a preload racing it) still gets the cropped file.
+  // The portrait crop's own URL. It is NOT an <img> fallback — the <img>
+  // keeps the landscape master, and a browser that ignores <source> gets
+  // that. What this is for is the preload <link>: a UA without imagesrcset
+  // support reads `href`, so the narrow-viewport preload has to name one
+  // concrete file, and this is it.
   const portraitSrc = $derived(
     portrait
       ? imgix(image?.url, {

@@ -18,6 +18,24 @@
         Permissions-Policy = "camera=(), microphone=(), geolocation=(), interest-cohort=()"
         Cross-Origin-Opener-Policy = "same-origin"
 
+# Internal tooling: the fixtures page, the animation demo and the slice
+# simulator. They stay reachable — the fleet reviews deploy previews with them
+# — but they are not pages of the site, and robots.txt only asks a crawler not
+# to FETCH them: a disallowed URL still gets indexed when something external
+# links to it. This is the directive that actually keeps them out of an index.
+# The pages carry the same thing in a <meta>, so neither one is load-bearing
+# alone. If they should be gone from production altogether, a 404 rule here is
+# the launch-time step — it would also take static/dev/*.webp with it.
+[[headers]]
+    for = "/dev/*"
+    [headers.values]
+        X-Robots-Tag = "noindex, nofollow"
+
+[[headers]]
+    for = "/slice-simulator"
+    [headers.values]
+        X-Robots-Tag = "noindex, nofollow"
+
 [[headers]]
     for = "/favicon.png"
     [headers.values]
