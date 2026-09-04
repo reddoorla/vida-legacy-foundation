@@ -73,6 +73,16 @@
         .person-open-cue.person-open-cue {
           display: none;
         }
+        /* And the card has to be allowed to hold it. The leadership card is
+           `aspect-square` — a fixed height from its column width — over
+           `overflow: hidden`, so a bio longer than the square is not merely
+           tight but CUT OFF, and the fixture's one-sentence bio only fits
+           because it lands flush on the boundary. Content cannot grow a box
+           whose height comes from an aspect ratio, so the ratio goes; the
+           clip stays, because it is what rounds the corners. */
+        .person-card.person-card {
+          aspect-ratio: auto;
+        }
         /* CountUp's visible layer is a tween that starts at 0 and is never run,
            so the figure read "0 people". Show the real one instead. */
         .countup-nojs.countup-nojs {

@@ -194,15 +194,69 @@ test.describe("without JavaScript", () => {
     ).toBe(false);
   });
 
+  test("shows a person's bio on the card, where one is written", async ({ page }) => {
+    // /about carries no bios today (the board members have none, the
+    // leadership cards open on `!board` alone), so the fixtures page is the
+    // only rendered bio on the site — and the only thing that can catch the
+    // regression that matters here: a class name that stops matching app.css,
+    // which would leave the bio visible for EVERY visitor, duplicated with the
+    // pop-up, without tripping axe or a type error.
+    await page.goto("/dev/a11y-fixtures", { waitUntil: "domcontentloaded" });
+    await expect
+      .poll(
+        () =>
+          page
+            .locator(".person-bio-nojs")
+            .evaluateAll(
+              (els) => els.filter((el) => getComputedStyle(el).display !== "none").length,
+            ),
+        { message: "no bio revealed without scripts" },
+      )
+      .toBeGreaterThan(0);
+  });
+
+  test("lets the card grow to hold a bio, instead of clipping it", async ({ page }) => {
+    await page.goto("/dev/a11y-fixtures", { waitUntil: "domcontentloaded" });
+    // The leadership card is `aspect-square` over `overflow: hidden`, so its
+    // height comes from its column width and content cannot grow it — a real
+    // multi-sentence bio was cut off with no sign it was there. Measured: 166px
+    // of it hidden. The fixture's own bio is one line and fits by luck, so the
+    // test writes a realistic one before measuring.
+    const hidden = await page.evaluate(() => {
+      const long =
+        "Fifteen years coordinating transplant services across South Texas, " +
+        "and the founder of the family-support programme VLF still runs today. " +
+        "She speaks regularly on donor family advocacy throughout the region.";
+      document.querySelectorAll(".person-bio-nojs p").forEach((el) => (el.textContent = long));
+      return [...document.querySelectorAll(".person-bio-nojs")].map((bio) => {
+        const card = bio.closest("li");
+        if (!card) return -1;
+        return Math.max(
+          0,
+          Math.round(bio.getBoundingClientRect().bottom - card.getBoundingClientRect().bottom),
+        );
+      });
+    });
+    expect(hidden.length, "no bios rendered — check the fixture").toBeGreaterThan(0);
+    expect(hidden, "a bio is clipped off the bottom of its card").toEqual(hidden.map(() => 0));
+  });
+
   test("/about hides the controls that cannot open a bio", async ({ page }) => {
     await page.goto("/about", { waitUntil: "domcontentloaded" });
     // The overlay button does nothing without a script and would swallow
     // selection of the bio beneath it; the + badge promises a pop-up that
     // cannot happen. Same treatment as the nav's hamburger.
     for (const selector of ["[data-bio-toggle]", ".person-open-cue"]) {
-      const shown = await page
-        .locator(selector)
-        .evaluateAll((els) => els.filter((el) => getComputedStyle(el).display !== "none").length);
+      const all = page.locator(selector);
+      // A floor first: "none are showing" is also true of a selector that
+      // matches nothing, so a rename would retire the guard silently.
+      expect(
+        await all.count(),
+        `${selector} matches nothing — has it been renamed?`,
+      ).toBeGreaterThan(0);
+      const shown = await all.evaluateAll(
+        (els) => els.filter((el) => getComputedStyle(el).display !== "none").length,
+      );
       expect(shown, `${selector} still showing without scripts`).toBe(0);
     }
   });
@@ -244,4 +298,78 @@ test.describe("the reduced-motion phone frame", () => {
       )
       .toMatchObject({ stageCollapsed: false, coversWidth: true, coversHeight: true });
   });
+
+  test("gives PageMasthead's stage a height too", async ({ page }) => {
+    // Same shape, same media query. Nothing reads this box today, so nothing
+    // renders wrong — which is exactly why it needs a test: the next thing to
+    // measure it would inherit a zero silently, as HeartHero's heart did.
+    await page.goto("/about", { waitUntil: "load" });
+    await expect
+      .poll(
+        () =>
+          page.locator(".page-masthead-stage").evaluate((el) => el.getBoundingClientRect().height),
+        { message: "the masthead stage collapsed to nothing" },
+      )
+      .toBeGreaterThan(0);
+  });
+});
+
+test("a card's bio stays hidden while the pop-up can open it", async ({ page }) => {
+  // The other half of the coupling above. With scripts the bio belongs to the
+  // pop-up alone; display:none also keeps it out of the accessibility tree, so
+  // nobody is read it twice.
+  await page.goto("/dev/a11y-fixtures", { waitUntil: "load" });
+  const bios = page.locator(".person-bio-nojs");
+  expect(await bios.count(), "the fixtures page no longer renders a bio").toBeGreaterThan(0);
+  // Polled: the suite runs against a dev server, where app.css can land after
+  // `load`, so a single read catches the moment before the rule applies and
+  // fails for the wrong reason. A class name that never matches still fails —
+  // it just takes the timeout to do it.
+  await expect
+    .poll(
+      () =>
+        bios.evaluateAll(
+          (els) => els.filter((el) => getComputedStyle(el).display !== "none").length,
+        ),
+      { message: "a card bio is visible even though scripts can open the pop-up" },
+    )
+    .toBe(0);
+});
+
+test("a stat paints one figure, not both of its candidates", async ({ page }) => {
+  // The CountUp half of the same coupling. A class name that drifts out of
+  // step with app.css leaves both layers painted — "100,000+ 100,000+" on
+  // every stat — and NOTHING else sees it: the unit suite stays green, and so
+  // do the no-JS tests, because with no script the noscript rule hides
+  // .countup-live and the renamed layer is the only thing showing. It only
+  // breaks with scripts ON, which is every real visitor. This was not a
+  // hypothetical; a renamed class reached a commit on this branch.
+  await page.goto("/", { waitUntil: "load" });
+  const band = page.locator('[data-slice-type="stats_band"]');
+  const roots = band.locator(".countup-live");
+  expect(await roots.count(), "no CountUp in the stats band — check the selector").toBeGreaterThan(
+    0,
+  );
+
+  // Counted by what is PAINTED, not by class name. Naming `.countup-nojs` in
+  // the selector was the first attempt and it passed the mutation happily: a
+  // renamed class simply stopped matching, so the test measured one element
+  // and found one. Every candidate is an aria-hidden child of the same
+  // wrapper, so counting those catches a rename to anything at all.
+  await expect
+    .poll(
+      () =>
+        roots.evaluateAll((els) =>
+          els.map(
+            (live) =>
+              [...(live.parentElement?.children ?? [])].filter(
+                (c) =>
+                  c.getAttribute("aria-hidden") === "true" &&
+                  getComputedStyle(c).display !== "none",
+              ).length,
+          ),
+        ),
+      { message: "a stat is painting more than one figure" },
+    )
+    .toEqual(await roots.evaluateAll((els) => els.map(() => 1)));
 });
