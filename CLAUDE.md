@@ -149,13 +149,11 @@ What is NOT done, in the order it blocks things:
    release sees its own links.
 3. The Netlify site is up and `FORMS_INGEST_URL` / `FORMS_INGEST_TOKEN` are
    set — `/health` reports `{"ok":true,"prismic":"ok"}` with both true.
-   `PUBLIC_TURNSTILE_SITE_KEY` is not set, so `TurnstileWidget` renders
-   nothing and the timing screen plus the honeypot are the whole anti-bot
-   story. **Nobody at VLF receives a contact submission yet**: ingest routes
-   to the operator, and the Airtable Websites row needs a real VLF point of
-   contact before launch — `reddoor-maint forms-notify-target
-vida-legacy-foundation` must print a vidalegacy.org address, not the
-   operator's.
+   **Turnstile is live as of 2026-09-04** (below). **Nobody at VLF receives a
+   contact submission yet**: ingest routes to the operator, and the Airtable
+   Websites row needs a real VLF point of contact before launch —
+   `reddoor-maint forms-notify-target vida-legacy-foundation` must print a
+   vidalegacy.org address, not the operator's.
 4. **The donation form ships hidden.** `DonationForm` (Figma `5328:1611`)
    keeps the comp's form behind a `show_form` Boolean that defaults to off:
    the donate page renders the heading and intro with two buttons out to
@@ -174,6 +172,55 @@ vida-legacy-foundation` must print a vidalegacy.org address, not the
    is our form → a Netlify function → Stripe or PayPal → LGL's REST API
    (`POST /api/v1/constituents/{id}/gifts`, API key from Settings →
    Integration settings).
+
+## Turnstile is on, and the sitekey is not interchangeable
+
+`PUBLIC_TURNSTILE_SITE_KEY` is set on Netlify to Cloudflare widget **"Site
+Forms 3"** (`0x4AAAAAAEnswC9BSsKnj_T7` — a sitekey is public, it ships in the
+page). `TurnstileWidget` therefore renders on the contact form and the modal,
+and central verifies the token with that widget's secret
+(`TURNSTILE_SECRET_KEY_3` on the reddoor-maintenance deploy). Verified
+end to end on 2026-09-04: the page mints a 773-char token, `siteverify`
+returns `success: true` for `vida-legacy-foundation-rd.netlify.app`, and a
+real submission landed centrally as `status: new`, `spam_score: 0`,
+`notify_status: sent`.
+
+**A widget is bound to a hostname list, and getting that wrong fails silently
+in the worst direction.** A sitekey served from a host its widget does not
+list throws an uncaught `TurnstileError … 110200`, renders no iframe and mints
+**no token at all** — and `/health` still reports `forms.turnstile: true`,
+because that is a truthiness check on the env var and nothing more. It
+happened here first: the obvious move is to copy `TURNSTILE_SITE_KEY_1` out of
+reddoor-maintenance's `.env`, and that widget ("Forms 1") has been **full at
+Cloudflare's 10-hostname cap** for weeks. Hence a third widget rather than the
+fleet's last free slot. The fleet-side half of this is
+[#689](https://github.com/reddoorla/reddoor-maintenance/issues/689) /
+[#691](https://github.com/reddoorla/reddoor-maintenance/pull/691): the
+`Turnstile widget` column no longer writes `pass` from an env var, and the
+runbook is `docs/runbooks/turnstile-widgets.md` in that repo.
+
+**At launch, adding the custom domain breaks Turnstile until the widget knows
+it.** `vidalegacy.org` and `www.vidalegacy.org` are two more hostnames and
+must be added to "Site Forms 3" as part of the DNS cutover, not after it.
+
+Two things about testing it, both of which cost an afternoon:
+
+- **An automated browser cannot solve the real widget.** Cloudflare answers a
+  CDP-driven Chromium with error **600010** even when the configuration is
+  perfect — the known-good `reddoorla.com` canary reports exactly the same
+  thing under the same harness, and Playwright's own Chromium does too, headed
+  or not. That is why `form-e2e` swaps in Cloudflare's always-pass test
+  sitekey. What automation _can_ check is that the error is **not 110200**,
+  which is the one that means the hostname is wrong.
+- **The smoke suite used to discard this by name.** `ALLOWED_CONSOLE_PATTERNS`
+  was applied to `pageerror` as well as console output, so the uncaught
+  `TurnstileError` never failed a run. `tests/smoke/pages.spec.ts` now keeps a
+  separate `ALLOWED_PAGEERROR_PATTERNS` that does not list Turnstile: console
+  telemetry stays allowed, a throw does not.
+
+CSP needs nothing further — `challenges.cloudflare.com` is already in
+`script-src` and `frame-src` in `svelte.config.js`, and `connect-src` does not
+need it (the challenge runs in Cloudflare's own iframe, under its own origin).
 
 ## Brand colours — two of them cannot hold text
 
