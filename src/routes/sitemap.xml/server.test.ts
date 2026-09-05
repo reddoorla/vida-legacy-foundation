@@ -5,15 +5,24 @@ import { LANGS, LOCALIZED_STATIC_ROUTES, localizePath } from "$lib/locale";
 // The route calls `createClient` itself rather than taking one, so the module is
 // the seam. `isPlaceholderRepo` is a const export, so each test rewrites it
 // through the mocked module object.
-const prismicio = vi.hoisted(() => ({ isPlaceholderRepo: false, pages: [] as unknown[] }));
+const prismicio = vi.hoisted(() => ({
+  isPlaceholderRepo: false,
+  pages: [] as unknown[],
+  getAllByType: vi.fn(),
+}));
 vi.mock("$lib/prismicio", () => ({
   get isPlaceholderRepo() {
     return prismicio.isPlaceholderRepo;
   },
-  createClient: () => ({ getAllByType: async () => prismicio.pages }),
+  createClient: () => ({
+    getAllByType: async (...args: unknown[]) => {
+      prismicio.getAllByType(...args);
+      return prismicio.pages;
+    },
+  }),
 }));
 
-const { GET } = await import("./+server");
+const { GET, prerender } = await import("./+server");
 
 const page = (uid: string, lang: string) => ({
   uid,
@@ -21,18 +30,20 @@ const page = (uid: string, lang: string) => ({
   last_publication_date: "2026-09-01T00:00:00Z",
 });
 
-const render = async () => {
-  const res = await (GET as unknown as (e: { fetch: typeof fetch; url: URL }) => Promise<Response>)(
-    { fetch, url: new URL("https://vidalegacy.org/sitemap.xml") },
-  );
-  return res.text();
-};
+const respond = async () =>
+  (GET as unknown as (e: { fetch: typeof fetch; url: URL }) => Promise<Response>)({
+    fetch,
+    url: new URL("https://vidalegacy.org/sitemap.xml"),
+  });
+
+const render = async () => (await respond()).text();
 
 const locs = (xml: string) => [...xml.matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => m[1]);
 
 beforeEach(() => {
   prismicio.isPlaceholderRepo = false;
   prismicio.pages = [];
+  prismicio.getAllByType.mockClear();
 });
 
 describe("sitemap.xml", () => {
@@ -94,5 +105,41 @@ describe("sitemap.xml", () => {
     expect(xml).toContain('<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">');
     expect(xml.trimEnd().endsWith("</urlset>")).toBe(true);
     expect(xml.match(/<url>/g)).toHaveLength(xml.match(/<\/url>/g)?.length ?? 0);
+  });
+  // Both added after the 2026-09-05 mutation audit, where each survived: the
+  // route was asserted entirely through its XML string, so nothing outside the
+  // body was ever read.
+  it("is served as XML, with a body", async () => {
+    prismicio.pages = [page("home", "en-us")];
+    const res = await respond();
+    // Deleting the header survived, and a sitemap served as text/html is one
+    // crawlers may decline to parse.
+    expect(res.headers.get("content-type")).toBe("application/xml");
+    // And blanking the joined <url> list survived too — a well-formed, valid,
+    // completely empty sitemap.
+    expect(locs(await res.text()).length).toBeGreaterThan(0);
+  });
+
+  it("is prerendered", () => {
+    // Flipping this to false survived. The sitemap would still be correct, and
+    // it would become a Netlify function invoked on every crawl instead of a
+    // file — the kind of regression that shows up on a bill, not in a test.
+    expect(prerender).toBe(true);
+  });
+  it("asks Prismic for every locale, not just the master one", async () => {
+    // The mocked client ignores its arguments, so blanking the type name or
+    // dropping `lang: "*"` both survived the 2026-09-05 audit while every
+    // assertion above stayed green. Without the wildcard the sitemap silently
+    // becomes English-only — a whole locale missing, and nothing red.
+    prismicio.pages = [page("home", "en-us")];
+    await render();
+    expect(prismicio.getAllByType).toHaveBeenCalledWith("page", { lang: "*" });
+  });
+
+  it("renders a page document with no uid at the locale root", async () => {
+    // `page.uid ?? "home"`: Prismic's uid is nullable in the type, and the
+    // fallback had no coverage at all.
+    prismicio.pages = [{ uid: null, lang: "es-mx", last_publication_date: "2026-09-01T00:00:00Z" }];
+    expect(locs(await render())).toContain("https://vidalegacy.org/es");
   });
 });

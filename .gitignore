@@ -32,5 +32,10 @@ dist/
 .vitest-cache/
 .tsbuildinfo
 
+# Mutation-audit output. `pnpm test:mutate` is a session tool, deliberately
+# outside `pnpm verify` and CI — see docs/mutation-audit.md.
+.stryker-tmp/
+reports/mutation/
+
 # The operator's local notes — never part of a public repo (see CLAUDE.md).
 NOTES.md
