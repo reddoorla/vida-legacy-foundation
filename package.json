@@ -17,6 +17,7 @@
     "test:unit:watch": "vitest",
     "test:smoke": "playwright install chromium && playwright test",
     "test:a11y": "reddoor-maint audit --only a11y --fail-on-violations",
+    "test:mutate": "stryker run",
     "slicemachine": "start-slicemachine"
   },
   "reddoor": {
@@ -36,6 +37,8 @@
     "@eslint/js": "^10.0.1",
     "@playwright/test": "^1.60.0",
     "@slicemachine/adapter-sveltekit": "^0.3.96",
+    "@stryker-mutator/core": "^10.0.0",
+    "@stryker-mutator/vitest-runner": "^10.0.0",
     "@sveltejs/adapter-netlify": "^6.0.4",
     "@sveltejs/kit": "^2.61.1",
     "@sveltejs/vite-plugin-svelte": "^7.1.2",

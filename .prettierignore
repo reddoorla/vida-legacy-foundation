@@ -12,5 +12,11 @@ src/prismicio-types.d.ts
 docs/superpowers/
 scratchpad/
 
+# Mutation-audit output (see docs/mutation-audit.md). Gitignored, but present
+# on disk after a run, and `stryker run` leaves .stryker-tmp behind if it is
+# interrupted — where an unignored sandbox copy of src/ reds the whole gate.
+.stryker-tmp/
+reports/
+
 # Local notes, untracked.
 NOTES.md
