@@ -92,6 +92,12 @@ for (const [slug, id] of Object.entries(frames)) {
         ls: s.letterSpacing,
         case: s.textCase,
         align: s.textAlignHorizontal,
+        // "CAP_HEIGHT" when Figma trims the box to cap height and baseline;
+        // absent otherwise. The box height above is then ~0.70em, not the
+        // line-height, and every gap the comp specifies from this node is
+        // cap-to-baseline. Without this field the harness records the
+        // trimmed box and cannot say why — see docs/figma-cap-height-trim.md.
+        trim: s.leadingTrim ?? null,
       };
     }
     nodes.push(rec);

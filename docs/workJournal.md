@@ -617,3 +617,94 @@ the forward-pointer paragraph: its `CLAUDE.md` had uncommitted changes modified
 two hours earlier, and moving the remote branch under a possibly-live session is
 exactly what the concurrent-sessions rule exists to prevent. It needs one small
 follow-up once that work lands.
+
+## 2026-09-05 (evening) — CLAUDE.md split, uiMatch tried for real, and the trim turns out to be per style (#64, #65)
+
+Three of the review's own recommendations, done the same day, plus the fix for
+a failure that had nothing to do with this site.
+
+**CLAUDE.md is 297 lines, from 1,006 (#64).** Every moved section went verbatim
+into `docs/` — brand, layout, rendering, locales, forms are new; security and
+accessibility took appended sections — because the review's finding was that
+the corpus is the asset and the always-on file is the cost. What stays is what
+a session must not violate, plus twelve one-line site rules under Traps, each
+linking to its evidence. The split ran as a script with line accounting and
+failed once: the `## 2026-09-04` _example_ inside the journal section's code
+fence parsed as a heading. Nothing had been written; the parser is fence-aware
+now. One thing surfaced by doing it: the a11y-gate paragraphs had lived inside
+"Brand colours" since the day they were written, because contrast is what axe
+measures. They are in accessibility.md, where a session looking for the gate
+would look.
+
+**uiMatch, evaluated by running it, not by reading about it.** 0.4.0 from npm
+(1,429 downloads last month; 15 stars; "Experimental / 0.x … not
+production-ready" in its own README; last npm publish 22 July, repo pushed
+today). Against this site's production build, three comparisons.
+
+Every first run failed on `UIMATCH_IMAGE_SIZE_MISMATCH`, for two reasons that
+are not in the quick start: the default is `size=strict`, and the viewport is
+derived from the Figma render's _pixel_ width — 2880 for a 1440 frame at 2× —
+so the implementation was captured at 5760. `viewport=1440x860 size=pad` is the
+incantation. Twenty minutes to learn it.
+
+With it: the nav scored 31/100 at 96.5% pixel diff, which is the ground — the
+Figma node is exported on cream and ours is transparent over the green hero —
+plus the EN | ES toggle the comp does not have. The tool cannot separate "wrong
+ground" from "wrong layout". The donate page scored 69 with a **46.1% area gap**,
+and that one is _correct_: the comp draws the on-page form, we ship it hidden
+behind `show_form`, and the gate failed on exactly the deliberate difference it
+should fail on. Then the part that decides it: the only typography finding on
+the page's `<h1>` was `font-family: "pragmatica-extended…" vs "Pragmatica
+Extended"` — Adobe Fonts' slug against Figma's display name, flagged
+`autoFixable: true`. A false positive, and **no size, line-height, tracking or
+position delta of any kind.** Its style layer is a computed-CSS string compare;
+`styleFidelityScore: 0` on a page that is a few pixels off.
+
+Two more, both about this site rather than the tool. `textMode=descendants`
+collected "Español Español Who We Are Donate Contact Us Become a Donor" from the
+nav — the no-JS menu list, in the DOM and hidden — while the Figma side was
+empty, because the wordmark is vector. And a screenshot of `main` contains the
+**footer**, because `main::after` grows by `--footer-h` and `main + footer` is
+pulled up over that spacer for the sticky cover. Any element-screenshot tool
+inherits that here.
+
+Verdict: a pixel regression gate with exit codes, which works and which we do
+not have; not a typographic diagnosis, which we do have and it does not. The
+review's "commodity" line was half right — the score-and-gate half is
+commoditised; the per-run cap-height-aware comparison is not in it. Not adopted:
+for three pages the setup traps cost more than the gate returns, and it has no
+component surface to point at. Revisit at 1.x, or if the slice simulator ever
+serves stable URLs. A forward pointer sits on the review's harness section.
+
+**The trim is per style, not per family — and the API says so.** Pulling the
+donation and home frames from the REST API today and grouping single-line text
+nodes by style: Pragmatica Extended 300 at 60px reports a **42px** box on an
+81px line-height; 36px → 25; 18px → 13; 12px → 8. Ratio 0.667–0.722, which is
+the face's cap height (≈0.70em) rounded to whole-pixel boxes. Each carries
+`style.leadingTrim: "CAP_HEIGHT"`. And the 10px field labels are Pragmatica
+Extended too, box = 15 = line-height, no `leadingTrim`. CLAUDE.md said "Figma
+trims its Pragmatica Extended text boxes" from day three until this afternoon;
+the belief was one level too coarse. **The harness did not record the field.**
+`pull-figma.mjs` saw the 42px box and could not say why; it records `trim` now,
+here and in the starter.
+
+`text-box: trim-both cap alphabetic` — the CSS side, already in six `t-*`
+utilities — reached Baseline newly-available in late August: Chrome/Edge 133,
+Safari 18.2, Firefox 154 (18 August 2026). Two weeks ago. The write-up is
+[figma-cap-height-trim.md](./figma-cap-height-trim.md), built entirely from
+today's measurements so it can be published without a caveat.
+
+**And the archived-repo failure, fixed where it recurs.** Three sessions have
+run a fleet sweep to completion and found at push time that `reddoor-mailer`
+and `the-pointe` reject writes — and this one reported the cause wrongly as
+"dead remotes"; both remotes answer, both repos are archived, and from inside a
+clone those look identical. `scripts/fleet-repos.sh` in reddoor-maintenance
+(#701) answers it before the work: one `gh repo list` per owner, 3.9s for 39
+checkouts, bash 3.2 because that is what macOS ships. A five-line
+`~/.claude/CLAUDE.md` points at it, so a session in a site repo learns it too.
+The script also found that the checkout `welcome-to-the-flower-court` is
+`tucksravin/invitations` — directory and repository names are not the same
+thing, and a sweep assuming they are addresses the wrong repo.
+
+**Not done.** `a-budget` still lacks the forward-pointer paragraph, for the same
+reason as this morning.
