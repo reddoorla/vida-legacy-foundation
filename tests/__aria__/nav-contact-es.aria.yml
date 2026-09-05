@@ -1,0 +1,9 @@
+- navigation:
+  - link "Inicio de Vida Legacy Foundation":
+    - /url: /es
+    - img "Inicio de Vida Legacy Foundation"
+  - group "Idioma":
+    - link "EN ES":
+      - /url: /contact
+    - text: English
+  - button "Abrir el menú"

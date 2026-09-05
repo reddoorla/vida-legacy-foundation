@@ -1,0 +1,9 @@
+- navigation:
+  - link "Vida Legacy Foundation home":
+    - /url: /
+    - img "Vida Legacy Foundation home"
+  - group "Language":
+    - link "EN ES":
+      - /url: /es/contact
+    - text: Español
+  - button "Open menu"

@@ -12,6 +12,12 @@ src/prismicio-types.d.ts
 docs/superpowers/
 scratchpad/
 
+# Aria snapshots, written by `playwright test --update-snapshots`. Formatting
+# them puts prettier and Playwright in a permanent fight: the next regeneration
+# writes Playwright's shape back and reds `prettier --check` again. Same reason
+# as prismicio-types.d.ts above — generated, not hand-authored.
+tests/__aria__/
+
 # Mutation-audit output (see docs/mutation-audit.md). Gitignored, but present
 # on disk after a run, and `stryker run` leaves .stryker-tmp behind if it is
 # interrupted — where an unignored sandbox copy of src/ reds the whole gate.

@@ -126,107 +126,24 @@ test("404 page renders the custom error component", async ({ page }) => {
   expect(errors).toEqual([]);
 });
 
-// The two runway stages open on scroll progress that only a script computes,
-// so without one they render frame 0: a green field with the photograph in its
-// closed shape and the page's only <h1> at opacity 0. The text is in the
-// markup, so a crawler and a screen reader are fine and nothing else in the
-// suite can see the problem — this is measured from the rendered box.
+// What is left here is the half of the no-JS work that is genuinely ONE-SIDED:
+// a control that cannot function must be hidden, and a card must be able to
+// grow around a bio it is now the only home for. Neither has a meaningful
+// with-scripts counterpart.
 //
-// The <noscript><style> in src/app.html is what fixes it, and app-html.test.ts
-// holds its shape. This holds the thing that actually matters: a visitor with
-// no scripts can read the page.
+// The invariants that hold in every rendering state — the heading is painted,
+// the runway is not 260vh, the stats are not zeros, one figure per stat, one
+// bio per card — moved to tests/smoke/rendering.spec.ts, where the projects in
+// playwright.config.ts run them in four cells instead of the single cell each
+// was discovered in.
 test.describe("without JavaScript", () => {
   // Scripts off AND reduced motion off. The shared config forces
   // `reducedMotion: "reduce"` on every test, and that alone collapses both
-  // runways through the components' own media query — so the runway assertion
-  // below would pass on a page with no fix at all. (The opacity assertion is
-  // real either way: neither reduced-motion block ever sets opacity, so the
-  // copy stays hidden. It only LOOKED vacuous at first because it was reading
-  // the h1 instead of its .reveal wrapper.)
+  // runway stages through the components' own media query — so a no-JS test
+  // that inherits it can pass against a page with no fix at all.
   test.use({
     javaScriptEnabled: false,
     contextOptions: { reducedMotion: "no-preference" },
-  });
-
-  for (const { path, name } of [
-    { path: "/", name: "HeartHero" },
-    { path: "/about", name: "PageMasthead" },
-    { path: "/es", name: "HeartHero (es)" },
-  ]) {
-    test(`${path} shows its heading and does not leave a runway (${name})`, async ({ page }) => {
-      await page.goto(path, { waitUntil: "domcontentloaded" });
-
-      const h1 = page.locator("#main-content h1").first();
-      await expect(h1, `no <h1> rendered on ${path}`).toBeAttached();
-
-      // The opacity is on the .reveal ANCESTOR, and opacity does not inherit
-      // as a computed value — getComputedStyle(h1).opacity reads 1 even while
-      // the heading is completely invisible, and toBeVisible() passes at
-      // opacity 0 too, since both look at the box rather than the paint. Ask
-      // the element that actually carries it.
-      // `?? el` would be a silent pass: opacity does not inherit as a computed
-      // value, so the h1's own is 1 whatever its wrapper does. If the .reveal
-      // ancestor ever moves, this must fail loudly rather than read the wrong
-      // element — hence the null, and the assertion on it.
-      const painted = await h1.evaluate((el) => {
-        const box = el.closest(".reveal");
-        return box ? getComputedStyle(box).opacity : null;
-      });
-      expect(
-        painted,
-        `no .reveal wrapper around the <h1> on ${path} — check the selector`,
-      ).not.toBeNull();
-      expect(painted, `the only <h1> on ${path} is invisible without scripts`).toBe("1");
-
-      // And the band must not still be the 260vh runway: with nothing to drive
-      // it, that is two and a half screens of one unchanging frame.
-      const runway = await page
-        .locator("#main-content > section")
-        .first()
-        .evaluate((el) => el.getBoundingClientRect().height / window.innerHeight);
-      expect(runway, `${path} still renders a scroll runway without scripts`).toBeLessThan(1.2);
-    });
-  }
-  test("/ shows the real figures, not the count's starting zeros", async ({ page }) => {
-    await page.goto("/", { waitUntil: "domcontentloaded" });
-    // CountUp's visible layer is a tween starting at 0 that no script runs, so
-    // the band read "0+", "0 people", "0%", "0 lives" — not merely unanimated
-    // but wrong. The sr-only layer always carried the truth, which is exactly
-    // why nothing else in the suite could see this.
-    const figures = await page
-      .locator('[data-slice-type="stats_band"] [aria-hidden="true"]')
-      .evaluateAll((els) =>
-        els
-          .filter((el) => getComputedStyle(el).display !== "none")
-          .map((el) => (el.textContent ?? "").trim())
-          .filter(Boolean),
-      );
-    expect(figures.length, "no stat figures found — check the selector").toBeGreaterThan(0);
-    expect(
-      figures.some((f) => /^0\b/.test(f)),
-      `stats still reading zero: ${figures}`,
-    ).toBe(false);
-  });
-
-  test("shows a person's bio on the card, where one is written", async ({ page }) => {
-    // /about carries no bios today (the board members have none, the
-    // leadership cards open on `!board` alone), so the fixtures page is the
-    // only rendered bio on the site — and the only thing that can catch the
-    // regression that matters here: a class name that stops matching app.css,
-    // which would leave the bio visible for EVERY visitor, duplicated with the
-    // pop-up, without tripping axe or a type error.
-    await page.goto("/dev/a11y-fixtures", { waitUntil: "domcontentloaded" });
-    await expect
-      .poll(
-        () =>
-          page
-            .locator(".person-bio-nojs")
-            .evaluateAll(
-              (els) => els.filter((el) => getComputedStyle(el).display !== "none").length,
-            ),
-        { message: "no bio revealed without scripts" },
-      )
-      .toBeGreaterThan(0);
   });
 
   test("lets the card grow to hold a bio, instead of clipping it", async ({ page }) => {
@@ -274,116 +191,4 @@ test.describe("without JavaScript", () => {
       expect(shown, `${selector} still showing without scripts`).toBe(0);
     }
   });
-});
-
-test.describe("the reduced-motion phone frame", () => {
-  test.use({ viewport: { width: 390, height: 664 } });
-
-  test("opens the heart far enough to cover the band", async ({ page }) => {
-    await page.goto("/", { waitUntil: "load" });
-
-    // Polled, not measured once: the size is written by an effect after
-    // hydration, and `load` fires well before that on the dev server the suite
-    // runs against — a single read returns the server's closed frame and fails
-    // for the wrong reason.
-    await expect
-      .poll(
-        () =>
-          page.locator(".heart-hero").evaluate((section) => {
-            const stage = section.querySelector(".heart-hero-stage") as HTMLElement;
-            const mask = section.querySelector(".heart-mask") as HTMLElement;
-            const band = section.getBoundingClientRect();
-            const box = mask.getBoundingClientRect();
-            // The mask is a percentage of its own box's width, and the art
-            // keeps the file's aspect — heart.ts's HEART_ART_RATIO.
-            const size = getComputedStyle(mask).maskSize;
-            const artW = size.includes("%")
-              ? (parseFloat(size) / 100) * box.width
-              : parseFloat(size);
-            return {
-              // The root cause, asserted directly: with no height on the stage
-              // there is nothing for heartEndPct to read.
-              stageCollapsed: stage.getBoundingClientRect().height === 0,
-              coversWidth: artW >= band.width,
-              coversHeight: artW / (669.436 / 584) >= band.height,
-            };
-          }),
-        { message: "the open heart never covered the band on a reduced-motion phone" },
-      )
-      .toMatchObject({ stageCollapsed: false, coversWidth: true, coversHeight: true });
-  });
-
-  test("gives PageMasthead's stage a height too", async ({ page }) => {
-    // Same shape, same media query. Nothing reads this box today, so nothing
-    // renders wrong — which is exactly why it needs a test: the next thing to
-    // measure it would inherit a zero silently, as HeartHero's heart did.
-    await page.goto("/about", { waitUntil: "load" });
-    await expect
-      .poll(
-        () =>
-          page.locator(".page-masthead-stage").evaluate((el) => el.getBoundingClientRect().height),
-        { message: "the masthead stage collapsed to nothing" },
-      )
-      .toBeGreaterThan(0);
-  });
-});
-
-test("a card's bio stays hidden while the pop-up can open it", async ({ page }) => {
-  // The other half of the coupling above. With scripts the bio belongs to the
-  // pop-up alone; display:none also keeps it out of the accessibility tree, so
-  // nobody is read it twice.
-  await page.goto("/dev/a11y-fixtures", { waitUntil: "load" });
-  const bios = page.locator(".person-bio-nojs");
-  expect(await bios.count(), "the fixtures page no longer renders a bio").toBeGreaterThan(0);
-  // Polled: the suite runs against a dev server, where app.css can land after
-  // `load`, so a single read catches the moment before the rule applies and
-  // fails for the wrong reason. A class name that never matches still fails —
-  // it just takes the timeout to do it.
-  await expect
-    .poll(
-      () =>
-        bios.evaluateAll(
-          (els) => els.filter((el) => getComputedStyle(el).display !== "none").length,
-        ),
-      { message: "a card bio is visible even though scripts can open the pop-up" },
-    )
-    .toBe(0);
-});
-
-test("a stat paints one figure, not both of its candidates", async ({ page }) => {
-  // The CountUp half of the same coupling. A class name that drifts out of
-  // step with app.css leaves both layers painted — "100,000+ 100,000+" on
-  // every stat — and NOTHING else sees it: the unit suite stays green, and so
-  // do the no-JS tests, because with no script the noscript rule hides
-  // .countup-live and the renamed layer is the only thing showing. It only
-  // breaks with scripts ON, which is every real visitor. This was not a
-  // hypothetical; a renamed class reached a commit on this branch.
-  await page.goto("/", { waitUntil: "load" });
-  const band = page.locator('[data-slice-type="stats_band"]');
-  const roots = band.locator(".countup-live");
-  expect(await roots.count(), "no CountUp in the stats band — check the selector").toBeGreaterThan(
-    0,
-  );
-
-  // Counted by what is PAINTED, not by class name. Naming `.countup-nojs` in
-  // the selector was the first attempt and it passed the mutation happily: a
-  // renamed class simply stopped matching, so the test measured one element
-  // and found one. Every candidate is an aria-hidden child of the same
-  // wrapper, so counting those catches a rename to anything at all.
-  await expect
-    .poll(
-      () =>
-        roots.evaluateAll((els) =>
-          els.map(
-            (live) =>
-              [...(live.parentElement?.children ?? [])].filter(
-                (c) =>
-                  c.getAttribute("aria-hidden") === "true" &&
-                  getComputedStyle(c).display !== "none",
-              ).length,
-          ),
-        ),
-      { message: "a stat is painting more than one figure" },
-    )
-    .toEqual(await roots.evaluateAll((els) => els.map(() => 1)));
 });
