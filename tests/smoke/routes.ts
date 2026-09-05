@@ -51,4 +51,23 @@ export const smokeRoutes: SmokeRoute[] = [
   // chrome render without console errors.
   { path: "/contact", name: "contact", hydrationMarker: "footer" },
   { path: "/es/contact", name: "contact (es)", hydrationMarker: "footer" },
+  // VLF's published pages, both locales. These are Prismic-backed, so unlike
+  // the three above they COUPLE this file to publish state: `entries()`
+  // (src/lib/prerender-entries.ts) deliberately enumerates only what is
+  // published, so an unpublished translation never 404s the build — but a
+  // route listed here that is later unpublished turns the smoke run red
+  // instead. That is the signal we want: on this site an unpublished page is
+  // an incident, not a routine authoring state, and the chrome links to
+  // /about and /donate by page reference.
+  //
+  // They were missing until 2026-09-04, which meant five of the site's eight
+  // real routes — including BOTH Spanish content pages — got none of the
+  // suite's assertions. The head-emission bug in `src/app.html` (see CLAUDE.md)
+  // is exactly the class this catches, and it would have shipped on /about
+  // undetected.
+  { path: "/es", name: "home (es)", hydrationMarker: "footer" },
+  { path: "/about", name: "who we are", hydrationMarker: "footer" },
+  { path: "/es/about", name: "who we are (es)", hydrationMarker: "footer" },
+  { path: "/donate", name: "donate", hydrationMarker: "footer" },
+  { path: "/es/donate", name: "donate (es)", hydrationMarker: "footer" },
 ];

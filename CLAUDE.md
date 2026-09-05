@@ -149,11 +149,19 @@ What is NOT done, in the order it blocks things:
    release sees its own links.
 3. The Netlify site is up and `FORMS_INGEST_URL` / `FORMS_INGEST_TOKEN` are
    set — `/health` reports `{"ok":true,"prismic":"ok"}` with both true.
-   **Turnstile is live as of 2026-09-04** (below). **Nobody at VLF receives a
-   contact submission yet**: ingest routes to the operator, and the Airtable
-   Websites row needs a real VLF point of contact before launch —
-   `reddoor-maint forms-notify-target vida-legacy-foundation` must print a
-   vidalegacy.org address, not the operator's.
+   **Turnstile is live as of 2026-09-04** (below). Contact submissions notify
+   the operator today, and that is the pre-launch guard working, **not** a
+   configuration gap: the site record already carries a real `@vidalegacy.org`
+   point of contact, and `resolveRecipients` short-circuits on
+   `status !== "maintained"` BEFORE it ever reads that field. So
+   `reddoor-maint forms-notify-target vida-legacy-foundation` printing
+   `OPERATOR ONLY` is structurally incapable of naming the client while the
+   site is `building` — do not read it as "the contact is missing", which an
+   earlier version of this file did. Nobody has to remember the flip either:
+   `updateLaunched` sets the status the moment the launch report sends, and
+   notifications start reaching VLF on their own. (Turso is authoritative for
+   the site record — Airtable is a legacy shadow write, not the source of
+   truth.)
 4. **The donation form ships hidden.** `DonationForm` (Figma `5328:1611`)
    keeps the comp's form behind a `show_form` Boolean that defaults to off:
    the donate page renders the heading and intro with two buttons out to
@@ -286,17 +294,40 @@ comp's own 282.5px column, so it wraps even in the comp's frame — and the
 pill's 40px min-height swallows both lines without growing.
 
 `pnpm test:a11y` gates all of this, so a regression fails CI rather than
-shipping — **but read what it actually audits before trusting it.** The gate's
-route list is the fleet's default and this repo adds nothing to it
-(`pkg.reddoor.a11yRoutes` is absent), so axe runs over `/dev/a11y-fixtures`
-and `/dev/animate-in` and nothing else; `/` is only visited for a hydration
-smoke. No real page of the site is measured. That is why the fixtures page
-carries in-flow renders of the chrome — the nav in all three tones over the
-grounds each one really sits on, the open menu, the Spanish chrome and the
-contact panel — because those are the only way those palettes reach axe at
-all. Anything you add to a slice reaches the gate ONLY if you add it there
-too. Do not assign `--color-green` or `--color-coral` to text in a slice and
-assume review will catch it.
+shipping. **Since 2026-09-04 it audits the real site as well as the fixtures**:
+`pkg.reddoor.a11yRoutes` in `package.json` lists all eight published routes and
+those APPEND to the fleet's two dev fixtures rather than replacing them. Until
+then the gate ran over `/dev/a11y-fixtures` and `/dev/animate-in` and nothing
+else, and no real page of the site was ever measured — the fleet's own comment
+(`a11y.ts`) records why that key exists: scanning only fixtures let a critical
+image-alt violation ship to five production pages with CI green. All eight
+routes measured 0 violations when the key was added, so it gates a clean state
+rather than opening a to-do.
+
+**The pass summary undercounts, and it will tell you the key did not work.** It
+reads `a11y: 0 violations across 2 routes` no matter how many routes ran — the
+fleet's summary string is built from the FIXTURE list's length, not the merged
+one (`a11y.ts`, the `status === "pass"` branch). The audit really did visit all
+ten. To see the truth, catch the generated spec while it runs: the audit writes
+`.reddoor-a11y-spec-*/a11y.spec.ts` in the repo root and deletes it in a
+`finally`, so poll for it from a second shell and read its `const pages = [...]`.
+
+Two consequences to know before touching it. It makes CI **content-dependent** —
+the audit renders real Prismic content, so an authored change can now fail the
+build, which is the point but is new. And the audit's synthesized config does
+NOT emulate reduced motion, so `/` and `/about` are scanned at runway frame 0:
+any future contrast work on the hero's closed-heart state is now gated, which
+is right, since frame 0 is what a no-JS visitor and a mid-scroll visitor see.
+
+The fixtures page still earns its keep, and is still where a NEW palette has to
+go. It carries in-flow renders of the chrome — the nav in all three tones over
+the grounds each one really sits on, the open menu, the Spanish chrome and the
+contact panel — and of both `PersonGrid` card designs, none of which the eight
+routes reach: the real nav is transparent over a hero, the menu is not in the
+DOM until opened, and `/about` ships bio-only cards. So a slice's new colour
+reaches the gate through a real route only if a published document uses it. Do
+not assign `--color-green` or `--color-coral` to text in a slice and assume
+review will catch it.
 
 ## Fonts — the shared kit `noj4tji`
 
