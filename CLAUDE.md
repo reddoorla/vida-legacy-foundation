@@ -88,17 +88,23 @@ If a session produced nothing worth an entry, that is itself worth one line.
 
 ## Orientation
 
-| Looking for                       | Go to                                                                       |
-| --------------------------------- | --------------------------------------------------------------------------- |
-| What this stack ships             | [docs/STARTER.md](docs/STARTER.md)                                          |
-| What's still a template default   | [docs/NEW-SITE.md](docs/NEW-SITE.md)                                        |
-| A11y conventions and the axe gate | [docs/accessibility.md](docs/accessibility.md)                              |
-| Whether a gate means anything     | [docs/mutation-audit.md](docs/mutation-audit.md)                            |
-| What the build process got wrong  | [docs/process-review.md](docs/process-review.md)                            |
-| CSP, headers, form anti-bot       | [docs/security.md](docs/security.md)                                        |
-| Page rendering                    | `src/routes/[[preview=preview]]/[uid]/+page.server.ts` → `$lib/page-load`   |
-| Prismic slices                    | `src/lib/slices/<Name>/` — `model.json`, `mocks.json`, `index.svelte`, test |
-| Brand tokens                      | `src/app.css` `@theme` block                                                |
+| Looking for                            | Go to                                                                       |
+| -------------------------------------- | --------------------------------------------------------------------------- |
+| What this stack ships                  | [docs/STARTER.md](docs/STARTER.md)                                          |
+| What's still a template default        | [docs/NEW-SITE.md](docs/NEW-SITE.md)                                        |
+| A11y conventions and the axe gate      | [docs/accessibility.md](docs/accessibility.md)                              |
+| Whether a gate means anything          | [docs/mutation-audit.md](docs/mutation-audit.md)                            |
+| What the build process got wrong       | [docs/process-review.md](docs/process-review.md)                            |
+| CSP, headers, Turnstile, form anti-bot | [docs/security.md](docs/security.md)                                        |
+| Colours, fonts, the logo files         | [docs/brand.md](docs/brand.md)                                              |
+| Matching the comp, chrome, mobile      | [docs/layout.md](docs/layout.md)                                            |
+| No-JS, reduced motion, the hero        | [docs/rendering.md](docs/rendering.md)                                      |
+| The Spanish site                       | [docs/locales.md](docs/locales.md)                                          |
+| The contact modal, the donation form   | [docs/forms.md](docs/forms.md)                                              |
+| How it got this way                    | [docs/workJournal.md](docs/workJournal.md)                                  |
+| Page rendering                         | `src/routes/[[preview=preview]]/[uid]/+page.server.ts` → `$lib/page-load`   |
+| Prismic slices                         | `src/lib/slices/<Name>/` — `model.json`, `mocks.json`, `index.svelte`, test |
+| Brand tokens                           | `src/app.css` `@theme` block                                                |
 
 ## Traps
 
@@ -138,6 +144,56 @@ If a session produced nothing worth an entry, that is itself worth one line.
   it outright; this site really runs on v4's defaults, 640/768/1024/1280.)
 
 ---
+
+### Site rules — the evidence is in `docs/`, the rule is here
+
+- **Two brand colours cannot hold text.** `--color-green` (1.94 on cream) and
+  `--color-coral` (2.80) are fill-only. Green text below display size is
+  `--color-green-mid-aa`, not `--color-green-mid` (4.47, misses AA body by
+  0.03). The design contains no white-on-green anywhere — do not introduce it
+  (2.10). Small green text never goes on the stats card. → [brand.md](docs/brand.md)
+- **Buttons are Pragmatica Extended Book, not Area Normal**, tracked 1.5px.
+  `document.fonts.check()` returns true for a weight that does not exist;
+  iterate `document.fonts` and read `.weight`. → [brand.md](docs/brand.md)
+- **`p.typekit.net` belongs in `style-src`, and there are no inline event
+  handlers here.** The CSP grants nonces without `'unsafe-inline'`, so the
+  fleet's `onload=` font swap is silently never applied. → [security.md](docs/security.md)
+- **Turnstile is bound to a hostname list. At launch, `vidalegacy.org` and
+  `www.` must be added to widget "Site Forms 3" AS PART OF the DNS cutover,**
+  or the form mints no token and `/health` still says true. Error `110200` =
+  wrong hostname; `600010` = every automated browser, not a defect. → [security.md](docs/security.md)
+- **Match the comp by measurement** (`scripts/figma-compare/`), never by eye.
+  Figma trims Extended text boxes to cap height — use the `t-*` utilities. Never
+  gate a layout on the comp's own 1440: a maximized 1440 window is 1425 of
+  viewport. → [layout.md](docs/layout.md)
+- **Anything that stacks elements by computed offsets uses
+  `getBoundingClientRect().height`, never `offsetHeight`,** and overlaps every
+  joint by a pixel. The seam it opens is intermittent and a screenshot proves
+  nothing. → [layout.md](docs/layout.md)
+- **`--nav-h`'s breakpoint is `768px`, not `48rem`** — a rem in a media query
+  resolves against the BROWSER's font size, and this is the one place a rem
+  breakpoint is wrong. → [layout.md](docs/layout.md)
+- **The footer is chrome** (`site-config.json` through the layout), not a slice.
+  **`person_grid.primary.headshots` is off at launch** — VLF has no photographs
+  of its people. → [layout.md](docs/layout.md)
+- **Anything a visitor can read that Prismic does not write is code**, in
+  `$lib/ui-copy` / `$lib/contact-copy` / `$lib/form-validation`, keyed by the
+  page's `lang`. Never point a language switch at a page that is not published;
+  `/en` is deliberately not a URL. → [locales.md](docs/locales.md)
+- **A no-JS visitor's fix is a `<noscript><style>` in `app.html`**, its classes
+  tripled to beat component-scoped rules. The dev server cannot show it and
+  the fleet config's reduced-motion emulation hides it. `tests/smoke/rendering.spec.ts`
+  runs every rendering invariant in four cells — add new ones there, with no
+  `test.use`. → [rendering.md](docs/rendering.md)
+- **A new form uses `.vlf-label` / `.vlf-field` / `.vlf-pill`, not
+  `Field.svelte`.** Any link to `/contact` opens the modal; the route stays as
+  the no-JS fallback. → [forms.md](docs/forms.md)
+- **Two session gates beyond `pnpm verify`, both deliberately outside CI:**
+  `pnpm test:mutate` (does the suite mean anything — [mutation-audit.md](docs/mutation-audit.md))
+  and the aria snapshots in `tests/__aria__/` (regenerate with
+  `npx playwright test tests/smoke/chrome.spec.ts --update-snapshots` and READ
+  the diff; a name that changed language looks exactly like a snapshot needing
+  an update).
 
 # Vida Legacy Foundation — site-specific
 
@@ -183,7 +239,7 @@ What is NOT done, in the order it blocks things:
    nav target is provisional: `Become a Donor` points at the operator's noted
    registry URL, which the client has not confirmed. `Contact Us` keeps its
    `/contact` href on purpose — the layout intercepts that link into the
-   contact modal (below), and the route stays as the no-JS fallback and the
+   contact modal ([docs/forms.md](docs/forms.md)), and the route stays as the no-JS fallback and the
    crawler's target.
 2. **`Who we are` and `Donate` are both published now**, so the chrome links
    straight to `/about` and `/donate` — but the mechanism that got the build
@@ -202,7 +258,7 @@ What is NOT done, in the order it blocks things:
    release sees its own links.
 3. The Netlify site is up and `FORMS_INGEST_URL` / `FORMS_INGEST_TOKEN` are
    set — `/health` reports `{"ok":true,"prismic":"ok"}` with both true.
-   **Turnstile is live as of 2026-09-04** (below). Contact submissions notify
+   **Turnstile is live as of 2026-09-04** ([docs/security.md](docs/security.md)). Contact submissions notify
    the operator today, and that is the pre-launch guard working, **not** a
    configuration gap: the site record already carries a real `@vidalegacy.org`
    point of contact, and `resolveRecipients` short-circuits on
@@ -234,772 +290,8 @@ What is NOT done, in the order it blocks things:
    (`POST /api/v1/constituents/{id}/gifts`, API key from Settings →
    Integration settings).
 
-## Turnstile is on, and the sitekey is not interchangeable
-
-`PUBLIC_TURNSTILE_SITE_KEY` is set on Netlify to Cloudflare widget **"Site
-Forms 3"** (`0x4AAAAAAEnswC9BSsKnj_T7` — a sitekey is public, it ships in the
-page). `TurnstileWidget` therefore renders on the contact form and the modal,
-and central verifies the token with that widget's secret
-(`TURNSTILE_SECRET_KEY_3` on the reddoor-maintenance deploy). Verified
-end to end on 2026-09-04: the page mints a 773-char token, `siteverify`
-returns `success: true` for `vida-legacy-foundation-rd.netlify.app`, and a
-real submission landed centrally as `status: new`, `spam_score: 0`,
-`notify_status: sent`.
-
-**A widget is bound to a hostname list, and getting that wrong fails silently
-in the worst direction.** A sitekey served from a host its widget does not
-list throws an uncaught `TurnstileError … 110200`, renders no iframe and mints
-**no token at all** — and `/health` still reports `forms.turnstile: true`,
-because that is a truthiness check on the env var and nothing more. It
-happened here first: the obvious move is to copy `TURNSTILE_SITE_KEY_1` out of
-reddoor-maintenance's `.env`, and that widget ("Forms 1") has been **full at
-Cloudflare's 10-hostname cap** for weeks. Hence a third widget rather than the
-fleet's last free slot. The fleet-side half of this is
-[#689](https://github.com/reddoorla/reddoor-maintenance/issues/689) /
-[#691](https://github.com/reddoorla/reddoor-maintenance/pull/691): the
-`Turnstile widget` column no longer writes `pass` from an env var, and the
-runbook is `docs/runbooks/turnstile-widgets.md` in that repo.
-
-**At launch, adding the custom domain breaks Turnstile until the widget knows
-it.** `vidalegacy.org` and `www.vidalegacy.org` are two more hostnames and
-must be added to "Site Forms 3" as part of the DNS cutover, not after it.
-
-Two things about testing it, both of which cost an afternoon:
-
-- **An automated browser cannot solve the real widget.** Cloudflare answers a
-  CDP-driven Chromium with error **600010** even when the configuration is
-  perfect — the known-good `reddoorla.com` canary reports exactly the same
-  thing under the same harness, and Playwright's own Chromium does too, headed
-  or not. That is why `form-e2e` swaps in Cloudflare's always-pass test
-  sitekey. What automation _can_ check is that the error is **not 110200**,
-  which is the one that means the hostname is wrong.
-- **The smoke suite used to discard this by name.** `ALLOWED_CONSOLE_PATTERNS`
-  was applied to `pageerror` as well as console output, so the uncaught
-  `TurnstileError` never failed a run. `tests/smoke/pages.spec.ts` now keeps a
-  separate `ALLOWED_PAGEERROR_PATTERNS` that does not list Turnstile: console
-  telemetry stays allowed, a throw does not.
-
-CSP needs nothing further — `challenges.cloudflare.com` is already in
-`script-src` and `frame-src` in `svelte.config.js`, and `connect-src` does not
-need it (the challenge runs in Cloudflare's own iframe, under its own origin).
-
-## Brand colours — two of them cannot hold text
-
-Token values come from the **Figma variables** on the Design page, not from
-`VLF_Brand-Cheat-Sheet.pdf`. Where the two disagreed the PDF was wrong by one
-value per channel (background `#fef5e9` → `#fdf5e8`, night `#00263f` →
-`#01263f`, sand `#f1e9dd` → `#f2eadd`), which showed up as a visible seam
-where the shipped logo SVG — which bakes the Figma value — met the page.
-
-Measured against the beige ground `#fdf5e8` (AA needs 4.5 body, 3.0 large):
-
-| token                        | hex       | ratio on beige | use               |
-| ---------------------------- | --------- | -------------- | ----------------- |
-| `--color-green`              | `#9cbf5b` | **1.94**       | fill only         |
-| `--color-coral`              | `#de7762` | **2.80**       | fill only         |
-| `--color-green-mid`          | `#527e01` | **4.47**       | large text only   |
-| `--color-green-mid-aa`       | `#507b01` | 4.65           | green at any size |
-| `--color-primary` (blue)     | `#065184` | 7.71           | text, links       |
-| `--color-accent` (dark red)  | `#652323` | 10.67          | accent text       |
-| `--color-secondary` (forest) | `#2c3b1a` | 11.10          | body text         |
-| `--color-green-btn`          | `#263b02` | 11.35          | text, button fill |
-| `--color-dark` (night)       | `#01263f` | 14.37          | text              |
-| `--color-green-deep`         | `#172303` | 15.18          | text, dark ground |
-
-**The design's button couple is `#263b02` + `#9cbf5b` — 5.86:1 in both
-directions.** Dark-on-green in the cream sections, green-on-dark in the navy
-ones. All three buttons in the comps were measured; the design contains no
-white-on-green anywhere. Do not introduce it — white on green is 2.10.
-
-> An earlier version of this file claimed white-on-green _was_ the design's
-> primary "register to become an organ donor" button. That was wrong. The
-> comps never specified it.
-
-The genuine edge case is `--color-green-mid` `#527e01` at **4.47** — it misses
-AA body by 0.03 and the design uses it for small text (the 10px footer
-copyright) and form placeholders. **That is the one place the comps fail WCAG
-outright.** `--color-green-mid-aa` `#507b01` is the same green darkened 2%
-(delta 2/3/0 per channel, indistinguishable beside it) and clears AA body at
-4.65. Use `-aa` for green text below display scale; keep `--color-green-mid`
-for the big stuff, where the exact Figma value matters and 4.47 already passes.
-
-### The dark grounds have their own ceilings
-
-`--color-blue-textured` `#004370` is the stats card raised off the navy band —
-the lightest dark ground on the site, so the tightest:
-
-| on `#004370`    | ratio    |
-| --------------- | -------- |
-| `#fdf5e8` beige | 9.53     |
-| `#9cbf5b` green | **4.92** |
-
-The site's grain sits over it at 15% `mix-blend-difference`, and the texture's
-brightest pixel is **254** — which lifts the ground to `#265575` at worst and
-takes green to **3.80**. That still passes for the 36px stat figures (large
-text) and they are the only green on it. **Do not put small green text on this
-ground.**
-
-The stats card's four columns hold from Tailwind's `xl` (1280) up, not from
-the comp's 1440: a maximized 1440 window is 1425 of viewport once the
-scrollbar is paid, and that fell to 2x2 on the client's own screen. The
-register pill takes two lines below ~1430 — it needs 291px against the
-comp's own 282.5px column, so it wraps even in the comp's frame — and the
-pill's 40px min-height swallows both lines without growing.
-
-Two gates beyond `pnpm verify`, neither in CI, both session tools. **`pnpm
-test:mutate`** (Stryker) answers "does this suite mean anything" by breaking the
-source and seeing whether anything goes red — nine minutes, and its first run
-found the module at the centre of the Turnstile lesson had no unit test at all.
-[docs/mutation-audit.md](docs/mutation-audit.md). And **`tests/__aria__/`**
-holds accessibility-tree snapshots of the chrome, nav per route and footer per
-locale; regenerate with `npx playwright test tests/smoke/chrome.spec.ts
---update-snapshots` and READ the diff, because a name that changed language
-looks exactly like a snapshot needing an update. That is the layer where English
-reached Spanish readers three times.
-
-`pnpm test:a11y` gates all of this, so a regression fails CI rather than
-shipping. **Since 2026-09-04 it audits the real site as well as the fixtures**:
-`pkg.reddoor.a11yRoutes` in `package.json` lists all eight published routes and
-those APPEND to the fleet's two dev fixtures rather than replacing them. Until
-then the gate ran over `/dev/a11y-fixtures` and `/dev/animate-in` and nothing
-else, and no real page of the site was ever measured — the fleet's own comment
-(`a11y.ts`) records why that key exists: scanning only fixtures let a critical
-image-alt violation ship to five production pages with CI green. All eight
-routes measured 0 violations when the key was added, so it gates a clean state
-rather than opening a to-do.
-
-**The pass summary undercounts, and it will tell you the key did not work.** It
-reads `a11y: 0 violations across 2 routes` no matter how many routes ran — the
-fleet's summary string is built from the FIXTURE list's length, not the merged
-one (`a11y.ts`, the `status === "pass"` branch). The audit really did visit all
-ten. To see the truth, catch the generated spec while it runs: the audit writes
-`.reddoor-a11y-spec-*/a11y.spec.ts` in the repo root and deletes it in a
-`finally`, so poll for it from a second shell and read its `const pages = [...]`.
-
-Two consequences to know before touching it. It makes CI **content-dependent** —
-the audit renders real Prismic content, so an authored change can now fail the
-build, which is the point but is new. And the audit's synthesized config does
-NOT emulate reduced motion, so `/` and `/about` are scanned at runway frame 0:
-any future contrast work on the hero's closed-heart state is now gated, which
-is right, since frame 0 is what a no-JS visitor and a mid-scroll visitor see.
-
-The fixtures page still earns its keep, and is still where a NEW palette has to
-go. It carries in-flow renders of the chrome — the nav in all three tones over
-the grounds each one really sits on, the open menu, the Spanish chrome and the
-contact panel — and of both `PersonGrid` card designs, none of which the eight
-routes reach: the real nav is transparent over a hero, the menu is not in the
-DOM until opened, and `/about` ships bio-only cards. So a slice's new colour
-reaches the gate through a real route only if a published document uses it. Do
-not assign `--color-green` or `--color-coral` to text in a slice and assume
-review will catch it.
-
-## Fonts — the shared kit `noj4tji`
-
-Wired in `src/app.html`. The site started on kit `alh8out` because the fleet's
-shared kit had `pragmatica` but no `pragmatica-extended`; **all of Pragmatica
-plus Area Normal were added to `noj4tji` on 2026-09-02**, so it is on the
-shared kit now. What it serves (measured from the kit CSS):
-
-| family                | weights                                |
-| --------------------- | -------------------------------------- |
-| `pragmatica-extended` | 200–900 incl. **300 Light**, + italics |
-| `pragmatica`          | 200, 300, 400, 700, 900, + italics     |
-| `area-normal`         | 600, 700                               |
-
-The Figma text styles, and what `app.css` does with them globally:
-
-| style  | face                              | base rule              |
-| ------ | --------------------------------- | ---------------------- |
-| H1–H3  | Pragmatica Extended **Light** 300 | `h1, h2, h3 { 300 }`   |
-| H4–H5  | Pragmatica Extended **Book** 400  | `h4, h5, h6 { 400 }`   |
-| Body 1 | Pragmatica Light 16/24            | `body { 300 }`         |
-| Button | Pragmatica Extended Book 10       | `.font-button { 400 }` |
-
-Sizes stay per slice. A display-size text that is not a heading element (the
-nav menu's entries, a stat figure) needs `font-light` itself.
-
-**Buttons are Pragmatica Extended Book, not Area Normal.** The comps set most
-buttons in Area Normal Bold 10/1.5 tracked 1px and one — "register to be an
-organ donor" — in Pragmatica Extended Book 10/1.5 tracked 1.5px; the client
-called Area Normal the oversight (review round 2, 2026-09-03). `--font-button`
-is pragmatica-extended, `.font-button` is 400, and every button, the nav
-toggle, the footer's fine print and the email links take the 1.5px tracking.
-The kit still serves `area-normal`; nothing on the site asks for it. The
-pill's hover (the arrow drifts, the pill brightens a step) and press bump are
-in `.vlf-pill` itself, the fleet's `bump` timings, gated on reduced motion.
-
-Adding more families to the kit costs almost nothing client-side: browsers
-fetch a `@font-face` file only when text actually uses that family and weight,
-so an unused face is a few hundred bytes of kit CSS, not a download. The kit
-CSS itself is ~50 KB for the whole fleet's list.
-
-Verifying a weight, if you touch this: `document.fonts.check('300 16px
-"pragmatica-extended"')` returns **`true`** even when a weight does not exist —
-it matches at family level after fallback. Iterate `[...document.fonts]` and
-read each face's `.weight` / `.status` instead.
-
-## Two CSP traps, both silent
-
-1. **`p.typekit.net` belongs in `style-src`, not just `font-src`.** It serves a
-   second stylesheet (`p.css`) as well as the woff2 files. With only `font-src`
-   the browser blocks `p.css` and no face ever registers. The smoke suite's
-   console-error assertion is the only thing that surfaces this — keep it.
-2. **No inline event handlers.** The fleet's usual font trick —
-   `media="print"` plus `onload="this.media='all'"` — is an inline handler, and
-   this site's CSP grants `script-src` nonces _without_ `'unsafe-inline'`. A
-   nonce never authorises an inline handler, so the swap is blocked, `media`
-   stays `"print"`, and fonts are fetched but never applied with no error on the
-   happy path. The plain `<link rel="stylesheet">` here is deliberate.
-
-## Assets and copy already in the repo
-
-| path                             | what                                                           |
-| -------------------------------- | -------------------------------------------------------------- |
-| `static/logo-mark.svg`           | the mark alone (blue swoosh, green swoosh, heart)              |
-| `static/logo-lockup.svg`         | full horizontal lockup, mark + wordmark                        |
-| `static/favicon.png`             | the mark at 94% on cream, 512²                                 |
-| `content/es-website-content.txt` | Spanish site copy, 171 paragraphs, keyed to the Figma sections |
-
-The Spanish source is labelled _Español latino (EE. UU.)_. The locale actually
-added in Prismic is `es-mx` — see the CMS notes above.
-
-The logo came out of Figma via `download_assets`, which returns the lockup plus
-separable sub-assets; the mark is the 2:1 one. The Dropbox logo-package share
-link is **not** usable programmatically — it renders its file listing
-client-side, so there is nothing to fetch server-side.
-
-The favicon's ceiling, so nobody re-litigates it: the mark is 2:1, so it can
-never fill more than half a square tile's height. 94% inset was chosen over 84%
-(too small at 32px); a cream tile was chosen over transparent, which nearly
-disappears on a dark tab bar. 16px stays marginal regardless of inset.
-
 ## Still template defaults
 
 None that matter: `static/og-default.png` is the VLF lockup on cream (1200×630,
 shipped in PR #4) and `src/lib/site-config.json` carries the real footer and
 nav. `DEFAULT_OG_IMAGE` points at the card.
-
-## Matching the comp is measured, not eyeballed
-
-The review standard is "match the Figma" at the comp's 1440 width — positions,
-sizes and type within a few pixels, with responsive lenience. Two comp facts
-decide most of it and are invisible in a screenshot:
-
-- **Figma trims its Pragmatica Extended text boxes to cap height and
-  baseline.** A 12px label is an 8px box, a 60px line a 42px one, so every
-  gap the comp specifies is cap-to-baseline. The `t-*` utilities in `app.css`
-  (`t-display`, `t-stat`, `t-lead`, `t-label-lg`, `t-label`, `t-label-sm`,
-  `t-body`) are the comp's text styles with `text-box-trim` on the Extended
-  ones, and a slice takes a style by name instead of re-deriving it. Body
-  copy and button labels are not trimmed in the comp and are not here.
-- **The comp pins bands** ("sticky scrolls") so the next one slides up over
-  them: the lead paragraph, the full-bleed photo and the closing statement on
-  the homepage, the board section on Who We Are. A `.sticky-cover` section —
-  and, by rule, whichever section precedes `CtaBanner onCream` — is pinned,
-  every slice section is positioned so tree order paints later ones over it,
-  and `$lib/actions/stickyCover` (on `<main>`) measures each band so a tall
-  one holds by its bottom edge. `CtaBanner onCream` is a full-bleed cream
-  panel on a transparent section: its rounded corners show the pinned band
-  through, whatever colour that band is. The homepage's closing statement
-  ("Hope that heals. Help that Lasts.") is a departure the client asked for,
-  and it took two rounds to land: the line comes to rest at the BOTTOM of the
-  screen rather than the top, and the band keeps the comp's own height doing
-  it. `.sticky-cover--bottom` is that — stickyCover gives the band the full
-  `viewport - height` offset, positive for a short band, so it holds by its
-  bottom edge. The first attempt grew the band to `min-h-dvh` instead, which
-  put the comp's 60px between the stats card and the line at a whole viewport
-  ("it shouldn't grow that much", round 4).
-- **The panel rolls over the PAGE, not over one band.** Pinning only the band
-  before it left that band stopping dead while the sections above it kept
-  scrolling — "out of flow", round 4, and the hole it opened showed a strip
-  of the pinned photograph. `coverRun` in `$lib/actions/stickyCover` walks
-  back from the closing panel, stacking each section's bottom against the top
-  of the one below it until the stack fills the viewport, and writes
-  `data-cover-run` + the offset on each (app.css pins those). Every member
-  therefore pins on the same scroll position: the whole screen holds still
-  and only the panel moves. The walk stops at a `.sticky-cover` band, which
-  is already holding on its own account and fills whatever is left above —
-  on the homepage that is the full-bleed photograph. Since the clear rule
-  below made the navy band a viewport tall, the stack now reaches the top on
-  that band alone: the frozen screen is a run of navy, "By the numbers" and
-  the closing line, and "Compassion in Action" has scrolled off it.
-  **The stack is measured fractionally and overlaps by a pixel at every
-  joint.** `offsetHeight` rounds to whole pixels and the real bands are
-  fractional (327.61, 301.81), so butting the boxes edge to edge left a
-  sub-pixel seam that showed the photograph behind — intermittently, because
-  a sticky offset is composited. `getBoundingClientRect().height` (falling
-  back to `offsetHeight` where there is no layout, i.e. jsdom) plus
-  `STACK_OVERLAP` fixes both that and the closing band's own bottom edge,
-  which now lands exactly on the viewport's.
-- **A pinned band holds BELOW the bar, not under it.** `--nav-h` in app.css
-  is the bar's height and the only place it is written: 70px from `md` up,
-  and **0 below it**, where the bar leaves once the first section is past —
-  there is nothing to leave room for, so nothing is left. `stickyTop` clamps
-  a top-anchored band to `min(navHeight, viewport - height)`, so a band
-  taller than the room available still holds its bottom edge on the
-  viewport's; `coverRun` fills `viewport - navHeight` and pays the closing
-  statement only what is short of the BAR's bottom edge, not the screen's.
-  **The fill test counts what the stack COVERS, not the sum of its boxes** —
-  each joint overlaps by `STACK_OVERLAP`, and summing the boxes let the walk
-  stop believing the screen was full while the real top edge was still 1.4px
-  short. That exit meets no pinned band, so it pays no slack either. Under
-  the bar the hairline was invisible; resting at the bar's edge it showed the
-  photograph, at one integer viewport height per width (1440x1018,
-  1280x1020, 1024x1086 …).
-  **The breakpoint is `768px`, not `48rem`, and matches Nav's own
-  `MOBILE_QUERY` exactly.** A rem in a media query resolves against the
-  BROWSER's default font size, not the document's, so at Chrome's "Large"
-  (20px) `48rem` is 960 while the bar still disappears at 768 — between them
-  the bar is present and `--nav-h` would have said there was nothing to leave
-  room for. `--nav-h` describes the bar, so it is gated on what the bar is
-  gated on. (This is the one place a `rem` breakpoint is WRONG; the Tailwind
-  trap above still stands for `--breakpoint-*` theme keys.)
-  The CSS falls back to `var(--nav-h)` when there is no measurement (no JS).
-  The companion column in `IconColumns` takes it too. The two runway stages
-  (`HeartHero`, `PageMasthead`) deliberately do NOT: they are full-bleed, the
-  stage IS the viewport, and the bar is transparent over them by design —
-  PageMasthead's own window insets already pay the 70 themselves. Holding at
-  the top of the screen ate the spacing the comp draws above a band's
-  content, and it read as the band tucking under the chrome rather than
-  arriving beneath it.
-- **A pinned band is only covered by as much of the stack above it.** The
-  photograph holds at the top of the screen and the closing stack is the navy
-  band, the stats card and the closing line — 946px of it. On a screen taller
-  than that, the rest is the photograph, held still across the top of the
-  frozen screen for as long as the cream panel takes to roll: "feels weird it
-  stops at her forehead", and "can the blue section reach all the way to the
-  top before the next section scrolls up?" (Nicole, round 4 — her screenshot
-  measures 1151px of viewport and a 204px strip, exactly the shortfall).
-  `coverRun` returns that shortfall as `slack` and `stickyCover` writes it as
-  `--cover-slack` on the closing statement, which app.css pays as
-  **padding-bottom** — height BELOW the line ("I meant below 'hope that heals,
-  help that lasts', and should be just enough to cover the image above at the
-  top of the screen"). The band is bottom-anchored, so growing it downward
-  takes the whole stack up with it until its top edge lands on the screen's,
-  and the comp's 60px between the line and the stats card never moves. It is
-  paid only when the walk actually ran into a pinned band — run out of
-  sections instead and what is above simply scrolls, and freezing a screen for
-  it would be wrong — and it is zero at every viewport the stack already
-  covers, which includes the comp's own and every phone. Measured after: no
-  photograph anywhere in the roll at 1440x760, x900, x1151, 1920x1300 or
-  390x664; slack 0 / 0 / 204.4 / 353.4 / 0.
-
-The VLF variations that sit in the comp's right-hand column (952.5 of the
-1280 grid, from x=407.5) carry a `layout` Select — `float right` (the comp,
-and what a document authored before the field gets) or `fill`. `ContentBand`
-writes it as `data-layout` on the section, and that is what
-`$lib/actions/companionRun` reads: the `IconColumns` intro ("A companion on
-the journey") holds not just for its own band but for the run of float-right
-sections after it, which leave the left column empty. The band grows by the
-run's measured height (a spacer row in its grid) and a negative bottom margin
-pulls the run back up over the spacer, so the intro's sticky range — its grid
-area — reaches the run's end. The run stops at a pinned band.
-
-`scripts/figma-compare/` is the harness: comp geometry and renders from
-Figma's REST API, the rendered site measured the same way with Playwright,
-and the two matched by text content. README in the folder. Run it before a
-PR that touches layout or type and read the deltas; the Figma file key and
-token stay in the environment.
-
-## Two locales, one route tree
-
-Spanish ships at launch. English is the master locale at the bare paths;
-Spanish is `/es` and `/es/<uid>`. The prefix is the optional route param
-`[[lang=lang]]` (matcher: `src/params/lang.ts`, only `es` — `/en` is
-deliberately not a URL), so one set of loaders serves both and `params.lang`
-picks the Prismic locale through `$lib/locale`. Prismic's ids (`en-us`,
-`es-mx`) never reach a URL.
-
-- **Prerender enumerates both locales** from `getAllByType("page", { lang:
-"*" })` via `$lib/prerender-entries`. A locale whose document is not
-  published is simply absent from `entries()`, so an unpublished translation
-  never becomes a 404 that fails the build.
-- **The language switch only renders where the target exists**: a Prismic
-  page's published translation (`page.data.alternates`), or a route in
-  `LOCALIZED_STATIC_ROUTES` (`/contact`). Anything else — a page with no
-  translation yet, the dev pages — gets no switch, because the crawler would
-  follow it into a 404. Do not "fix" a missing switch by pointing it at `/es`
-  until the Spanish home is published.
-- **Chrome per locale** lives in `site-config.json` under `locales.es` (nav and
-  footer replaced wholesale, hrefs included); `loadSiteConfig(lang)` resolves
-  it. The contact page carries its own two-language copy.
-- **The words the chrome supplies itself** — the skip link, "Open menu",
-  "Close menu", the menu dialog's name, the language group's name, a dialog's
-  close button, "Read the bio for …", the landscape cover — are in
-  `$lib/ui-copy` (`ui(lang)`), because nothing translates them: they are code,
-  not content. Components take the page's `lang` and slices read
-  `context.lang`, the same split the contact and donation forms use for their
-  field labels. Two siblings hold the rest: `$lib/contact-copy` (the contact
-  panel's words, shared with the route's ACTION so a server-side failure
-  answers in the right language — `createIngestAction` freezes its messages at
-  construction, so the route builds one action per locale), and
-  `$lib/form-validation` (the field messages, because native constraint
-  validation speaks the BROWSER's language and puts it in a bubble that is not
-  in the accessibility tree). `novalidate` on those forms is set from an
-  effect, never written in the markup: it must apply only where scripts can do
-  the job instead, or a no-JS visitor loses the guard entirely. `Modal` takes a `closeLabel` so its caller decides. Anything
-  new that a visitor can read and Prismic does not write belongs there, or
-  the Spanish site announces it in English (it did, until round 4).
-- **Head**: `<html lang>` is set per request in `hooks.server.ts` (app.html
-  carries `%lang%`), `og:locale` comes from the loader, and `Seo` emits
-  reciprocal `hreflang` links plus an English `x-default` only when a page has
-  a translation.
-- **Previews** pass the locale-aware `linkResolver`, so an es-mx preview lands
-  on `/es/…`.
-
-## The nav has no ground of its own
-
-The bar (Figma `5314:2013` / `5314:1743` / `5314:1744`) is transparent and
-fixed over the page, so its colouring is decided by whatever the page's
-**first slice** paints under it. `$lib/nav-tone` maps that slice to the comp's
-variant — `heart_hero` → all-cream lockup, `page_masthead` → cream wordmark
-with the green swoosh, anything else → the blue default — and the layout passes
-it in. Once the first slice's bottom edge scrolls under the bar, Nav swaps to a
-cream `bg-background/95` bar with the default lockup; that state is measured
-from the DOM (`#main-content`'s first child), not a scroll offset, because
-HeartHero is a 260vh runway and the swap must not fire mid-hero.
-
-Below `md` the bar also leaves once the first section is past — see "Mobile is
-not the comp scaled down" below.
-
-The three lockup files in `static/` are the same shipped SVG with each
-variant's fills — `navbar-white` really does set `FOUNDATION` and the heart to
-`#FFFFFF`, not cream — not redraws.
-
-**Two deliberate departures from the comp:** `navbar-white` draws a cream
-hamburger on the green hero, which is 1.93:1 against `#9cbf5b`. A logo is
-exempt from contrast rules; a control is not (1.4.11 wants 3:1). The hamburger
-there is `--color-green-btn`, the design's own dark-on-green pairing at 5.86.
-And the bar carries an EN | ES toggle the comp does not have — a pill in the
-donate button's clothes, the current locale marked, the other side a link
-only when its page exists (an inert label otherwise, so the visitor still
-sees which version they are on). The lockup links to the locale's own home.
-
-The open menu (`5314:1679`) is `NavMenu`, extracted so the a11y fixtures can
-render it in-flow (`inline`) — the real one is not in the DOM until opened, so
-that fixture is the only thing that puts its colours in front of axe.
-
-**Switching language does not reload, and does not fade.** The toggle is
-`LangToggle` — a plain Kit link with `data-sveltekit-noscroll`, so the reader
-keeps their place — and the open menu carries the same control under its
-entries (round 3: not the language's name as a text link). The layout's
-`onNavigate` wraps that one navigation (the target is `switchTo.href`) in a
-view transition — the browser's own crossfade of the whole document, 350ms in
-app.css, skipped where unsupported or under reduced motion — and an effect
-restamps `<html lang>`, which hooks.server.ts only sets per request. Nav keeps
-the menu OPEN across a switch (the new path is the one the toggle offered), so
-the entries change language under the visitor; any other route closes it. The
-toggle moves focus to its new link after a press, because the pressed side
-becomes the marked span.
-
-**Every other route change is a hard swap, and the overlay is a loading cover,
-not a page effect** (round 3: "only if we actually need it for loading").
-`TransitionOverlay` shows only if a navigation is still pending after 200ms,
-then holds at least 400ms and fades over 400 — a prerendered page usually
-lands inside the delay and nothing is shown. It is the menu's textured dark
-green (not the fleet's black) and takes a `skip` predicate: the contact link is
-cancelled into the modal, and a cancelled navigation never fires
-`afterNavigate`, so without the skip the overlay would come up and stay.
-
-## The hero opens itself
-
-Erik, in the client channel (2026-09-03): "Do we need some sort of indicator
-on the hero to scroll down so that people know what to do?" — Nicole: "Or it
-opens on its own", and then "i think we can have it open on its own". So
-`HeartHero` plays its own opening: two seconds after a visitor lands at the
-top of the home page, it scrolls the runway for them over 1.8s, through 80%
-of it — past `CTAS_AT`, so the heart has opened and the copy and the buttons
-are in — and then hands the scroll back. Any wheel, touch, key or pointer
-cancels it on the spot; and a reduced-motion visitor never sees it, because
-that hero is already on the open frame. `shouldAutoOpen` in
-`HeartHero/heart.ts` holds every condition and is unit-tested; one of them —
-the hero must be the top of the document — is what keeps it from scrolling
-the a11y fixtures page, which renders a hero half way down.
-
-**The session mark does not survive a refresh, deliberately.** It exists so
-the opening does not replay on every soft navigation back to the home page,
-and it still does that. But frame 0 of this hero is a green field with a
-small closed heart and NOTHING else — the eyebrow, the heading, both calls to
-action and the bar are all revealed by scroll progress — so a visitor who
-refreshed at the top of the page was stranded on an empty hero for the rest
-of the session, which is the exact state the opening was added to prevent.
-`playedThisSession` discards the mark when Navigation Timing says `reload`.
-That is safe because the mark is not the guard that matters: `shouldAutoOpen`
-still requires the visitor to be at the top, so a refresh anywhere else —
-scroll restored mid-runway, heart already open — declines on the scroll test
-and nobody reading has the page moved under them. Measured on a production
-build (a dev server is useless for this: Vite's HMR reloads the page, so
-every load reports `reload`): first arrival plays, refresh-at-top plays,
-refresh-mid-page leaves the scroll at 1400, back-to-home does not replay.
-
-Frame 0 is still reachable two other ways, both known: a same-session back
-navigation to the home page that lands at the top (bfcache normally restores
-the open hero instead, so this needs a real document reload), and a visitor
-without JavaScript, for whom `progress` never advances and the copy stays at
-`opacity: 0` — it is in the DOM, so crawlers and screen readers get it, but
-it is invisible and no amount of scrolling reveals it. The `<noscript><style>`
-in app.html that reveals the nav's entry list is the mechanism if that is
-ever worth closing.
-
-## Without scripts, both runway stages render their final frame
-
-`HeartHero` and `PageMasthead` are 260vh runways whose opening is driven by
-scroll progress that only JavaScript computes. Without it they rendered frame
-0 — the photograph in its closed shape and the page's only `<h1>` at
-`opacity: 0`, on `/`, `/es` and `/about` alike, which is every published page
-with a masthead. The text is in the markup, so a crawler and a screen reader
-were fine; it was a sighted visitor who got a green field and two and a half
-screens of nothing. HeartHero at least had `.reveal:focus-within`, since its
-block holds the two call-to-action links; PageMasthead's holds only a
-paragraph and a heading, so on Who We Are nothing could reveal it at all.
-**Reduced motion does not rescue this** — both `@media` blocks set only
-`transition: none`, and the open frame comes from the `reducedMotion` STATE
-variable, which is JavaScript.
-
-The second `<noscript><style>` in `src/app.html` is the fix: the components'
-own reduced-motion geometry plus the open values their JavaScript half
-supplies. Three things about it are load-bearing:
-
-- **Classes are TRIPLED, not doubled.** Svelte scopes a component rule with a
-  hash class, so `.reveal` is really `.reveal.svelte-1abc` at (0,2,0), and
-  those sheets arrive with the app's head markup BELOW this block — two
-  classes tie and lose on order. (The nav list above it doubles, because it
-  beats a (0,1,0) rule in app.css. Same lever, one class apart.)
-- **The open heart is sized without measuring anything.** The component sets
-  the mask as a percentage of the stage's WIDTH, which it can only learn from
-  a ResizeObserver; `mask-size: auto 273.4919%` expresses the same heart as a
-  multiple of its HEIGHT, because a percentage in that slot resolves against
-  the positioning area's height. Algebraically identical to `heartEndPct` at
-  every aspect, except the `Math.max` floor, which binds only above W/H
-  1.6747 and gives a slightly smaller — still covering — heart there.
-  `app-html.test.ts` holds the number against `HEART_END_HEIGHT_RATIO`.
-- **`--opened: 1` is set on `.masthead-window`, the element that READS it**,
-  not on the stage that declares it inline. A value declared on the element
-  always beats an inherited one, so that needs no specificity contest.
-
-`max-width: 47.999rem` rather than the components' `width < 48rem`: Safari
-learned range syntax only in 16.4 and drops a block it cannot parse, which
-here would hand a phone the 1440/860 desktop band. And `100vh` precedes every
-`100svh`, since an engine without small-viewport units drops the declaration
-and would be left with no height at all.
-
-**A dev server cannot show any of this** and neither could the suite: the
-shared Playwright config forces `contextOptions.reducedMotion: "reduce"` on
-every test, which collapses both runways through the components' own media
-query — so a no-JS test that inherits it passes on a page with no fix.
-
-**Since 2026-09-05 these are asserted in four rendering states, not one.**
-`tests/smoke/rendering.spec.ts` holds every invariant that must hold whatever
-the visitor's browser is doing — the heading is painted, the band is not a
-260vh runway, the stats are not the count's zeros, one figure per stat, one bio
-per card, both stages have a height, the heart covers the band — with NO
-`test.use` of its own. `playwright.config.ts` runs it in four projects:
-{desktop, phone} x {scripts + reduced motion, no scripts + full motion}. Each of
-those assertions used to live in the single cell where its defect was found.
-Deliberately not all four combinations of the axes: with scripts AND full motion
-the hero shows frame 0 for two seconds by design, so "the heading is painted" is
-false of that state on arrival.
-
-What stays in `tests/smoke/pages.spec.ts` is the genuinely one-sided half — a
-control that cannot function must be hidden, a card must grow around the bio it
-is now the only home for — plus the route, console and head assertions.
-
-Opacity is asserted on the `.reveal` ANCESTOR, because opacity does not inherit
-as a computed value and the `<h1>`'s own is 1 while it is completely invisible.
-Everything is polled, because with scripts the values are written by effects
-after hydration and a single read is a race in one cell and fine in three.
-
-All of it was verified by deleting each fix and watching the tests go red — and
-that is not a formality. The first attempt at the no-JS heart assertion PASSED
-with the fix deleted: `-webkit-mask-size` on the line above `mask-size` in
-app.html still supplied the value, so the test was vacuous. Delete both.
-
-### Three more things a script was supplying
-
-Same pattern, same two places: the element renders normally and hidden
-(`app.css`), and the FIRST `<noscript><style>` in app.html reveals it while
-hiding whatever control cannot work. That block doubles its classes, because
-it beats (0,1,0) rules in app.css; the runway block below it triples, because
-it beats (0,2,0) component-scoped ones. The unit test only holds the runway
-block to the triple bar.
-
-- **`CountUp` showed the count's starting zeros.** The visible layer is a
-  tween that begins at `startValue` and is run by `onMount`, so with no script
-  the stats band read "0+", "0 people", "0%", "0 lives" — not unanimated but
-  WRONG, and the `sr-only` sibling carried the truth all along, which is
-  exactly why nothing in the suite could see it. The component now renders two
-  candidates, `.countup-live` and `.countup-nojs`, BOTH `aria-hidden` so the
-  swap never changes what is announced. `.countup-live` stays first: the tests
-  address "the visible number" as the first `[aria-hidden]` element.
-- **`PersonGrid`'s bios existed only inside a pop-up a click creates**, so
-  without a script they were not hidden but absent — unreachable for a visitor
-  and invisible to a crawler. Each card renders `.person-bio-nojs` as well,
-  and `[data-bio-toggle]` (the overlay button, which would also swallow
-  selection of the bio under it) and `.person-open-cue` (the + badge, which
-  advertises a pop-up that cannot open) both go — and `.person-card` loses its
-  `aspect-ratio`, because the leadership card's height comes from its column
-  width over `overflow: hidden`, so content cannot grow it and a real bio was
-  simply CUT OFF (measured: 166px of it). **Nothing on `/about` currently has
-  a bio** — the four board members have none, and the three leadership cards
-  open on `!board` alone — so the only rendered bio on the site is on
-  `/dev/a11y-fixtures`, which is where the smoke suite measures both
-  directions of the coupling: revealed without scripts, `display: none` with
-  them. That pair is the only thing that catches a class name drifting out of
-  step with app.css, which would show every visitor a bio twice without
-  tripping axe, a type error or a console warning.
-- **`PageMasthead`'s stage collapsed to zero** on a reduced-motion phone, the
-  same shape as HeartHero's below. Nothing reads that box, so nothing rendered
-  wrong; it is fixed so the next thing to measure it does not inherit the bug.
-
-Still outstanding, and NOT fixed: without a script the nav never swaps to its
-cream bar (the swap is measured from the DOM), so past the first section its
-links sit dark-on-navy over whatever the page is showing.
-
-### The reduced-motion phone heart did not cover
-
-Separate bug, found the same afternoon. `.heart-hero-stage`'s `height: 100%`
-resolves against the band, and under reduced motion on a phone the band has
-only a `min-height` — indefinite, so it computed to `auto`, and since every
-child is absolutely positioned the box collapsed to ZERO. Layout survived it
-(the mask is positioned against the section, which is `relative`), but
-measurement did not: `heartEndPct` read 0 and fell back to the comp's 187.2%,
-which on 390x664 is a 702x612 heart in a 664-tall band — its cleft and its
-point both on screen with green around them, the exact failure the height
-ratio was introduced to end. `height: 100svh` under that media query fixes
-it, and it must sit BELOW the general stage rule, not inside the band's own
-phone block above it: a media query adds no specificity, so at an equal
-(0,2,0) the later declaration simply takes it back. It did, for one build.
-No existing test could reach it — the rule needs reduced motion AND width
-< 768, and every other test runs at the config's 1280x720 — so
-`the reduced-motion phone frame` in the smoke suite pins it at 390x664.
-
-## Mobile is not the comp scaled down
-
-The comps are 1440x860 landscape and every full-bleed measurement in them is a
-percentage of WIDTH. A 390x664 phone breaks four of those outright, and each
-fix is measured, not guessed (review round 3, 2026-09-03):
-
-- **The heart never opened.** `heartEndPct` (`src/lib/slices/HeartHero/heart.ts`)
-  replaces the hard-coded 187.2%: the comp's open mask is 2696x2352 on an
-  860px band, so what it really fixes is the heart at **2.735x the band's
-  height** — which is why its cleft and point sit off-screen and the photo
-  fills the frame. Held as a ratio, the comp's own band still computes 187.2%
-  and a phone gets ~534%. The stage is measured with a ResizeObserver in both
-  motion modes, since reduced motion lands on the open frame.
-- **Full-bleed photos were center-cropped AND magnified.** On a phone the
-  browser picked a 390px-wide candidate for a 390px-wide box, then
-  `object-cover` scaled it 2.8x to fill a 664px-tall one — the about
-  masthead's embrace became a forehead. `HeroBackgroundImage` takes a
-  `portrait` aspect and emits a `<picture>` whose narrow-viewport `<source>`
-  is an imgix crop at that shape around any face it finds
-  (`portraitSrcset` in `$lib/utils/image`), with one `<link rel=preload>` per
-  source carrying its own `media` so the browser preloads what it will
-  actually pick. The `<picture>` is `display: contents`, or the `<img>`'s
-  `h-full`/`absolute` would resolve against an inline box with no height.
-  Set it on a hero whose box is the viewport; leave it off a band that keeps
-  the comp's landscape shape at every width.
-- **The bar goes away below 767px** once the first section is behind you
-  (`data-hidden` on the `<nav>`): these pages are short and few, and a fixed
-  bar costs a tenth of a phone screen all the way down. Any upward scroll
-  brings it back, as does `focus-within`, so a keyboard visitor can never tab
-  to an off-screen control. Desktop is unchanged.
-- **The bio pop-up drops its headshot below md.** The visitor tapped that very
-  face on the card, and at 390px the square photo pushed the name, role and
-  bio off the screen. The comp's two-column pop-up is a desktop shape.
-
-## Who We Are ships without photographs, and that is a switch
-
-The comp draws every person card twice — Figma **"Headshot Bio"** (`5312:1454`,
-the picture card) and **"Bio Only"** (`5289:1368`, no picture, the name at the
-comp's 36/42 display size instead of the 18px label, the badge on the card's
-own bottom-right corner at 20/20). The earlier Who We Are frame `5173:1077`
-is the whole page in bio-only form, and it is what the site launches with:
-VLF has no photographs of its people, and the placeholder was one stock
-portrait standing in for four named men — which `PersonGrid` then announced
-as that person, because a card's alt text IS the name.
-
-`person_grid.primary.headshots` (Boolean, default **false**) picks the card.
-Off is the launch and is also what a document authored before the field
-reads, so nothing had to be edited in Prismic. Turning it on when the real
-headshots arrive brings back the picture card, the square photo above the
-20px-padded block, and the photograph in the bio pop-up — no code follows.
-The leadership card is a square, the board card 200px tall, both from the
-comp. Both designs are in the a11y fixtures, so axe sees both palettes.
-
-## The donation form's labels are code, its copy is content
-
-`DonationForm` is one slice that IS the donate page — the comp has no
-masthead, so the slice renders the `<h1>`. The author owns the copy around
-the form (heading, eyebrow, paragraph, both button labels, the preset
-amounts); the field labels, placeholders and the schedule options live in the
-component in both languages, keyed by the document's locale. That split is the
-contact page's: the labels belong to the field set, which is the payload the
-backend will read, and they change with it. The locale reaches the slice
-through SliceZone's `context` — both page routes pass `{ lang }` — so a slice
-that needs the locale reads `context.lang`, never `$app/state`, which keeps it
-renderable in the fixtures and the simulator.
-
-Two things the comp draws that the slice does not: the reCAPTCHA (it belongs
-to the backend) and a 100px-fixed schedule dropdown ("Quarterly" and
-"Trimestral" overflow it; the width follows the longest option).
-
-## The contact modal is the contact page, and vice versa
-
-`ContactModal` (mounted once by the root layout) is the fleet's appointment
-modal pattern in the donation page's vocabulary: Modal's native `<dialog>`,
-a form that posts to the contact route's own action (`/contact` or
-`/es/contact`, so the ingest payload and the anti-bot screen are the route's),
-the timing token stamped at open time because a layout-mounted modal has no
-server load, the action's own failure copy shown with the typed values kept,
-and focus moved to the confirmation. **Any link to the contact route opens
-it** — the layout cancels that navigation in `beforeNavigate` and opens the
-dialog instead (a document click listener would race Kit's own) — so the
-nav, a footer row or a Prismic link field reach it with a plain href, and
-without scripts that href is the contact page, which renders the same panel
-in-flow
-(`inline`, `headingLevel={1}`, the route's `formTs`). The fixtures page mounts
-it `inline` too, because the real dialog is not in the DOM until opened.
-
-The vocabulary itself is app.css `.vlf-label` / `.vlf-field` /
-`.vlf-field--area` / `.vlf-pill`, shared with `DonationForm`, with the
-contrast measured there. A new form on this site uses those classes, not
-`Field.svelte`.
-
-`Modal` keeps the native `<dialog>` (focus containment, Escape, restore) as a
-transparent full-viewport frame; the dim + blur is a real element inside it,
-because `::backdrop` cannot transition out, and the sheet mounts with Svelte
-`fade`/`fly` from `$lib/transitions`. Closing runs the outro first and only
-then closes the dialog and calls `onclose` — so a parent that unmounts the
-Modal on close (`PersonGrid`) does not cut the exit short. Escape is taken
-through the same path via `cancel`. The transitions are `|global`: PersonGrid
-creates its Modal already open, and a local intro only plays when its own
-block toggles — without the modifier the bios left with an animation and
-arrived without one.
-
-## The footer is chrome, not a slice
-
-It renders from `site-config.json` through `+layout.svelte`, so it is NOT in
-the slice zone and an author cannot reorder or remove it. Two site-specific
-hints were added to `FooterText` for it, both optional:
-
-- `tight` — hug the row above at 15px instead of the 30px inter-row gap, so a
-  label and its detail lines read as one group (`Contact us` → phone →
-  address).
-- `tone` — `"detail"` is the link colour for contact lines, `"fine"` is the
-  small print. Colour only; the sizes come from the row itself.
-
-The footer's ground is `--color-background`, deliberately: it is the last
-tenant of the cream panel that `CtaBanner onCream` rounds off, so it has to
-continue that panel rather than restart on its own colour.
-
-It also slides over the pinned band with that panel. A sticky box is released
-at the end of its containing block, and the footer is outside `<main>` — so on
-its own the panel slid over the band and then the footer pushed everything
-back into flow. `stickyCovers` measures the footer and sets `--footer-h` on the
-parent both share; `main::after` grows by it and `main + footer` is pulled up
-over that spacer (app.css). Padding would not do: sticky is constrained to the
-content box. Without JS the footer simply follows in flow.
-
-The second column's five rows sit at one 30px pitch — the client asked for
-equal gaps, a deliberate departure from the comp's 30/15. `tight` still
-exists on `FooterText`; nothing uses it.

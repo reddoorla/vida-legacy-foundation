@@ -64,3 +64,69 @@ Run through [OWASP ASVS](https://owasp.org/www-project-application-security-veri
 ## Reporting vulnerabilities
 
 If you find a vulnerability in this starter, please email contact@tuckerlemos.com rather than opening a public issue.
+
+---
+
+# Vida Legacy Foundation — site-specific
+
+## Turnstile is on, and the sitekey is not interchangeable
+
+`PUBLIC_TURNSTILE_SITE_KEY` is set on Netlify to Cloudflare widget **"Site
+Forms 3"** (`0x4AAAAAAEnswC9BSsKnj_T7` — a sitekey is public, it ships in the
+page). `TurnstileWidget` therefore renders on the contact form and the modal,
+and central verifies the token with that widget's secret
+(`TURNSTILE_SECRET_KEY_3` on the reddoor-maintenance deploy). Verified
+end to end on 2026-09-04: the page mints a 773-char token, `siteverify`
+returns `success: true` for `vida-legacy-foundation-rd.netlify.app`, and a
+real submission landed centrally as `status: new`, `spam_score: 0`,
+`notify_status: sent`.
+
+**A widget is bound to a hostname list, and getting that wrong fails silently
+in the worst direction.** A sitekey served from a host its widget does not
+list throws an uncaught `TurnstileError … 110200`, renders no iframe and mints
+**no token at all** — and `/health` still reports `forms.turnstile: true`,
+because that is a truthiness check on the env var and nothing more. It
+happened here first: the obvious move is to copy `TURNSTILE_SITE_KEY_1` out of
+reddoor-maintenance's `.env`, and that widget ("Forms 1") has been **full at
+Cloudflare's 10-hostname cap** for weeks. Hence a third widget rather than the
+fleet's last free slot. The fleet-side half of this is
+[#689](https://github.com/reddoorla/reddoor-maintenance/issues/689) /
+[#691](https://github.com/reddoorla/reddoor-maintenance/pull/691): the
+`Turnstile widget` column no longer writes `pass` from an env var, and the
+runbook is `docs/runbooks/turnstile-widgets.md` in that repo.
+
+**At launch, adding the custom domain breaks Turnstile until the widget knows
+it.** `vidalegacy.org` and `www.vidalegacy.org` are two more hostnames and
+must be added to "Site Forms 3" as part of the DNS cutover, not after it.
+
+Two things about testing it, both of which cost an afternoon:
+
+- **An automated browser cannot solve the real widget.** Cloudflare answers a
+  CDP-driven Chromium with error **600010** even when the configuration is
+  perfect — the known-good `reddoorla.com` canary reports exactly the same
+  thing under the same harness, and Playwright's own Chromium does too, headed
+  or not. That is why `form-e2e` swaps in Cloudflare's always-pass test
+  sitekey. What automation _can_ check is that the error is **not 110200**,
+  which is the one that means the hostname is wrong.
+- **The smoke suite used to discard this by name.** `ALLOWED_CONSOLE_PATTERNS`
+  was applied to `pageerror` as well as console output, so the uncaught
+  `TurnstileError` never failed a run. `tests/smoke/pages.spec.ts` now keeps a
+  separate `ALLOWED_PAGEERROR_PATTERNS` that does not list Turnstile: console
+  telemetry stays allowed, a throw does not.
+
+CSP needs nothing further — `challenges.cloudflare.com` is already in
+`script-src` and `frame-src` in `svelte.config.js`, and `connect-src` does not
+need it (the challenge runs in Cloudflare's own iframe, under its own origin).
+
+## Two CSP traps, both silent
+
+1. **`p.typekit.net` belongs in `style-src`, not just `font-src`.** It serves a
+   second stylesheet (`p.css`) as well as the woff2 files. With only `font-src`
+   the browser blocks `p.css` and no face ever registers. The smoke suite's
+   console-error assertion is the only thing that surfaces this — keep it.
+2. **No inline event handlers.** The fleet's usual font trick —
+   `media="print"` plus `onload="this.media='all'"` — is an inline handler, and
+   this site's CSP grants `script-src` nonces _without_ `'unsafe-inline'`. A
+   nonce never authorises an inline handler, so the swap is blocked, `media`
+   stays `"print"`, and fonts are fetched but never applied with no error on the
+   happy path. The plain `<link rel="stylesheet">` here is deliberate.
