@@ -19,6 +19,18 @@
     "test:a11y": "reddoor-maint audit --only a11y --fail-on-violations",
     "slicemachine": "start-slicemachine"
   },
+  "reddoor": {
+    "a11yRoutes": [
+      "/",
+      "/es",
+      "/about",
+      "/es/about",
+      "/donate",
+      "/es/donate",
+      "/contact",
+      "/es/contact"
+    ]
+  },
   "devDependencies": {
     "@axe-core/playwright": "^4.11.3",
     "@eslint/js": "^10.0.1",
