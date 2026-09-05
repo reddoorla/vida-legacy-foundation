@@ -39,6 +39,15 @@ a result.
 
 ## The parity harness is a commodity, and I led with it
 
+> Superseded in part by the work journal's second 2026-09-05 entry. Evaluated
+> hands-on the same evening: uiMatch installs and gates in ten minutes and
+> correctly failed on a real, deliberate difference — and its only typography
+> finding on the page's `<h1>` was a font-family string mismatch, a false
+> positive, with no size, line-height or position delta at all. It is a pixel
+> regression gate; ours is a typographic diagnosis. Complementary, not a
+> substitute, and not adopted. The cap-height piece is written up in
+> [figma-cap-height-trim.md](./figma-cap-height-trim.md).
+
 I briefed the research on `scripts/figma-compare/` as our most distinctive
 asset. Three of four checkers said that is the wrong flag to plant, and they are
 right.
