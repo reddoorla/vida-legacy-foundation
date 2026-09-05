@@ -1,0 +1,12 @@
+- contentinfo:
+  - img "Vida Legacy Foundation"
+  - paragraph: /© \d+ Vida Legacy Foundation\. All Rights Reserved\./
+  - link "Who we are":
+    - /url: /about
+  - link "Donate":
+    - /url: /donate
+  - link "Contact us":
+    - /url: /contact
+  - link /\d+-\d+-\d+/:
+    - /url: tel:+17262346910
+  - paragraph: /\d+ Fredericksburg Rd\. Suite \d+ San Antonio, TX \d+/
