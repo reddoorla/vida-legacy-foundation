@@ -59,3 +59,56 @@ Public-sector and education clients should publish an accessibility statement at
 ## Reporting issues
 
 Treat accessibility regressions as P1 bugs. They block merges to `main`.
+
+---
+
+# Vida Legacy Foundation — site-specific
+
+## The gate on this site
+
+Two gates beyond `pnpm verify`, neither in CI, both session tools. **`pnpm
+test:mutate`** (Stryker) answers "does this suite mean anything" by breaking the
+source and seeing whether anything goes red — nine minutes, and its first run
+found the module at the centre of the Turnstile lesson had no unit test at all.
+[docs/mutation-audit.md](docs/mutation-audit.md). And **`tests/__aria__/`**
+holds accessibility-tree snapshots of the chrome, nav per route and footer per
+locale; regenerate with `npx playwright test tests/smoke/chrome.spec.ts
+--update-snapshots` and READ the diff, because a name that changed language
+looks exactly like a snapshot needing an update. That is the layer where English
+reached Spanish readers three times.
+
+`pnpm test:a11y` gates all of this, so a regression fails CI rather than
+shipping. **Since 2026-09-04 it audits the real site as well as the fixtures**:
+`pkg.reddoor.a11yRoutes` in `package.json` lists all eight published routes and
+those APPEND to the fleet's two dev fixtures rather than replacing them. Until
+then the gate ran over `/dev/a11y-fixtures` and `/dev/animate-in` and nothing
+else, and no real page of the site was ever measured — the fleet's own comment
+(`a11y.ts`) records why that key exists: scanning only fixtures let a critical
+image-alt violation ship to five production pages with CI green. All eight
+routes measured 0 violations when the key was added, so it gates a clean state
+rather than opening a to-do.
+
+**The pass summary undercounts, and it will tell you the key did not work.** It
+reads `a11y: 0 violations across 2 routes` no matter how many routes ran — the
+fleet's summary string is built from the FIXTURE list's length, not the merged
+one (`a11y.ts`, the `status === "pass"` branch). The audit really did visit all
+ten. To see the truth, catch the generated spec while it runs: the audit writes
+`.reddoor-a11y-spec-*/a11y.spec.ts` in the repo root and deletes it in a
+`finally`, so poll for it from a second shell and read its `const pages = [...]`.
+
+Two consequences to know before touching it. It makes CI **content-dependent** —
+the audit renders real Prismic content, so an authored change can now fail the
+build, which is the point but is new. And the audit's synthesized config does
+NOT emulate reduced motion, so `/` and `/about` are scanned at runway frame 0:
+any future contrast work on the hero's closed-heart state is now gated, which
+is right, since frame 0 is what a no-JS visitor and a mid-scroll visitor see.
+
+The fixtures page still earns its keep, and is still where a NEW palette has to
+go. It carries in-flow renders of the chrome — the nav in all three tones over
+the grounds each one really sits on, the open menu, the Spanish chrome and the
+contact panel — and of both `PersonGrid` card designs, none of which the eight
+routes reach: the real nav is transparent over a hero, the menu is not in the
+DOM until opened, and `/about` ships bio-only cards. So a slice's new colour
+reaches the gate through a real route only if a published document uses it. Do
+not assign `--color-green` or `--color-coral` to text in a slice and assume
+review will catch it.
