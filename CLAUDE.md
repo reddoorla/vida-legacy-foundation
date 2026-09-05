@@ -76,6 +76,14 @@ journal is a record of what was believed at the time, and that record is most
 useful precisely where it was wrong. Fixing the past in place destroys the only
 evidence of how the mistake was made.
 
+The one edit an old entry may take is a **forward pointer**: one line directly
+under its heading naming the entry that overturned it — `> Superseded in part by
+2026-10-14 — <that entry's title>.` It asserts nothing new and retracts nothing,
+so the record of what was believed survives whole; it only stops a reader who
+lands on the old paragraph from leaving with the old answer. Without it the rule
+above is half a mechanism: the correction exists at the bottom of the file, and
+nothing points to it from where a reader actually arrives.
+
 If a session produced nothing worth an entry, that is itself worth one line.
 
 ## Orientation
@@ -85,6 +93,8 @@ If a session produced nothing worth an entry, that is itself worth one line.
 | What this stack ships             | [docs/STARTER.md](docs/STARTER.md)                                          |
 | What's still a template default   | [docs/NEW-SITE.md](docs/NEW-SITE.md)                                        |
 | A11y conventions and the axe gate | [docs/accessibility.md](docs/accessibility.md)                              |
+| Whether a gate means anything     | [docs/mutation-audit.md](docs/mutation-audit.md)                            |
+| What the build process got wrong  | [docs/process-review.md](docs/process-review.md)                            |
 | CSP, headers, form anti-bot       | [docs/security.md](docs/security.md)                                        |
 | Page rendering                    | `src/routes/[[preview=preview]]/[uid]/+page.server.ts` → `$lib/page-load`   |
 | Prismic slices                    | `src/lib/slices/<Name>/` — `model.json`, `mocks.json`, `index.svelte`, test |
@@ -335,6 +345,17 @@ scrollbar is paid, and that fell to 2x2 on the client's own screen. The
 register pill takes two lines below ~1430 — it needs 291px against the
 comp's own 282.5px column, so it wraps even in the comp's frame — and the
 pill's 40px min-height swallows both lines without growing.
+
+Two gates beyond `pnpm verify`, neither in CI, both session tools. **`pnpm
+test:mutate`** (Stryker) answers "does this suite mean anything" by breaking the
+source and seeing whether anything goes red — nine minutes, and its first run
+found the module at the centre of the Turnstile lesson had no unit test at all.
+[docs/mutation-audit.md](docs/mutation-audit.md). And **`tests/__aria__/`**
+holds accessibility-tree snapshots of the chrome, nav per route and footer per
+locale; regenerate with `npx playwright test tests/smoke/chrome.spec.ts
+--update-snapshots` and READ the diff, because a name that changed language
+looks exactly like a snapshot needing an update. That is the layer where English
+reached Spanish readers three times.
 
 `pnpm test:a11y` gates all of this, so a regression fails CI rather than
 shipping. **Since 2026-09-04 it audits the real site as well as the fixtures**:
@@ -765,12 +786,33 @@ and would be left with no height at all.
 **A dev server cannot show any of this** and neither could the suite: the
 shared Playwright config forces `contextOptions.reducedMotion: "reduce"` on
 every test, which collapses both runways through the components' own media
-query — so a no-JS test that inherits it passes on a page with no fix. The
-`without JavaScript` block in `tests/smoke/pages.spec.ts` overrides it to
-`no-preference`, and asserts opacity on the `.reveal` ANCESTOR, because
-opacity does not inherit as a computed value and the `<h1>`'s own is 1 while
-it is completely invisible. Both were verified by deleting the fix and
-watching the tests go red.
+query — so a no-JS test that inherits it passes on a page with no fix.
+
+**Since 2026-09-05 these are asserted in four rendering states, not one.**
+`tests/smoke/rendering.spec.ts` holds every invariant that must hold whatever
+the visitor's browser is doing — the heading is painted, the band is not a
+260vh runway, the stats are not the count's zeros, one figure per stat, one bio
+per card, both stages have a height, the heart covers the band — with NO
+`test.use` of its own. `playwright.config.ts` runs it in four projects:
+{desktop, phone} x {scripts + reduced motion, no scripts + full motion}. Each of
+those assertions used to live in the single cell where its defect was found.
+Deliberately not all four combinations of the axes: with scripts AND full motion
+the hero shows frame 0 for two seconds by design, so "the heading is painted" is
+false of that state on arrival.
+
+What stays in `tests/smoke/pages.spec.ts` is the genuinely one-sided half — a
+control that cannot function must be hidden, a card must grow around the bio it
+is now the only home for — plus the route, console and head assertions.
+
+Opacity is asserted on the `.reveal` ANCESTOR, because opacity does not inherit
+as a computed value and the `<h1>`'s own is 1 while it is completely invisible.
+Everything is polled, because with scripts the values are written by effects
+after hydration and a single read is a race in one cell and fine in three.
+
+All of it was verified by deleting each fix and watching the tests go red — and
+that is not a formality. The first attempt at the no-JS heart assertion PASSED
+with the fix deleted: `-webkit-mask-size` on the line above `mask-size` in
+app.html still supplied the value, so the test was vacuous. Delete both.
 
 ### Three more things a script was supplying
 

@@ -334,6 +334,11 @@ above. Ordered by what they would actually have saved.
 
 ### 1. Build the comp-measuring harness at Stage A, before the first slice
 
+> Superseded in part by 2026-09-05 — the retrospective checked against the
+> field. Building it early still holds; building it OURSELVES is the part that
+> did not survive contact — three off-the-shelf tools do this, one of them
+> free. See [process-review.md](./process-review.md).
+
 `scripts/figma-compare` was built on day three, after all 17 slices were merged, and
 immediately cost #29, #30 and #31 — re-doing pages already called done — plus nine
 PRs on the sticky-band mechanism it should have specified once.
@@ -362,6 +367,11 @@ is opt-in and **nothing in `/new-site` sets it**. Set both lists at bootstrap an
 grow them as routes land.
 
 ### 3. A pass must require positive evidence, never the absence of an error
+
+> Superseded in part by 2026-09-05 — the retrospective checked against the
+> field. This rule has a name — mutation testing — and as of #61 the repo
+> measures it rather than aspiring to it. See
+> [mutation-audit.md](./mutation-audit.md).
 
 The single most expensive pattern in the build. `/health`'s `forms.turnstile` is a
 truthiness check on an env var, and it was allowed to mean "the widget works."
@@ -396,6 +406,11 @@ not fixed now, it is an issue with a described fix — otherwise a launch sweep 
 miss it, and one did.
 
 ### 6. Treat a coverage claim as a claim about code
+
+> Superseded in part by 2026-09-05 — the retrospective checked against the
+> field. The corollary — break the thing on purpose — is mechanised in #61,
+> and it caught this session shipping a vacuous test within the hour of
+> restating it.
 
 "The suite covers this" is a statement about a file and must be made by reading that
 file. Three claims in the Turnstile work were written and found false within 24
@@ -442,7 +457,163 @@ own notes is the rest.
 
 ### 10. Verify on a production build
 
+> Superseded in part by 2026-09-05 — the retrospective checked against the
+> field. Not merely unimplemented: BOTH browser gates run `npm run vite:dev`,
+> so the harness that enforces the other nine contradicts this one. Filed as
+> reddoor-maintenance#700.
+
 Some defects are not merely invisible on the dev server — it **actively hides**
 them. The no-JS runway bug needs a real build; the font path loads by a different CSP
 directive in dev than in prod, which is why issue #6 is still open. It is the last
 of the four issues filed on day one that has not been closed.
+
+---
+
+## 2026-09-05 — the retrospective checked against the field, and three of its rules made mechanical (#61, #62, starter#116)
+
+The entry above is the inside view: ten recommendations drawn from our own
+defects, written with no reference to how anyone else solves the same problems.
+This is the outside check — eight research agents across four angles, every
+claim verified against this repo rather than taken on report — and then the
+three highest-value recommendations actually implemented, so the review rests on
+evidence rather than intent. [process-review.md](./process-review.md) is the
+full document; this records what it cost and what it corrected.
+
+**The most useful finding came from the checker.** An agent asked how the field
+stops coding agents making confident false claims reported that this repo's
+`CLAUDE.md` still carried the stale paragraph about the axe gate scanning only
+`/dev/a11y-fixtures`. It does not — `a11yRoutes` landed in #55 and the paragraph
+is gone. The agent had reasoned from the retrospective text in its own prompt,
+which describes the pre-fix state as history, and never opened the file. A
+report about hallucinated completion claims, containing one, from an agent told
+in its own brief that this was our number-one failure mode. The check costs one
+grep.
+
+**Recommendations 3 and 6 have a name, and it is fifteen years old.** _A pass
+must require positive evidence_ and _break the thing on purpose_ together
+describe mutation testing. Four days of hand-derivation, one defect at a time,
+for a technique with mature JS tooling since 2010. `pnpm test:mutate` (#61) now
+runs it, deliberately outside `verify` and CI: nine minutes, and the output is a
+reading list rather than a pass.
+
+The first run scored **81.21%** — 1,219 mutants, 989 killed, 191 survived, 38
+never reached. The headline is fine and beside the point. `src/lib/turnstile.ts`
+scored **40 with no unit test at all**: the module at the centre of the whole
+positive-evidence lesson, whose misconfiguration buckets every real lead as
+spam, was the lowest-scoring file in the repo. Its entire `onerror` handler
+could be emptied — which leaks a dead `<script>` into `<head>` AND never clears
+the cached promise, so one network blip disables the widget for the life of the
+page — with nothing red. `/health`'s `prerender = false` could be flipped to
+`true`, freezing the endpoint the fleet polls into a build-time snapshot
+reporting `ok: true` forever. And `/health`'s `.trim()` on the sitekey is
+documented in a comment as making a whitespace value "report dark here too";
+dropping it survived, because every fixture used a well-formed key — which is
+recommendation #6 catching itself. Six files went from ~50% combined to 94.44%;
+#58–#60 hold the rest.
+
+**The strongest datum of the day is a test that passed when it should not
+have.** Building the rendering matrix (#62), the no-JS heart assertion was
+break-tested by deleting `mask-size: auto 273.4919%` from `app.html`. It stayed
+green: the `-webkit-mask-size` line directly above still supplied the value. The
+assertion was vacuous, written and about to be committed by the same session
+that had spent the morning putting "break the thing on purpose" into three
+repositories. The rule is not aspiration and it is not automatic — it caught its
+own author within the hour. Removing both declarations reds `no-js` and
+`phone-no-js` and leaves the scripts-on cell green, which is correct.
+
+**Eleven invariants now run in four cells instead of one.** Every no-JS and
+reduced-motion-phone defect this site shipped was found by hand, and its test
+then lived in the single cell where it was discovered. "The heart covers the
+band" ran only at 390×664; "the stats are not zeros" only without scripts; "the
+heading is painted" only on the desktop no-JS page. All three are true of every
+rendering state. `tests/smoke/rendering.spec.ts` holds them with no `test.use`
+of its own and `playwright.config.ts` runs it across {desktop, phone} ×
+{scripts + reduced motion, no scripts + full motion}. 22 tests became 67.
+
+Not all four combinations of those axes, deliberately: a visitor with scripts
+and full motion sees frame 0 for two seconds by design, so "the heading is
+painted" is false of that state on arrival and asserting it would be wrong
+rather than strict.
+
+The heart check had to be rewritten to get there, and it is now the only thing
+that measures the no-JS claim in a browser. The two halves express the mask
+differently on purpose — `<pct>% auto` with scripts, `auto 273.4919%` without —
+and CLAUDE.md argues they are algebraically identical at every aspect. Nothing
+could check it, because parsing the first token as a width is a NaN on the
+no-JS form.
+
+**Aria snapshots, not pixels.** `tests/__aria__/` holds ten accessibility-tree
+snapshots of the chrome: nav per route, footer per locale. The tree is identical
+on macOS and CI's Linux, where font rasterisation differs enough that a
+screenshot baseline needs a container or a tolerance; it is text, so it reviews
+in a PR. Verified against the bug class that actually shipped here — swapping
+`openMenu: "Abrir el menú"` for `"Open menu"` reds `/es` with a one-line diff,
+and English reached Spanish readers three separate times on this build, each
+round found by eye. It would **not** have caught the head-in-`<body>` bug:
+`<meta>` and `<link>` are not in the accessibility tree. Worth saying, because
+the temptation is to claim a new gate covers the last defect that hurt.
+
+**Recommendation #10 is worse than unimplemented.** Both browser gates —
+`configs/playwright-a11y` and the a11y audit's synthesized config — start the
+system under test with `npm run vite:dev`. So the harness that enforces the
+other nine contradicts this one, and all 67 assertions in the new matrix inherit
+it. Observed live in a run today: the dev server fires a `connect-src` CSP
+violation for the Typekit stylesheet that production does not, which is issue #6
+— open since day one and uncloseable by a gate that runs in dev. Filed as
+reddoor-maintenance#700, and it is now the ceiling on everything else here.
+
+**Beliefs corrected on contact.** Two, both mine.
+
+The parity harness is a **commodity**, and I briefed the research on it as our
+most distinctive asset. uiMatch does the same job open-source with a fidelity
+score, ΔE2000 colour and CI exit codes; Fidel sells the architecture as a $29
+GitHub Action; Uiprobe went free in April; Figma has acquired the leading
+open-source visual-diff team. Ours is 542 lines across six scripts, of which the
+comparator is 121, with no score, no threshold and no exit code. Recommendation
+#1 — build it at Stage A — stands on its own evidence. _Build it yourself_ does
+not. The one genuinely novel piece is the cap-height trim, which no tool in the
+field documents, and which is worth writing up publicly.
+
+And the thing we are actually ahead on got one sentence in the research, filed
+under "secondary": the corrected trap corpus plus this journal, read by an agent
+before it acts. Cline's Memory Bank — the closest widely-used equivalent —
+rewrites `activeContext.md` every session and would have compacted the
+white-on-green correction away the first time it stopped being active context.
+
+**Honest accounting, and it points at this file's sibling.** `CLAUDE.md` is 963
+lines, ~13K tokens, loaded into every session whatever the task. The only
+measured study of that artifact class (Gloaguen et al., ETH Zurich,
+arXiv:2602.11988, Feb 2026 — 138 tasks, four agents) puts developer-written
+context files at **+4% task success for +19% inference cost**, and concludes
+that unnecessary requirements in them make tasks harder. The archive is worth
+having; keeping all of it always-on is not. Which cuts directly against what
+this session spent its morning doing — adding the journal convention to that
+file across 39 repositories. The rollout was still right. The size of this
+particular file is a separate problem and it is now the largest one on the list.
+
+**One claim withdrawn before it shipped.** The starter PR said journal entries
+are anchored to "a PR under branch protection and a green `pnpm verify`." This
+retrospective established that a `pnpm verify` pass was granted on the absence
+of an error string, and that the axe gate audited no real page for four days
+while every PR reported 0 violations. An anchor to a gate that demonstrably lied
+is the appearance of provenance, which is worse than none. It is not in the
+merged text.
+
+**The journal rule was half a mechanism.** It says a superseded entry is never
+rewritten — a later entry corrects it and names which one — which puts the
+correction at the bottom of the file and leaves nothing pointing to it from the
+paragraph a reader lands on. Forward pointers close that, and four of the ten
+recommendations above now carry one. A pointer is navigation, not content: the
+prohibition is on editing the claim, and a pointer makes no claim. Rolled out to
+33 fleet repositories today (starter#116). The evidence it was needed turned up
+by accident — `a-budget`'s `CLAUDE.md` was already doing it by hand,
+uncommitted, in a working tree nobody had committed from: `**SUPERSEDED WHILE IN
+DEBT PAYOFF — see "Envelopes: pure retroactive" below.**` Somebody hit the
+problem and invented the fix locally, which usually means a convention is
+missing rather than a person is wrong.
+
+**Not done, and why.** `a-budget` is the one repository of 34 that did not get
+the forward-pointer paragraph: its `CLAUDE.md` had uncommitted changes modified
+two hours earlier, and moving the remote branch under a possibly-live session is
+exactly what the concurrent-sessions rule exists to prevent. It needs one small
+follow-up once that work lands.
