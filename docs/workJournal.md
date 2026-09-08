@@ -708,3 +708,74 @@ thing, and a sweep assuming they are addresses the wrong repo.
 
 **Not done.** `a-budget` still lacks the forward-pointer paragraph, for the same
 reason as this morning.
+
+## 2026-09-08 — The hero's dark overlay stops at the heart, not the green (#66)
+
+Nicole, on Discord yesterday: "could the dark overlay on the homepage masthead
+only apply to the image, not the green cutout?" One note, and the whole session.
+
+`HeartHero`'s legibility scrim was a **sibling** of `.heart-mask` — `absolute
+inset-0` over the stage — so it covered everything the stage painted. At rest
+the heart is 46.49% of the band, which means the other ~85% of the frame is
+`--color-green`, and the scrim was laying a 0.52-alpha gradient across it. The
+green went to a muddy olive toward the bottom. That is a flat brand fill the
+comp never darkens, and it had been shipping since the slice was written.
+
+The fix is one move: the scrim goes **inside** `.heart-mask`. A CSS mask applies
+to everything an element paints, children included, so the scrim inherits the
+heart's size and position for free — in every frame of the opening, and in the
+scriptless one, where app.html's noscript block overrides `mask-size` and
+`mask-position` on `.heart-mask` alone. The alternative was duplicating the mask
+rules onto `.hero-scrim`, which would have meant moving `--heart-size` /
+`--heart-y` up to the stage AND adding a second selector to the noscript block —
+two more places to keep in step with a geometry that is already derived in three
+(the component, `heart.ts`, and a hard-coded 273.4919% in app.html). Containment
+needs none of them.
+
+**The copy was never at risk, and it is worth writing down why**, because the
+scrim exists for exactly one reason and it looked like this change removed it.
+`COPY_AT` is 0.6; `HEART_OPEN_THROUGH` is 0.55. The copy is revealed _after_ the
+heart is fully open, and `heartEndPct` guarantees an open heart covers the
+stage at any aspect. So the scrim is under the copy in every frame the copy
+exists in — it can only be clipped away where there is no copy.
+
+Proved rather than argued. Before/after captures at three scroll positions on
+1440×860 and 390×664, diffed per pixel:
+
+| viewport | rest                 | mid-open (0.3) | open (0.8) |
+| -------- | -------------------- | -------------- | ---------- |
+| 1440×860 | 47.09%, rows 342–859 | 14.43%         | **0 px**   |
+| 390×664  | 53.17%, rows 264–663 | 0.14%          | **0 px**   |
+
+Every changed pixel is the green under the gradient; the open frame is
+byte-identical on both. The ground at the bottom-left corner at rest goes
+`#404e28` → `#87a353` (brand green under the grain layer); the photograph inside
+the heart at the same moment is `#635b5c` in both, delta `0,0,0`. The phone's
+mid-open number is 0.14% and not a bug: `heartEndPct` gives a 390×664 stage a
+533.76% heart, so by 0.3 of the runway it has already covered nearly everything.
+
+**Two harness lessons, both from getting it wrong first.** (1) Reconstructing
+the "before" state by reparenting the scrim in the live DOM is not the same
+experiment: `appendChild` puts it _after_ `.hero-copy`, so it painted over the
+heading and the first probe read a cream glyph as if it were the ground. Even
+`insertBefore` the copy still reported 2–3% of the frame differing, all of it at
+glyph edges, because the two captures were separated by a scroll that had not
+settled to the same integer y. A `git stash` A/B — two clean page loads of two
+real code states — answered in one run what three rounds of DOM surgery had
+muddied. (2) A screenshot pair is only evidence if the thing you are measuring
+is the only thing that moved.
+
+**What was NOT run, and why it does not matter here.** `pnpm test:mutate` is a
+session gate, but Stryker's `mutate` globs in `stryker.config.json` are `.ts`
+only (`src/lib/**/*.ts`, `src/params/*.ts`, `src/routes/**/+server.ts`). This
+change is a `.svelte` file and its test; `heart.ts` is untouched, so the
+mutation score is structurally incapable of having moved. The aria snapshots
+did run — they are inside `pnpm test:smoke`, and `pnpm verify` is green
+end to end.
+
+The no-photo case keeps the full-bleed scrim in an `{:else}`. Without an image
+there is no heart to clip to and the copy would sit on bare `--color-green`,
+where cream is 1.94 — the one thing brand.md says this design never does. The
+scrim carries the bottom of the band back to ~4.5, so losing it in the else
+branch would have been a silent contrast regression axe cannot see, because the
+a11y fixtures render the slice with its mock image.

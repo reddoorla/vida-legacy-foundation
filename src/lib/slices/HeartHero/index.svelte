@@ -276,6 +276,26 @@
       ></div>
     </div>
 
+    <!-- Legibility scrim. NOT in the comp, which sets #fffbf4 copy straight onto
+         the photograph — contrast there depends entirely on whichever image an
+         editor uploads, and axe cannot measure text over an image. This keeps
+         the designed colours while making them safe against any photo.
+
+         It lives INSIDE the masked element, so the heart clips it and the
+         gradient darkens only the photograph. A mask applies to everything an
+         element paints, children included, which is why this needs no mask
+         rules of its own and nothing in app.html's noscript block: wherever the
+         photo is, the scrim is, at exactly the same size and position, in every
+         frame of the opening and in the scriptless one. Nicole, on Discord
+         (2026-09-07): "could the dark overlay on the homepage masthead only
+         apply to the image, not the green cutout?" — as a sibling it covered
+         the whole stage, so at rest it dulled the green ground the heart sits
+         on, which is a flat brand fill the comp never darkens.
+
+         The copy is safe either way: it is revealed at COPY_AT (0.6), past the
+         point the heart is fully open (0.55), and heartEndPct guarantees an
+         open heart covers the stage — so the scrim is under the copy in every
+         frame the copy exists in. -->
     {#if hasImage}
       <div
         class="heart-mask absolute inset-0"
@@ -289,14 +309,15 @@
           portraitMedia="(max-width: 767px)"
           class="h-full w-full object-cover"
         />
+        <div aria-hidden="true" class="hero-scrim pointer-events-none absolute inset-0"></div>
       </div>
+    {:else}
+      <!-- No photo, so there is no heart to clip to and nothing to protect the
+           copy: cream on bare --color-green is 1.94, and this site ships no
+           white-on-green anywhere. The scrim stays full-bleed and carries the
+           bottom of the band to ~4.5. -->
+      <div aria-hidden="true" class="hero-scrim pointer-events-none absolute inset-0"></div>
     {/if}
-
-    <!-- Legibility scrim. NOT in the comp, which sets #fffbf4 copy straight onto
-         the photograph — contrast there depends entirely on whichever image an
-         editor uploads, and axe cannot measure text over an image. This keeps
-         the designed colours while making them safe against any photo. -->
-    <div aria-hidden="true" class="hero-scrim pointer-events-none absolute inset-0"></div>
 
     <div class="hero-copy reveal absolute" class:is-in={copyIn}>
       {#if slice.primary.eyebrow}

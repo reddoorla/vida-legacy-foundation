@@ -58,6 +58,45 @@ describe("HeartHero slice", () => {
     expect(section?.querySelector(".texture-full")).not.toBeNull();
   });
 
+  it("clips the scrim to the heart so only the photograph is darkened", () => {
+    // Nicole, 2026-09-07: "could the dark overlay on the homepage masthead
+    // only apply to the image, not the green cutout?" A sibling scrim covers
+    // the whole stage, so at rest — heart at 46.49% — it dulled the green
+    // ground. Nesting it inside the masked element is the whole mechanism:
+    // the mask applies to children too, so the scrim inherits the heart's
+    // exact size and position in every frame with no second set of mask
+    // rules to keep in step (and nothing to add to app.html's noscript
+    // block). Assert the containment, not the CSS.
+    const { container } = render(HeartHero, { props: { slice } });
+    const mask = container.querySelector(".heart-mask");
+    const scrim = container.querySelector(".hero-scrim");
+    expect(mask).not.toBeNull();
+    expect(scrim).not.toBeNull();
+    expect(mask?.contains(scrim!)).toBe(true);
+    // And it still paints over the photo, not under it: same stacking
+    // context, and the last child, so every earlier sibling — the photo —
+    // paints first.
+    expect(mask?.querySelector("img")).not.toBeNull();
+    expect(mask?.lastElementChild).toBe(scrim);
+  });
+
+  it("keeps a full-bleed scrim when there is no photo to clip it to", () => {
+    // Without an image there is no heart, and the copy would sit on bare
+    // --color-green: cream on it is 1.94, and this design ships no
+    // white-on-green anywhere. The unmasked scrim is what carries the bottom
+    // of the band back to ~4.5, so losing it in the else branch would be a
+    // silent contrast regression axe cannot see (it renders no text over the
+    // green in the fixtures).
+    const bare = {
+      ...slice,
+      primary: { image: {}, eyebrow: null, heading: [] },
+    } as unknown as Content.HeartHeroSlice;
+    const { container } = render(HeartHero, { props: { slice: bare } });
+    const scrim = container.querySelector(".hero-scrim");
+    expect(scrim).not.toBeNull();
+    expect(scrim?.parentElement?.className).toContain("heart-hero-stage");
+  });
+
   it("paints the inlined LQIP grain immediately, with the full file layered over it", () => {
     // The regression this guards: dropping the LQIP would leave the hero flat
     // green until a 54KB request lands, which is the exact flash the two-tier
