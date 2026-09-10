@@ -2,6 +2,7 @@
   import HeroBackgroundImage from "$lib/components/HeroBackgroundImage.svelte";
   import { PORTRAIT_HERO_ASPECT } from "$lib/utils/image";
   import { isFilled, type Content } from "@prismicio/client";
+  import { runAutoOpen } from "$lib/utils/autoOpen";
 
   let { slice }: { slice: Content.PageMastheadSlice } = $props();
 
@@ -60,6 +61,26 @@
       window.removeEventListener("resize", onScroll);
       if (frame) cancelAnimationFrame(frame);
     };
+  });
+
+  // And it opens itself, as the home hero does — Nicole, on Discord
+  // (2026-09-09): "could the about page open automatically as well?". Far
+  // enough through the runway to clear COPY_AT, so the beat ends on the open
+  // photograph with the page's heading on it rather than part way.
+  //
+  // The mark is keyed by path because this one slice opens more than one page:
+  // /about and /donate each draw a PageMasthead, and spending the mark on the
+  // first would leave the second sitting shut for the rest of the session.
+  const AUTO_OPEN_THROUGH = 0.7;
+
+  $effect(() => {
+    if (!sectionEl) return;
+    return runAutoOpen({
+      section: sectionEl,
+      reducedMotion,
+      key: `vlf:masthead-opened:${location.pathname}`,
+      through: AUTO_OPEN_THROUGH,
+    });
   });
 
   // Reduced motion lands on the FINAL frame — the open photograph with the

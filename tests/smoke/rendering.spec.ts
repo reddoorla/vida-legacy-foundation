@@ -211,9 +211,8 @@ test("/ paints one figure per stat, not both candidates", async ({ page }) => {
 });
 
 test("a card shows exactly one bio, whichever half of the coupling is live", async ({ page }) => {
-  // /about carries no bios today (the board members have none, the leadership
-  // cards open on `!board` alone), so the fixtures page is the only rendered
-  // bio on the site.
+  // /about carries no bios today, and a card only opens when it has one, so
+  // the fixtures page is the only rendered bio on the site.
   //
   // The two halves are opposites — with scripts the bio belongs to the pop-up
   // alone and `.person-bio-nojs` is display:none, which also keeps it out of
@@ -240,4 +239,32 @@ test("a card shows exactly one bio, whichever half of the coupling is live", asy
       },
     )
     .toBe(scripts ? 0 : await bios.count());
+});
+
+test("/ pins the lead paragraph only on a screen that can hold it", async ({ page }) => {
+  // A pinned band gets covered by the next one, which is the comp's effect —
+  // but it only works where the band's own copy fits above the band covering
+  // it. The mission paragraph is taller than a 390x664 phone, so the columns
+  // band slid up over a paragraph still mid-sentence and cut it at "and
+  // embraced while connecting" (Nicole, on Discord 2026-09-09).
+  //
+  // The class assertion for this lives in the slice's unit test; what can only
+  // be checked here is that the CSS behind the class actually wins — it sits
+  // at the same specificity as the rule it overrides, so it is source order
+  // that decides, and nothing but a real cascade proves that.
+  const { width } = state();
+  const pinned = width >= 768;
+  await page.goto("/", { waitUntil: "domcontentloaded" });
+  const band = page
+    .locator('main > section[data-slice-type="lead_text"][data-slice-variation="onDark"]')
+    .first();
+  await expect(band, "the home page no longer opens with the lead paragraph").toHaveCount(1);
+
+  await expect
+    .poll(() => band.evaluate((el) => getComputedStyle(el).position), {
+      message: pinned
+        ? "the lead paragraph is no longer pinned for the band above to slide over"
+        : "the lead paragraph is still pinned on a screen too short to hold it",
+    })
+    .toBe(pinned ? "sticky" : "relative");
 });

@@ -779,3 +779,101 @@ where cream is 1.94 — the one thing brand.md says this design never does. The
 scrim carries the bottom of the band back to ~4.5, so losing it in the else
 branch would have been a silent contrast regression axe cannot see, because the
 a11y fixtures render the slice with its mock image.
+
+## 2026-09-09 — Nicole's second review round: four notes, and one of them was a bug the comp had been blamed for
+
+Four notes from Nicole in `#vida-legacy-foundation`, two with phone
+screenshots. Taken together in one branch because they are one review round.
+
+**The (+) that opened nothing.** She asked to "disable the (+) button if a bio
+does not exist". The first read of this was that it _overrode_ the comp, because
+`PersonGrid` said so in a comment: the comp draws a "+" on every leadership card,
+and `opens()` was `!board || isFilled.richText(p.bio)` — deliberately true for
+every leadership card, bio or no bio, with the reasoning that a bio not yet
+written would open to "the name, role and address alone". Following that through
+the component is what corrected the belief. The pop-up's bio block is guarded by
+`isFilled.richText(current.bio)`, so a card with no bio opened a dialog
+containing the name, the role and the email — the three things already printed
+on the card face — and the trigger announced itself as "Read the bio for
+&lt;name&gt;" on the way in. That is not a design decision being overridden; it
+is a dead end, and a broken promise specifically to a screen reader. The comp
+puts a "+" on every leadership card because in the comp every leadership person
+_has_ a bio; the bio-less card is a content state it never drew. Nobody on
+/about has a bio today, so this was all three leadership cards, live.
+
+`opens()` is now `isFilled.richText(p.bio)` and the `board` distinction leaves it
+entirely — both styles say the same thing, which is what the board rule already
+said.
+
+**What that broke, and why the breakage was the good news.**
+`tests/smoke/pages.spec.ts` had `/about hides the controls that cannot open a
+bio`, and it went red — not on the hiding, but on its own floor guard
+(`[data-bio-toggle] matches nothing — has it been renamed?`). /about now renders
+no bio controls at all, because nobody there has a bio. The guard exists because
+"none are showing" is also true of a selector matching nothing, and it did
+exactly the job it was written for. The test now loads `/dev/a11y-fixtures`,
+which is the only rendered bio on the site, the same page its sibling test
+already used.
+
+**The square cards.** "Height of the box matches height of content instead of
+being a perfect square. Too much real estate for the names." A photoless
+leadership card was `aspect-square`, and with `headshots` off at launch that is
+every leadership card — a name, a role and an address in the top third of a
+full-bleed square. Measured at 390px before: 327×327 with 119px of content, so
+64% of the card was empty. Now `sm:aspect-square`: 327×119 for Brooke and Vilma,
+327×143 for Holly (two-line role), and the comp's square returns at `sm` where
+the cards are two and three up. The board card is untouched at `min-h-[200px]`.
+
+**The sticky that ate the paragraph.** The mission band is a `sticky-cover`: the
+comp pins it and the columns band slides over it. That works while the band's
+copy fits on the screen above the band covering it, and on a 390×664 phone it
+does not — her screenshot has the paragraph cut mid-word at "and embraced while
+connecting" with the columns band already over it. New modifier
+`.sticky-cover--from-md`: in flow below `md`, pinned above it. It has to sit
+after the base rule in app.css — same specificity, so source order is the only
+thing deciding — and that is precisely the kind of fix that can be silently
+undone by a later edit, so the invariant is asserted against a real cascade in
+`rendering.spec.ts` rather than as a class name. Verified by neutering the
+selector and watching the phone cell fail (`expected "relative", received
+"sticky"`) while the desktop cell passed.
+
+Deliberately narrow: `ImageBand` is the only other `sticky-cover` and it pins a
+photograph, which has no text to clip; the closing statement is bottom-anchored
+and rests on its last line by design. Neither was in the note and neither is
+changed.
+
+**The about page opening itself.** "could the about page open automatically as
+well?" — the same request that gave the hero its opening on 2026-09-03, for the
+band that opens /about and /donate. `PageMasthead` already had HeartHero's
+runway mechanics; what it lacked was the opening. Rather than copy forty lines,
+the auto-open moved to `$lib/utils/autoOpen`: the three decision helpers
+(`shouldAutoOpen`, `playedThisSession`, `navigationType`) that were never
+heart-specific in the first place, plus a new `runAutoOpen` holding the beat,
+the gesture cancel and the easing. HeartHero's effect is now nine lines and
+`heart.ts` is back to being about hearts.
+
+One thing that is genuinely new rather than moved: **the mark is keyed by
+path**. /about and /donate both draw a PageMasthead, and a single
+`vlf:masthead-opened` would have let the first page visited spend the second
+one's turn — /donate would sit shut for the rest of the session with no
+indication why. `vlf:masthead-opened:${location.pathname}`, and there is a test
+for exactly that ("keys the mark per band").
+
+**Why the wiring is unit-tested and not smoked.** None of the four Playwright
+cells can exercise an auto-open: `chromium` and `phone` inherit
+`reducedMotion: "reduce"` from the shared config, which declines by design, and
+both `no-js` cells have no script to run it. That is why the hero's opening
+never had a smoke test either. `runAutoOpen` is therefore driven directly under
+fake timers, and `PageMasthead.test.ts` asserts only that the slice is wired to
+it and finishes past `COPY_AT`.
+
+`pnpm verify` green end to end. Measured after, at 390px: the band computes
+`position: relative`, and the mission paragraph's bottom is 489 of a 664
+viewport — it fits with room to spare.
+
+**One thing looked wrong and was not.** The phone screenshots show a 15px cream
+strip down the right edge: `main` is 375 wide in a 390 viewport. That is
+`scrollbar-gutter: stable` (app.css) reserving room for a classic scrollbar in
+headless Chromium — `scrollWidth` is 375 against a 390 `clientWidth`, so nothing
+overflows, and a real phone with overlay scrollbars shows none of it. Nicole's
+own screenshots have the green going edge to edge, which is the proof.

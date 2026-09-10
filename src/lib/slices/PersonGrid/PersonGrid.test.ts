@@ -80,7 +80,7 @@ describe("PersonGrid slice", () => {
     const name = container.querySelector("li h4")!;
     expect(name.textContent?.trim()).toBe("Brooke Perucki");
     expect(name.className).toContain("t-stat");
-    expect(container.querySelector("li")?.className).toContain("aspect-square");
+    expect(container.querySelector("li")?.className).toContain("sm:aspect-square");
     expect(container.querySelector("li img[src='/icons/plus-circle.svg']")?.className).toContain(
       "bottom-5",
     );
@@ -135,17 +135,37 @@ describe("PersonGrid slice", () => {
     expect(container.querySelector("h4")).toBeNull();
   });
 
-  it("opens every leadership card, and a board card only when it has a bio", () => {
-    // The comp's "+" is on every leadership card (a bio not yet written opens
-    // to the name, role and address); its board cards carry no "+".
+  it("opens a card only when a bio exists, in either style", () => {
+    // Nicole, on Discord (2026-09-09): "let's disable the (+) button if a bio
+    // does not exist". The comp draws a "+" on every leadership card because
+    // in the comp every leadership person HAS one — a card without a bio is a
+    // content state the comp never drew, not a rule it asserts. Opening it
+    // anyway promised "Read the bio for <name>" to a screen reader and then
+    // delivered a pop-up repeating the name, role and address already on the
+    // card face. Nobody on /about has a bio today, so that was every card.
+    for (const primary of [{}, { style: "board" }]) {
+      const { container } = render(PersonGrid, { props: { slice: make(primary) } });
+      const triggers = container.querySelectorAll("li button");
+      expect(triggers.length).toBe(1);
+      expect(triggers[0].getAttribute("aria-label")).toContain("Brooke Perucki");
+      // Vilma has no bio: neither the trigger nor the badge advertising it.
+      const vilma = container.querySelectorAll("li")[1];
+      expect(vilma.querySelector("button")).toBeNull();
+      expect(vilma.querySelector("img[src='/icons/plus-circle.svg']")).toBeNull();
+    }
+  });
+
+  it("takes its content's height while a card is full width, and the comp's square once they sit side by side", () => {
+    // Nicole, on Discord (2026-09-09), from a 390px phone: "Height of the box
+    // matches height of content instead of being a perfect square. Too much
+    // real estate for the names." With `headshots` off there is nothing in a
+    // card but a name, a role and an address, so a square left roughly the
+    // lower two thirds of a full-bleed card empty. From `sm` the cards are two
+    // and three up, where the square is the comp's shape and stays.
     const { container } = render(PersonGrid, { props: { slice: make() } });
-    const triggers = container.querySelectorAll("li button");
-    expect(triggers.length).toBe(2);
-    expect(triggers[0].getAttribute("aria-label")).toContain("Brooke Perucki");
-    const board = render(PersonGrid, { props: { slice: make({ style: "board" }) } });
-    const boardTriggers = board.container.querySelectorAll("li button");
-    expect(boardTriggers.length).toBe(1);
-    expect(boardTriggers[0].getAttribute("aria-label")).toContain("Brooke Perucki");
+    const classes = container.querySelector("li")!.className.split(/\s+/);
+    expect(classes).toContain("sm:aspect-square");
+    expect(classes).not.toContain("aspect-square");
   });
 
   it("gives the bio trigger a real accessible name, not a bare icon", () => {
@@ -240,9 +260,9 @@ describe("without JavaScript", () => {
   // inside a <noscript> itself, because a browser running scripts parses that
   // content as raw text and it would not survive hydration.
   //
-  // Nothing on /about carries a bio today (the four board members have none and
-  // the three leadership cards open on `!board` alone), so this is the only
-  // thing that exercises the path until one is authored.
+  // Nothing on /about carries a bio today, so this is the only thing that
+  // exercises the path until one is authored — and since a card only opens
+  // when it HAS a bio, no card on /about opens at all right now.
   it("renders each bio on the card, for a visitor who cannot open the pop-up", () => {
     const { container } = render(PersonGrid, {
       props: { slice: make({}, [person("Ada Lovelace", true), person("Grace Hopper", true)]) },

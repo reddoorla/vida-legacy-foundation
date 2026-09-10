@@ -172,8 +172,14 @@ test.describe("without JavaScript", () => {
     expect(hidden, "a bio is clipped off the bottom of its card").toEqual(hidden.map(() => 0));
   });
 
-  test("/about hides the controls that cannot open a bio", async ({ page }) => {
-    await page.goto("/about", { waitUntil: "domcontentloaded" });
+  test("hides the controls that cannot open a bio", async ({ page }) => {
+    // The fixtures page rather than /about, which this used to load: a card
+    // carries these controls only when it HAS a bio, and nobody on /about has
+    // one, so /about renders neither of them now. It used to render both on
+    // every leadership card — a "+" advertising a pop-up with nothing in it,
+    // which is the defect Nicole reported on 2026-09-09. The floor guard below
+    // is what caught the change, which is exactly what it is there for.
+    await page.goto("/dev/a11y-fixtures", { waitUntil: "domcontentloaded" });
     // The overlay button does nothing without a script and would swallow
     // selection of the bio beneath it; the + badge promises a pop-up that
     // cannot happen. Same treatment as the nav's hamburger.
