@@ -877,3 +877,72 @@ strip down the right edge: `main` is 375 wide in a 390 viewport. That is
 headless Chromium — `scrollWidth` is 375 against a 390 `clientWidth`, so nothing
 overflows, and a real phone with overlay scrollbars shows none of it. Nicole's
 own screenshots have the green going edge to edge, which is the proof.
+
+---
+
+## 2026-09-10 — Five of the six photographs are licensed now; the hero is not (#56, release `aqMzexEAAAxmnrN7`)
+
+Nicole posted the purchased-stock folder in Discord at 21:54 — a 94MB Dropbox zip,
+`iStock-2026-09-10/`, five files. #56 wanted six. **The hero is the one that
+wasn't bought**, and that is the finding of this session, not the swap.
+
+The five that arrived are the same pictures already on the site, unwatermarked.
+That is provable rather than assumed: each purchased original has the aspect
+ratio of the comp crop it replaces, to within a rounding error — 8640×5760
+(1.50000) against the icon-columns crop's 1280×853 (1.50059); 7008×4672 against
+the image band's 1024×682 (1.50147); 4873×3568 (1.36575) against
+`comp-home-testimonial-2.jpg`'s 1024×750 (1.36533); 7368×4428 (1.66396) against
+the about masthead's 1024×615 (1.66504). Same crops, more pixels. So every
+`edit` stayed at `zoom: 1, crop: {0,0}` and nothing needed re-framing. Four of
+the five were also confirmed by reading the iStock id burned into the bottom-left
+of the comp still in Prismic — `2202106824`, `2172612894`, `1459779817`,
+`1030913030` — and matching it to the purchased filename.
+
+The hero fails all of that. `comp-home-hero.png` is 768×432, a waiting-room
+photo of two women and a doctor, with "iStock by Getty Images" across the middle
+and **no id band at all** — the comp was cropped out of the Figma frame, and the
+strip carrying the number went with it. Enlarging the stored asset to 2400px
+recovers the wordmark and nothing else. So there is no id to hand anyone: the
+photo has to be found in iStock's library by eye, or the hero given a different
+picture. #56 said the hero "needs a wide original"; the sharper problem is that
+nobody can currently name which original.
+
+**What shipped.** Five assets uploaded and four documents staged — `home` and
+`about` in both `en-us` and `es-mx` — in release "Licensed stock photos
+(replaces watermarked comps)". Not published; that stays a human step in the
+dashboard.
+
+Uploaded at 3200px on the long edge, JPEG quality 88, 1.1–1.8MB each, down from
+9.4–29.2MB at up to 8640×5760. The site serves at most 2560px, so 3200 is
+headroom rather than waste, and the licensed masters stay in Dropbox where they
+belong. Filenames carry the id — `vlf-two-men-embrace-istock-1385054127.jpg` —
+so the licence is answerable from the asset library alone, forever. That is the
+cheap fix for how this went wrong the first time: the watermark was recorded in
+one code comment and nowhere a launch audit reads.
+
+Alt text was preserved verbatim in both locales, per #56. Worth someone's
+decision, not mine: the English image band alt is **"two woman hugging"** — a
+grammatical error a screen reader will read out, and the only alt on the site
+that isn't sentence-styled. The Spanish counterpart is correct.
+
+**Two mechanics worth not rediscovering.**
+
+`PRISMIC_API_TOKEN` from the site's own `.env` authenticates directly against
+`https://asset-api.prismic.io/assets` — `Authorization: Bearer …` plus a
+`repository: vida-legacy` header, multipart `file=@…`, and it returns
+`{id, url, width, height}` ready to paste into an `ImageContent`. This matters
+because the Prismic MCP's `upload_asset` only accepts a **public HTTPS URL** it
+fetches server-side, which for local files means putting a client's licensed
+photographs on a temp file host first. It doesn't have to be done, and it
+shouldn't be.
+
+The Content API exposes the editor's slice keys as `slices[].id` —
+`icon_columns$f4376253-a0e7-4336-a86c-70301dc52db5` — which is exactly the
+prefix `update_document` paths need, so addressing one field does not require
+pulling a whole document's `paths` list first (the home page's is ~100 entries).
+**Group item keys are not exposed** (`__key` comes back null), so the two
+testimonial images still cost one scoped `get_document`. And slice keys are
+**per locale** — the ES home's `icon_columns$a5c996e7-…` is a different uuid
+from the EN one, confirmed by trying the EN path against the ES document and
+getting "not addressable". Assuming translated documents clone their keys would
+have written the wrong fields quietly.

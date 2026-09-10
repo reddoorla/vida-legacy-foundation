@@ -235,13 +235,23 @@ release; **publishing is a human step in the dashboard** — do not call
 
 What is NOT done, in the order it blocks things:
 
-1. `src/lib/site-config.json` **footer and nav are both populated.** One
+1. **The home hero is still a watermarked iStock comp** — the last of the six
+   (#56). Nicole's purchase landed 2026-09-10 and covered five of them; those
+   five are swapped and staged. The sixth, the hero's waiting-room photo
+   (`comp-home-hero.png`, 768×432, "iStock by Getty Images" straight across the
+   centre), is **not in the folder**, and it has no recoverable asset id — the
+   comp crop cut off the bottom ID band, so the original has to be found in
+   iStock by eye or the hero given a different photo. It is the first thing
+   every visitor sees and an unlicensed preview on a live 501(c)(3) site.
+   Nothing else here blocks launch harder.
+
+2. `src/lib/site-config.json` **footer and nav are both populated.** One
    nav target is provisional: `Become a Donor` points at the operator's noted
    registry URL, which the client has not confirmed. `Contact Us` keeps its
    `/contact` href on purpose — the layout intercepts that link into the
    contact modal ([docs/forms.md](docs/forms.md)), and the route stays as the no-JS fallback and the
    crawler's target.
-2. **`Who we are` and `Donate` are both published now**, so the chrome links
+3. **`Who we are` and `Donate` are both published now**, so the chrome links
    straight to `/about` and `/donate` — but the mechanism that got the build
    green before they were is still load-bearing and still the rule. Prerendering
    loud-fails and the crawler follows every internal link it renders, so a
@@ -256,7 +266,7 @@ What is NOT done, in the order it blocks things:
    the menu). Add a chrome item for a page that is not published yet and it
    costs nothing; hard-code its path and the next build fails. A previewed
    release sees its own links.
-3. The Netlify site is up and `FORMS_INGEST_URL` / `FORMS_INGEST_TOKEN` are
+4. The Netlify site is up and `FORMS_INGEST_URL` / `FORMS_INGEST_TOKEN` are
    set — `/health` reports `{"ok":true,"prismic":"ok"}` with both true.
    **Turnstile is live as of 2026-09-04** ([docs/security.md](docs/security.md)). Contact submissions notify
    the operator today, and that is the pre-launch guard working, **not** a
@@ -271,7 +281,7 @@ What is NOT done, in the order it blocks things:
    notifications start reaching VLF on their own. (Turso is authoritative for
    the site record — Airtable is a legacy shadow write, not the source of
    truth.)
-4. **The donation form ships hidden.** `DonationForm` (Figma `5328:1611`)
+5. **The donation form ships hidden.** `DonationForm` (Figma `5328:1611`)
    keeps the comp's form behind a `show_form` Boolean that defaults to off:
    the donate page renders the heading and intro with two buttons out to
    LGL's hosted form and PayPal. Flipping the Boolean in Prismic draws the
