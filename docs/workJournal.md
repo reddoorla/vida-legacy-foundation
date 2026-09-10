@@ -920,10 +920,15 @@ so the licence is answerable from the asset library alone, forever. That is the
 cheap fix for how this went wrong the first time: the watermark was recorded in
 one code comment and nowhere a launch audit reads.
 
-Alt text was preserved verbatim in both locales, per #56. Worth someone's
-decision, not mine: the English image band alt is **"two woman hugging"** — a
-grammatical error a screen reader will read out, and the only alt on the site
-that isn't sentence-styled. The Spanish counterpart is correct.
+Alt text was preserved verbatim in both locales, per #56 — including the English
+image band's **"two woman hugging"**, and that one is deliberate. It reads like a
+typo and it is not: it is Tucker's own wording, set by hand on production on
+2026-09-03 after a session staged "A daughter embracing her mother at home" over
+it. That release (`apjwExEAAI5CBJkp`) then had to be abandoned as stale, because
+publishing it would have overwritten his words with mine. So the rule that came
+out of it holds here too — **an agent does not improve the client-facing wording
+a human has already chosen**, and the grammatical argument is not a licence to.
+Flagged once in this session before the history was checked; that flag was wrong.
 
 **Two mechanics worth not rediscovering.**
 
