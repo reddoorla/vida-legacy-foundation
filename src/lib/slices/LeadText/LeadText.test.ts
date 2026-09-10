@@ -108,6 +108,20 @@ describe("LeadText slice", () => {
     expect(container.querySelector("section")?.className).toContain("sticky-cover");
   });
 
+  it("stops pinning the lead paragraph on a screen too short to hold it", () => {
+    // Nicole, on Discord (2026-09-09), from a 390x664 phone: "Could we disable
+    // the sticky and scroll over in this section so the first paragraph just
+    // continues scrolling instead of getting covered?" — the mission paragraph
+    // is taller than that viewport, so the columns band slid over it while it
+    // was pinned and cut it mid-sentence at "and embraced while connecting".
+    // Pinned from `md` up, where the copy fits above the band that covers it;
+    // in flow below.
+    const body = [{ type: "paragraph", text: "Body.", spans: [] }];
+    const onDark = { slice_type: "lead_text", variation: "onDark", primary: { body }, items: [] };
+    const { container } = render(LeadText, { props: { slice: onDark as never } });
+    expect(container.querySelector("section")?.className).toContain("sticky-cover--from-md");
+  });
+
   it("holds the statement at the bottom of a full screen of navy", () => {
     // The closing cream panel rolls up over this band, so it has to BE the
     // screen — a short band would leave the page's own ground showing above

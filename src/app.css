@@ -590,6 +590,32 @@ main > section:has(+ section[data-slice-type="cta_banner"][data-slice-variation=
   z-index: 0;
 }
 
+/* A band that is pinned gets covered, and that is the point — but only while
+   the band's own copy fits on the screen above the band covering it. The
+   mission paragraph does not: on a 390x664 phone it is taller than the
+   viewport, so the columns band slid up over a paragraph still mid-sentence
+   and cut it at "and embraced while connecting" (Nicole, on Discord
+   2026-09-09: "Could we disable the sticky and scroll over in this section so
+   the first paragraph just continues scrolling instead of getting covered?").
+
+   `.sticky-cover--from-md` is the band that only pins once there is room:
+   in flow below the breakpoint, pinned above it. It has to come AFTER the
+   rule above — the two selectors have the same specificity, so source order
+   is what decides. 48rem is Tailwind's own `md:`, which is the breakpoint the
+   band's column (`md:w-[74.4%]`) already turns on at; this is deliberately NOT
+   the px-valued exception `--nav-h` makes. */
+main > section.sticky-cover--from-md {
+  position: relative;
+  top: auto;
+}
+
+@media (min-width: 48rem) {
+  main > section.sticky-cover--from-md {
+    position: sticky;
+    top: var(--sticky-top, var(--nav-h));
+  }
+}
+
 /* `--cover-slack` is the height the closing statement grows by, below its own
    line, so the held screen reaches the top — set by $lib/actions/stickyCover
    from the measured shortfall and zero without JavaScript. It is padding, not

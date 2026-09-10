@@ -44,11 +44,20 @@
   // whole change; the photo card below is the one the site shipped with.
   let photos = $derived(slice.primary.headshots === true);
 
-  // A leadership card opens its bio on click — the comp's "+" is on every
-  // card, and a bio not yet written shows the name, role and address alone.
-  // A board card has no "+" in the comp, so it opens only when a bio exists.
+  // A card opens its bio on click, and only a card that HAS a bio opens.
+  //
+  // The comp draws a "+" on every leadership card, and this used to follow it
+  // (`!board || isFilled.richText(p.bio)`) on the reading that a bio not yet
+  // written should still open to the name, role and address. It shouldn't:
+  // that pop-up repeats the card face and nothing else, and the trigger
+  // announces itself as "Read the bio for <name>" on the way in. The comp puts
+  // a "+" on every leadership card because in the comp every leadership person
+  // has a bio — the bio-less card is a content state it never drew. Nobody on
+  // /about has one today, so that was all three of them.
+  // (Nicole, on Discord 2026-09-09: "let's disable the (+) button if a bio
+  // does not exist".)
   type Person = Content.PersonGridSliceDefaultItem;
-  const opens = (p: Person) => !board || isFilled.richText(p.bio);
+  const opens = (p: Person) => isFilled.richText(p.bio);
 
   // Which person's bio is open. null = closed. Index rather than object so the
   // dialog survives an items reorder without pointing at stale content.
@@ -76,8 +85,15 @@
   row; the intro column 297.5 wide with 20 above and below; three cards of
   296 across the 952.5 column, 30 apart — sized as thirds so a classic
   scrollbar's 15px cannot push the third to a new row. A card is the square
-  headshot over a 20px-padded block: name, 10, role, 10, address. The
-  leadership band pays 60 above and below; the board band 80 above and 200
+  headshot over a 20px-padded block: name, 10, role, 10, address.
+
+  The square holds from `sm` up, where the cards are two and three across. On
+  a phone each card is full width, and with `headshots` off it holds only a
+  name, a role and an address — a square left the lower two thirds of a
+  full-bleed card empty, so below `sm` the height is the content's (Nicole,
+  on Discord 2026-09-09: "Too much real estate for the names").
+
+  The leadership band pays 60 above and below; the board band 80 above and 200
   below (the closing panel slides over it — see the slide-over note in
   app.css), with its cards centred in the row.
 
@@ -136,7 +152,7 @@
           <li
             class="person-card group relative flex w-full flex-col overflow-hidden rounded-[20px] sm:w-[calc((100%-30px)/2)] md:w-[calc((100%-60px)/3)] {board
               ? 'bg-background'
-              : 'bg-green-deep'} {photo ? '' : board ? 'min-h-[200px]' : 'aspect-square'}"
+              : 'bg-green-deep'} {photo ? '' : board ? 'min-h-[200px]' : 'sm:aspect-square'}"
           >
             <div
               aria-hidden="true"

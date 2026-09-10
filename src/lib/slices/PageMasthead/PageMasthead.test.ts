@@ -1,5 +1,5 @@
-import { render } from "@testing-library/svelte";
-import { describe, it, expect } from "vitest";
+import { render, cleanup } from "@testing-library/svelte";
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import type { Content } from "@prismicio/client";
 import PageMasthead from "./index.svelte";
 
@@ -88,5 +88,82 @@ describe("PageMasthead slice", () => {
     const { container } = render(PageMasthead, { props: { slice: make({ image: {} }) } });
     expect(container.querySelector("[data-slice-type='page_masthead']")).not.toBeNull();
     expect(container.querySelector("h1")?.textContent?.trim()).toBe("Who We Are");
+  });
+});
+
+describe("PageMasthead opening itself", () => {
+  // Nicole, on Discord (2026-09-09): "could the about page open automatically
+  // as well?" — the same request that gave the home hero its opening a week
+  // earlier, for the band that opens /about and /donate. The mechanism is
+  // shared and tested in $lib/utils/autoOpen; what belongs here is that this
+  // slice is wired to it, far enough through the runway to bring the copy in.
+  const VIEWPORT = 800;
+  const RUNWAY = 2400 - VIEWPORT;
+  let scrolled: number[] = [];
+  let realRect: typeof Element.prototype.getBoundingClientRect;
+
+  beforeEach(() => {
+    vi.useFakeTimers();
+    scrolled = [];
+    sessionStorage.clear();
+    // jsdom lays nothing out, so the band has to be given a runway.
+    realRect = Element.prototype.getBoundingClientRect;
+    Element.prototype.getBoundingClientRect = () =>
+      ({
+        top: 0,
+        height: 2400,
+        bottom: 2400,
+        left: 0,
+        right: 0,
+        width: 1280,
+        x: 0,
+        y: 0,
+      }) as DOMRect;
+    Object.defineProperty(window, "scrollY", { value: 0, writable: true, configurable: true });
+    Object.defineProperty(window, "innerHeight", {
+      value: VIEWPORT,
+      writable: true,
+      configurable: true,
+    });
+    window.scrollTo = ((_x: number, y: number) => {
+      scrolled.push(y);
+      Object.defineProperty(window, "scrollY", { value: y, writable: true, configurable: true });
+    }) as typeof window.scrollTo;
+  });
+
+  afterEach(() => {
+    Element.prototype.getBoundingClientRect = realRect;
+    vi.useRealTimers();
+    cleanup();
+  });
+
+  it("scrolls its own runway far enough to bring the copy in", async () => {
+    render(PageMasthead, { props: { slice: make() } });
+    await vi.advanceTimersByTimeAsync(2000 + 3000);
+    expect(scrolled.length, "the masthead never opened itself").toBeGreaterThan(0);
+    // The copy is revealed at 0.6 of the runway, so it has to finish past it.
+    expect(scrolled.at(-1)).toBeGreaterThan(RUNWAY * 0.6);
+  });
+
+  it("leaves a reduced-motion visitor where they are, already on the open frame", async () => {
+    const real = window.matchMedia;
+    window.matchMedia = ((query: string) =>
+      ({
+        matches: true,
+        media: query,
+        onchange: null,
+        addEventListener: () => {},
+        removeEventListener: () => {},
+        addListener: () => {},
+        removeListener: () => {},
+        dispatchEvent: () => false,
+      }) as unknown as MediaQueryList) as typeof window.matchMedia;
+    try {
+      render(PageMasthead, { props: { slice: make() } });
+      await vi.advanceTimersByTimeAsync(2000 + 3000);
+      expect(scrolled).toEqual([]);
+    } finally {
+      window.matchMedia = real;
+    }
   });
 });
