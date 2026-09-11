@@ -222,12 +222,23 @@
                      starts at `sm:` because that is where the cards first sit
                      side by side (`sm:w-[calc((100%-30px)/2)]`) — stacked on a
                      phone there is nothing to align, and reserving a line there
-                     would only add a gap. -->
+                     would only add a gap.
+
+                     The break is scoped to `sm:` for the same reason, and that
+                     is the half worth reading twice. Nicole approved the hard
+                     return (Discord, 2026-09-11: "I'm fine with a hard return on
+                     Aldridge"), and on a row of cards it is what makes the three
+                     name blocks *look* alike rather than merely line up. On a
+                     390px phone the cards are stacked and every name already
+                     fits on one line, so honouring it there split a name that
+                     had room to spare — measured at 50/50/82 against the others.
+                     Below `sm:` the newline collapses to a space, which is the
+                     default behaviour and the right one. -->
                 <svelte:element
                   this={nameTag}
                   class="{photo ? 't-label-lg' : 't-stat'} {board
                     ? 'text-green-btn'
-                    : 'text-green'} whitespace-pre-line sm:min-h-[2lh]"
+                    : 'text-green'} sm:min-h-[2lh] sm:whitespace-pre-line"
                 >
                   {person.name.trim()}
                 </svelte:element>

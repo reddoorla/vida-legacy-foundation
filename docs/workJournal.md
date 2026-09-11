@@ -1111,11 +1111,23 @@ there is no neighbour to align with and reserving a line would only open a gap.
 `2lh` is two of the element's own line-heights, so it tracks `t-stat` and
 `t-label-lg` without restating either.
 
-After: desktop EN, tablet EN (700, two-up), desktop ES and phone ES all aligned.
-Phone EN still 50/50/82 — **and that is the typed return, not the CSS**.
-Simulating its removal in the browser gives 114/114/114, 95/95/95 and 50/50/50:
-aligned at every width, in both languages, from CSS alone. The recommendation
-back to Tucker is therefore to delete the return; the code no longer needs it.
+After that alone: desktop EN, tablet EN (700, two-up), desktop ES and phone ES
+aligned; phone EN still 50/50/82, **and that was the typed return, not the CSS**.
+Simulating its removal gave 114/114/114, 95/95/95 and 50/50/50, so the first
+recommendation written here was to delete it.
+
+Nicole then approved it — _"I'm fine with a hard return on Aldridge"_ — and she
+is right on the axis she is answering: on a row of cards the return is what makes
+the three name blocks _look_ alike, rather than merely line up. Reserved height
+with a one-line name in it aligns the roles but leaves one card visibly emptier.
+So the break is kept and **scoped to the same breakpoint as the reservation**:
+`sm:whitespace-pre-line`. Below `sm:` the cards are stacked, every name already
+fits on one line, and the newline collapses to a space — the browser default,
+and the right answer there.
+
+Measured after both: **every viewport and both locales aligned** — 114/114/114
+desktop EN and ES, 95/95/95 tablet, 50/50/50 both phones — with the return left
+in Prismic. No content change needed after all.
 
 **One thing the same field being in two places caught.** The name also heads the
 bio dialog (`aria-labelledby` points at it) and fills the card button's

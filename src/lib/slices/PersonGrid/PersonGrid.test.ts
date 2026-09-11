@@ -313,7 +313,19 @@ describe("an editorial line break in a name", () => {
     // that makes the stored break visible; without this class the content is
     // correct and the page is not.
     const { container } = render(PersonGrid, { props: { slice: broken() } });
-    expect(container.querySelector("li h4")!.className).toContain("whitespace-pre-line");
+    expect(container.querySelector("li h4")!.className).toContain("sm:whitespace-pre-line");
+  });
+
+  it("ignores the break on a phone, where the cards are stacked", () => {
+    // Nicole approved the hard return for the row of cards, and it is right
+    // there. At 390px every name already fits on one line and the cards are
+    // stacked, so honouring it split a name that had room — measured 50/50/82
+    // against the others. Scoped to sm:, the newline collapses to a space below
+    // it, which is the browser default.
+    const cls = render(PersonGrid, { props: { slice: broken() } }).container.querySelector(
+      "li h4",
+    )!.className;
+    expect(cls).not.toMatch(/(^|\s)whitespace-pre-line/);
   });
 
   it("collapses the stray space the editor left before the return", () => {
