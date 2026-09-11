@@ -121,17 +121,9 @@ export function runAutoOpen(opts: AutoOpenOptions): () => void {
     // replaying the opening on every navigation back to this page.
   }
 
-  const rect = section.getBoundingClientRect();
-  if (
-    !shouldAutoOpen({
-      reducedMotion,
-      alreadyPlayed,
-      scrollY: window.scrollY,
-      documentTop: rect.top + window.scrollY,
-      runway: rect.height - window.innerHeight,
-    })
-  )
-    return nothingToStop;
+  // Only the two answers that cannot change inside the beat are settled here.
+  // Everything about WHERE THE PAGE IS waits for `play` — see the note there.
+  if (alreadyPlayed) return nothingToStop;
 
   let raf = 0;
   const timer = window.setTimeout(play, delay);
@@ -149,12 +141,35 @@ export function runAutoOpen(opts: AutoOpenOptions): () => void {
   for (const type of GESTURES) window.addEventListener(type, cancel, { passive: true });
 
   function play() {
-    // Re-checked rather than trusted: the beat is two seconds long, and the
-    // page can have been scrolled or resized inside it.
-    if (window.scrollY > AUTO_OPEN_EPSILON) return cancel();
+    // THE decision point, and deliberately not the mount.
+    //
+    // This used to be settled synchronously in the effect above, and on a soft
+    // navigation `window.scrollY` there is still the PREVIOUS page's position.
+    // Home auto-opens itself to ~1150, you click "Who we are", /about mounts
+    // while the scroll is still 1557, the gate reads that as "this visitor is
+    // already reading" and declines — and only afterwards does instantNavScroll
+    // put the page back to 0. The masthead then sits shut at frame 0 with no
+    // mark stored, which is exactly Nicole's report (Discord, 2026-09-11: "does
+    // it still do the automatic open? … homepage does it but not about page").
+    // A fresh load of /about was always fine, which is what made it look like a
+    // page-specific bug rather than a navigation one.
+    //
+    // Asking after the beat is also just the better question: "is the visitor
+    // at the top and not driving" is about the moment we are about to move the
+    // page, not about two seconds earlier. The beat is a long time; the page can
+    // be scrolled, resized, or — as here — still settling from a navigation.
     const r = section.getBoundingClientRect();
     const runway = r.height - window.innerHeight;
-    if (runway <= 0) return cancel();
+    if (
+      !shouldAutoOpen({
+        reducedMotion,
+        alreadyPlayed,
+        scrollY: window.scrollY,
+        documentTop: r.top + window.scrollY,
+        runway,
+      })
+    )
+      return cancel();
     try {
       sessionStorage.setItem(key, "1");
     } catch {

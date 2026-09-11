@@ -1136,3 +1136,54 @@ dialog at a different type size it reads as arbitrary, and in an attribute it is
 a newline nobody asked for. Both now take a one-line form. The accessible-name
 spec does collapse whitespace, but a label we control should not be betting on
 it.
+
+---
+
+## 2026-09-11 — /about did not open itself, and it was never about /about (#73)
+
+Nicole, on Discord: _"does it still do the automatic open? I have to scroll for
+my masks to open on both the homepage and about page… Checked it in incognito,
+homepage does it but not about page."_
+
+A fresh load of `/about` opens perfectly, which is what made this look like a
+page-specific defect and is why it survived review. Measured on production, cold
+context, 1440×900: `/` opens to 1152 and stores `vlf:hero-opened`; `/about`
+opens to 1008 and stores `vlf:masthead-opened:/about`. Both fine.
+
+The journey is what breaks it. Reproduced: load `/`, let it open itself to 1152,
+click "Who we are". On arrival at `/about` **`window.scrollY` is 1557** — the
+homepage's position, because a soft navigation mounts the new page before
+`instantNavScroll` puts the scroll back. `runAutoOpen` settled its whole gate
+synchronously in the mount effect, read that stale number against
+`scrollY <= AUTO_OPEN_EPSILON`, concluded the visitor was already reading, and
+returned `nothingToStop`. No timer, no listeners, **and no mark stored** — which
+is the detail that identifies the cause: it declined rather than played. The
+scroll then resets to 0 and the masthead sits shut at frame 0 for the rest of
+the session.
+
+The fix is to ask later, not to ask differently. `play()` already re-checked the
+scroll — _"Re-checked rather than trusted: the beat is two seconds long"_ — so
+the correct answer was being computed 2000ms after the wrong one had already
+thrown the opportunity away. Now the mount settles only `alreadyPlayed`, the one
+answer that cannot change inside the beat, and the full `shouldAutoOpen` runs at
+play time against the scroll, the rect and the runway as they actually are.
+
+That is also just the better question. "Is this visitor at the top and not
+driving" is about the moment the page is about to be moved, not about two
+seconds earlier — and in between, the page can be scrolled, resized, or still
+settling from a navigation.
+
+`documentTop` and `runway` were never affected, worth saying so nobody re-derives
+it: `rect.top + window.scrollY` is scroll-independent, and so is
+`rect.height - window.innerHeight`. **Only `scrollY` was stale.**
+
+Verified by reproducing the journey against the fixed build — arrives at 1951
+this time, opens to 1008, mark stored — and fresh loads of `/` and `/about` still
+open unchanged. The regression test was checked against the old code the way a
+gate should be: exactly one test fails without the fix, and it is the new one.
+
+**An aside that is not a defect but contradicts a comment.** `runAutoOpen`'s key
+is per path because _"/about and /donate both draw a PageMasthead"_. `/donate`
+does not — it has one slice, `donation_form`, and no `.page-masthead` at all.
+The per-path key is still right the moment that changes; the comment is just
+describing a page that never arrived.

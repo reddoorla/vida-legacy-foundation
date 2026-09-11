@@ -204,6 +204,39 @@ describe("runAutoOpen", () => {
     stop();
   });
 
+  it("survives a soft navigation that has not reset the scroll yet", () => {
+    // The defect Nicole found (Discord, 2026-09-11: "homepage does it but not
+    // about page"). On a soft navigation the band mounts while window.scrollY
+    // is still the PREVIOUS page's position — home auto-opens itself to ~1150,
+    // you click "Who we are", /about mounts at 1557 — and instantNavScroll puts
+    // the page back to 0 only afterwards. Settling the gate at mount read that
+    // stale number as "this visitor is already reading" and declined, silently
+    // and without even storing the mark. A fresh load was always fine, which is
+    // what made it look page-specific.
+    Object.defineProperty(window, "scrollY", { value: 1557, writable: true, configurable: true });
+    const stop = runAutoOpen({ section: band(2400), reducedMotion: false, key: "k", through: 0.8 });
+
+    // the navigation's scroll reset lands during the beat, as it really does
+    Object.defineProperty(window, "scrollY", { value: 0, writable: true, configurable: true });
+    play();
+
+    expect(scrolled.at(-1)).toBeCloseTo(1280, 0);
+    expect(sessionStorage.getItem("k")).toBe("1");
+    stop();
+  });
+
+  it("still declines when the visitor is genuinely mid-page at play time", () => {
+    // The other side of the same change: deferring the question must not turn
+    // it into no question. A reader who is actually scrolled down when the beat
+    // ends never has the page moved under them.
+    const stop = runAutoOpen({ section: band(2400), reducedMotion: false, key: "k", through: 0.8 });
+    Object.defineProperty(window, "scrollY", { value: 600, writable: true, configurable: true });
+    play();
+    expect(scrolled).toEqual([]);
+    expect(sessionStorage.getItem("k")).toBeNull();
+    stop();
+  });
+
   it("stops cleanly when the component goes away mid-beat", () => {
     const stop = runAutoOpen({ section: band(2400), reducedMotion: false, key: "k", through: 0.8 });
     stop();
