@@ -166,6 +166,17 @@ If a session produced nothing worth an entry, that is itself worth one line.
   Figma trims Extended text boxes to cap height — use the `t-*` utilities. Never
   gate a layout on the comp's own 1440: a maximized 1440 window is 1425 of
   viewport. → [layout.md](docs/layout.md)
+- **The home hero's motion is a Vimeo embed, and the still is its poster.**
+  The comp's hero "photo" was frame 1 of iStock clip 1831051144 — which is why
+  it never had a photo id to buy. `HeartHero` renders the image always and
+  layers `VimeoBackground` over it only at ≥768px, with motion allowed, after a
+  real interaction. **Do not reach for a `<video>` and a self-hosted mp4**: the
+  fleet's pattern is the Vimeo iframe, the CSP was already provisioned for it
+  (`player.vimeo.com` in script-src and frame-src), and the reveal has to be
+  gated on a playback _heartbeat_ because iOS fires one `play` for a muted
+  background embed and then suspends it. An iframe also ignores `object-fit`,
+  so the player is SIZED to cover — `coverBox`, from the same stage
+  measurements the heart uses. → [rendering.md](docs/rendering.md)
 - **Anything that stacks elements by computed offsets uses
   `getBoundingClientRect().height`, never `offsetHeight`,** and overlaps every
   joint by a pixel. The seam it opens is intermittent and a screenshot proves
@@ -235,23 +246,13 @@ release; **publishing is a human step in the dashboard** — do not call
 
 What is NOT done, in the order it blocks things:
 
-1. **The home hero is still a watermarked iStock comp** — the last of the six
-   (#56). Nicole's purchase landed 2026-09-10 and covered five of them; those
-   five are swapped and staged. The sixth, the hero's waiting-room photo
-   (`comp-home-hero.png`, 768×432, "iStock by Getty Images" straight across the
-   centre), is **not in the folder**, and it has no recoverable asset id — the
-   comp crop cut off the bottom ID band, so the original has to be found in
-   iStock by eye or the hero given a different photo. It is the first thing
-   every visitor sees and an unlicensed preview on a live 501(c)(3) site.
-   Nothing else here blocks launch harder.
-
-2. `src/lib/site-config.json` **footer and nav are both populated.** One
+1. `src/lib/site-config.json` **footer and nav are both populated.** One
    nav target is provisional: `Become a Donor` points at the operator's noted
    registry URL, which the client has not confirmed. `Contact Us` keeps its
    `/contact` href on purpose — the layout intercepts that link into the
    contact modal ([docs/forms.md](docs/forms.md)), and the route stays as the no-JS fallback and the
    crawler's target.
-3. **`Who we are` and `Donate` are both published now**, so the chrome links
+2. **`Who we are` and `Donate` are both published now**, so the chrome links
    straight to `/about` and `/donate` — but the mechanism that got the build
    green before they were is still load-bearing and still the rule. Prerendering
    loud-fails and the crawler follows every internal link it renders, so a
@@ -266,7 +267,7 @@ What is NOT done, in the order it blocks things:
    the menu). Add a chrome item for a page that is not published yet and it
    costs nothing; hard-code its path and the next build fails. A previewed
    release sees its own links.
-4. The Netlify site is up and `FORMS_INGEST_URL` / `FORMS_INGEST_TOKEN` are
+3. The Netlify site is up and `FORMS_INGEST_URL` / `FORMS_INGEST_TOKEN` are
    set — `/health` reports `{"ok":true,"prismic":"ok"}` with both true.
    **Turnstile is live as of 2026-09-04** ([docs/security.md](docs/security.md)). Contact submissions notify
    the operator today, and that is the pre-launch guard working, **not** a
@@ -281,7 +282,7 @@ What is NOT done, in the order it blocks things:
    notifications start reaching VLF on their own. (Turso is authoritative for
    the site record — Airtable is a legacy shadow write, not the source of
    truth.)
-5. **The donation form ships hidden.** `DonationForm` (Figma `5328:1611`)
+4. **The donation form ships hidden.** `DonationForm` (Figma `5328:1611`)
    keeps the comp's form behind a `show_form` Boolean that defaults to off:
    the donate page renders the heading and intro with two buttons out to
    LGL's hosted form and PayPal. Flipping the Boolean in Prismic draws the

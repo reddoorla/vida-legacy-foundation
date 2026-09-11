@@ -20,6 +20,13 @@
             "thumbnails": []
           }
         },
+        "vimeo_id": {
+          "type": "Text",
+          "config": {
+            "label": "vimeo_id",
+            "placeholder": "Vimeo id only, e.g. 1831051144"
+          }
+        },
         "eyebrow": {
           "type": "Text",
           "config": {

@@ -614,6 +614,16 @@ export interface HeartHeroSliceDefaultPrimary {
   image: prismic.ImageField<never>;
 
   /**
+   * vimeo_id field in *HeartHero → Default → Primary*
+   *
+   * - **Field Type**: Text
+   * - **Placeholder**: Vimeo id only, e.g. 1831051144
+   * - **API ID Path**: heart_hero.default.primary.vimeo_id
+   * - **Documentation**: https://prismic.io/docs/fields/text
+   */
+  vimeo_id: prismic.KeyTextField;
+
+  /**
    * eyebrow field in *HeartHero → Default → Primary*
    *
    * - **Field Type**: Text

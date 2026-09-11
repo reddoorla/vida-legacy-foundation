@@ -951,3 +951,117 @@ testimonial images still cost one scoped `get_document`. And slice keys are
 from the EN one, confirmed by trying the EN path against the ES document and
 getting "not addressable". Assuming translated documents clone their keys would
 have written the wrong fields quietly.
+
+---
+
+## 2026-09-11 — The hero was never a photograph (#56, release `aqQovhEAAMd6oDpA`)
+
+The sixth photograph, the one yesterday's entry said had "no recoverable id",
+was never a photograph. Erik posted the hero asset at 13:25 and it was an iStock
+**clip** — `iStock-1831051144.mov`, 911MB of ProRes 422 10-bit, 3840×2160,
+23.976fps, 10.47s. Nicole's comp had used a frame grab of it, which is exactly
+why the still carried an "iStock by Getty Images" wordmark across the middle and
+no id band: the band is burned into the bottom of a comp, and the crop out of
+the Figma frame took it.
+
+Confirmed rather than assumed. Frames were sampled at 4fps and each scored by
+SSIM against the comp still: the best match is **frame 1, SSIM 0.79** — against
+a watermarked 768×432 upscale, so the ceiling is well under 1. Everything after
+t=0 scores lower because the handshake starts. So the still and the clip are one
+licensed asset, and the still is the clip's poster, frame-for-frame.
+
+### The wrong road, and the sign that was already up
+
+The first implementation self-hosted it: transcode to H.264, upload the mp4 to
+Prismic (which accepts it — `kind: "video"`, 5.7MB at 1080p), add a Link-to-Media
+field, render `<video autoplay muted loop playsinline>`. It passed its tests.
+
+It was wrong, and **the evidence was in this repo before the session started**:
+`svelte.config.js` already lists `https://*.vimeocdn.com` under `media-src` and
+`https://player.vimeo.com` under BOTH `script-src` and `frame-src`. Nothing on
+this site had ever used them. A CSP provisioned for a service the site does not
+use is a message from whoever wrote the fleet config, and it was read as
+scenery. Tucker: _"we have this implemented already, check other repos for how
+we do video."_
+
+The fleet's version is `the-pointe-burbank`'s `VimeoBanner`, and it is carrying
+two defects' worth of scar tissue that a fresh implementation cannot guess:
+
+- **The reveal is gated on a playback heartbeat, not on a play event.** iOS and
+  iPadOS fire an initial `play` for a muted background embed and then suspend
+  it. A one-shot reveal uncovers a frozen first frame and leaves it. So progress
+  events are treated as a pulse and a watchdog restores the poster after 2.5s of
+  silence. The `background=1` embed speaks legacy Froogaloop, whose event is
+  `playProgress` — **not** the player.js SDK's `timeupdate` — so both are
+  subscribed.
+- **The iframe is built only after a real interaction.** Vimeo's player sets
+  Cloudflare's `__cf_bm` third-party cookie on load, which fails Lighthouse
+  best-practices. An automated audit never taps or moves, so gating on genuine
+  input keeps the cookie out of an audited load. `scroll` is deliberately not one
+  of the events, because Lighthouse scrolls the page itself for a full-page
+  screenshot.
+
+And one that only matters because two embeds can share a page: a message is
+trusted only when its origin matches exactly **and** `e.source` is this
+component's own `contentWindow`. A sibling player posts from the same origin and
+its beats would otherwise reveal a player that has not started.
+
+`VimeoBackground.svelte` is that mechanism, ported with its test suite, minus
+the poster and section wrapper — HeartHero owns the box.
+
+### What is genuinely new here: an iframe cannot be `object-fit` cropped
+
+VimeoBanner sidesteps the geometry by making its own section `aspect-video`.
+HeartHero cannot: its stage is the comp's 1440×860 and on a phone it is taller
+than it is wide. An iframe lays the embed out to its element box and letterboxes
+inside it — and inside the heart, a letterbox bar is the green ground showing
+through a hole in the photograph.
+
+So the player is **sized**, not fitted, by `coverBox`, from the same stage
+measurements `heartEndPct` already takes. The number worth keeping, because it
+is the opposite of the intuition: the comp's band is **1.674**, which is
+_narrower_ than the player's 1.778 — so the height matches at 860 and the
+**width** spills to **1528.89**, 44.4px off each edge. Measured in the browser
+afterwards: stage 1440×860, iframe 1529×860 at x=−44. A stage wider than 16:9
+swaps the roles.
+
+### Where the clip does not play, and why each is free
+
+`shouldPlayHeroVideo` declines for **no JS** (the iframe is client-created, so a
+scriptless render has no element and no request — nothing needed in app.html's
+`<noscript>` block, the cheapest possible version of that rule), for **reduced
+motion** (a ten-second loop behind the page's heading is what WCAG 2.2.2 is
+about, and this site already lands reduced motion on the hero's final frame),
+and **below 768px** (`HeroBackgroundImage` serves a face-aware `crop=faces`
+portrait there; scaling a 16:9 player to cover 390×664 throws both faces away).
+That threshold is the image's own `portraitMedia` breakpoint and a test reads
+the slice source to pin them together — two numbers that both mean "is this a
+phone" drift apart the moment one is edited alone.
+
+Every decline shows the photograph the comp specified. So does a stalled player,
+and a refused autoplay. There is no state where the hero is worse than it was.
+
+### Verified by measurement, and one thing only a browser could answer
+
+`pnpm verify` green: 74 files, **665** unit tests (631 before), 71 smoke, 0 axe
+violations. The oEmbed check says the id is live and public — "homeHero",
+960×540, exactly 16:9, 10s.
+
+The unit tests cannot answer whether a CSS mask clips an **iframe** the way it
+clips an `<img>`. Nothing in the spec made that obvious and guessing it would
+have been guessing. Driven in a real Chromium against the dev server, injecting
+the player into `.heart-mask` at two scroll positions: at `mask-size: 77.17%`
+the clip is cut to a crisp heart edge with green ground outside it, and at
+187.23% it is full-bleed under the scrim and the copy. It also proved the clip
+was _playing_ rather than holding a poster — the frame on screen is the
+handshake, which does not exist at t=0.
+
+### Housekeeping
+
+The self-hosted mp4 was deleted from the Prismic library (`DELETE
+asset-api.prismic.io/assets/{id}`, 204) rather than left as a 5.7MB orphan, and
+the Link-to-Media field was replaced by `vimeo_id` (Text) on the pushed model.
+Both home documents carry `1226003530` in release `aqQovhEAAMd6oDpA`, unpublished.
+
+Publish order does not matter: the code ignores an unknown field, and the field
+without the code is inert. Either half alone still shows the licensed still.

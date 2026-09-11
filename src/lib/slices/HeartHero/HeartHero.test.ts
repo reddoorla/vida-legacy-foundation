@@ -1,5 +1,6 @@
 import { render } from "@testing-library/svelte";
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, afterEach } from "vitest";
+import { tick } from "svelte";
 import type { Content } from "@prismicio/client";
 import HeartHero from "./index.svelte";
 import { TEXTURE_LQIP } from "./texture-lqip";
@@ -183,5 +184,107 @@ describe("HeartHero slice", () => {
     const { container } = render(HeartHero, { props: { slice } });
     const full = container.querySelector(".texture-full");
     expect(full?.classList.contains("is-ready")).toBe(false);
+  });
+});
+
+describe("HeartHero's moving hero", () => {
+  const withVideo = {
+    ...slice,
+    primary: { ...slice.primary, vimeo_id: "1226003530" },
+  } as unknown as Content.HeartHeroSlice;
+
+  // Answer each media query independently: the slice asks two — reduced motion
+  // and the width threshold — and the whole point of the gate is that they are
+  // separate answers. Asserting on the VimeoBackground wrapper rather than on
+  // an iframe is deliberate: the embed itself waits for a real interaction, and
+  // that mechanism is VimeoBackground's to test, not this slice's.
+  const media = (answers: { reduce?: boolean; wide?: boolean }) => {
+    window.matchMedia = ((query: string) =>
+      ({
+        matches: query.includes("prefers-reduced-motion") ? !!answers.reduce : !!answers.wide,
+        media: query,
+        onchange: null,
+        addEventListener: () => {},
+        removeEventListener: () => {},
+        addListener: () => {},
+        removeListener: () => {},
+        dispatchEvent: () => false,
+      }) as unknown as MediaQueryList) as typeof window.matchMedia;
+  };
+
+  const realMatchMedia = window.matchMedia;
+  afterEach(() => {
+    window.matchMedia = realMatchMedia;
+  });
+
+  const bg = (container: HTMLElement) => container.querySelector(".vimeo-bg");
+
+  it("mounts the player on a wide client that allows motion", async () => {
+    media({ wide: true, reduce: false });
+    const { container } = render(HeartHero, { props: { slice: withVideo } });
+    await tick();
+    expect(bg(container)).not.toBeNull();
+  });
+
+  it("mounts no player under reduced motion — not a hidden one, none", async () => {
+    media({ wide: true, reduce: true });
+    const { container } = render(HeartHero, { props: { slice: withVideo } });
+    await tick();
+    expect(bg(container)).toBeNull();
+  });
+
+  it("mounts no player on a phone, which gets the face-aware crop instead", async () => {
+    media({ wide: false, reduce: false });
+    const { container } = render(HeartHero, { props: { slice: withVideo } });
+    await tick();
+    expect(bg(container)).toBeNull();
+  });
+
+  it("mounts no player when the slice carries only an image", async () => {
+    media({ wide: true, reduce: false });
+    const { container } = render(HeartHero, { props: { slice } });
+    await tick();
+    expect(bg(container)).toBeNull();
+  });
+
+  it("treats a blank vimeo id as no id at all", async () => {
+    // Prismic returns "" for a text field an editor opened and left empty, and
+    // a stray space is one keystroke away from shipping an iframe pointed at
+    // https://player.vimeo.com/video/ .
+    media({ wide: true, reduce: false });
+    const blank = {
+      ...slice,
+      primary: { ...slice.primary, vimeo_id: "   " },
+    } as unknown as Content.HeartHeroSlice;
+    const { container } = render(HeartHero, { props: { slice: blank } });
+    await tick();
+    expect(bg(container)).toBeNull();
+  });
+
+  it("keeps the photograph underneath, so the clip is never the only source", async () => {
+    media({ wide: true, reduce: false });
+    const { container } = render(HeartHero, { props: { slice: withVideo } });
+    await tick();
+    const img = container.querySelector("img");
+    expect(img?.getAttribute("alt")).toBe("A patient smiling with a family member");
+  });
+
+  it("puts the player under the scrim, so it is darkened on the photograph's terms", async () => {
+    media({ wide: true, reduce: false });
+    const { container } = render(HeartHero, { props: { slice: withVideo } });
+    await tick();
+    const mask = container.querySelector(".heart-mask")!;
+    const kids = [...mask.children];
+    const video = kids.findIndex((el) => el.classList.contains("vimeo-bg"));
+    const scrim = kids.findIndex((el) => el.classList.contains("hero-scrim"));
+    expect(video).toBeGreaterThanOrEqual(0);
+    expect(scrim).toBeGreaterThan(video);
+  });
+
+  it("keeps the player inside the heart mask, which is what clips it", async () => {
+    media({ wide: true, reduce: false });
+    const { container } = render(HeartHero, { props: { slice: withVideo } });
+    await tick();
+    expect(container.querySelector(".heart-mask")!.contains(bg(container)!)).toBe(true);
   });
 });
