@@ -1065,3 +1065,74 @@ Both home documents carry `1226003530` in release `aqQovhEAAMd6oDpA`, unpublishe
 
 Publish order does not matter: the code ignores an unknown field, and the field
 without the code is inert. Either half alone still shows the licensed still.
+
+---
+
+## 2026-09-11 — A return typed into a name, and why it could not do the job (#72)
+
+Erik, on Discord: _"Any problem with inserting a line break between Holly and
+Aldridge so that the leadership team name blocks all align?"_ Two of the three
+leadership names wrap on their own at desktop width; "Holly Aldridge" does not,
+so its role and address sat ~40px higher than the other two cards'. Tucker typed
+a return into the name in Prismic and it rendered as a space — the field is
+KeyText and HTML collapses a newline in text content. The ask was to make the
+page respect it.
+
+Two changes, and only one of them is the fix.
+
+**The return is now respected.** `whitespace-pre-line` on the name heading, and
+`.trim()` so a stray leading return cannot open a card with a blank line.
+`pre-line` rather than `pre-wrap` because the stored value is literally
+`"Holly \nAldridge"` — a space, then the newline — and `pre-line` collapses the
+space while keeping the break. This is worth having on its own: where a person's
+name breaks is editorial. No rule can work out `"Vince Speeg, MD, PhD"`.
+
+**The return does not align the row, and measuring said so before shipping.**
+With it in place and `pre-line` live:
+
+|                 | Brooke  | Vilma | Holly | roles              |
+| --------------- | ------- | ----- | ----- | ------------------ |
+| desktop EN 1440 | 2 lines | 2     | 2     | 114 / 114 / 114 ✓  |
+| phone EN 390    | 1 line  | 1     | **2** | 50 / 50 / **82** ✗ |
+| desktop ES 1440 | 2 lines | 2     | **1** | 97 / 97 / **55** ✗ |
+
+It fixed exactly one viewport in one language. On a phone it made Holly the odd
+one out in the opposite direction, and Spanish — where nobody typed a return,
+and where the names are the same but the roles are longer — was untouched.
+**Which names wrap is a function of the viewport width and of the words**, so a
+break chosen against one combination is wrong in the others. That is not a
+defect in the break; it is the wrong kind of tool.
+
+So the alignment comes from `sm:min-h-[2lh]` on the name: reserve two lines and
+the role and the address hold their height whatever the name does. `sm:` because
+that is where the cards first sit side by side
+(`sm:w-[calc((100%-30px)/2)]`) — below it they are `w-full` and stacked, so
+there is no neighbour to align with and reserving a line would only open a gap.
+`2lh` is two of the element's own line-heights, so it tracks `t-stat` and
+`t-label-lg` without restating either.
+
+After that alone: desktop EN, tablet EN (700, two-up), desktop ES and phone ES
+aligned; phone EN still 50/50/82, **and that was the typed return, not the CSS**.
+Simulating its removal gave 114/114/114, 95/95/95 and 50/50/50, so the first
+recommendation written here was to delete it.
+
+Nicole then approved it — _"I'm fine with a hard return on Aldridge"_ — and she
+is right on the axis she is answering: on a row of cards the return is what makes
+the three name blocks _look_ alike, rather than merely line up. Reserved height
+with a one-line name in it aligns the roles but leaves one card visibly emptier.
+So the break is kept and **scoped to the same breakpoint as the reservation**:
+`sm:whitespace-pre-line`. Below `sm:` the cards are stacked, every name already
+fits on one line, and the newline collapses to a space — the browser default,
+and the right answer there.
+
+Measured after both: **every viewport and both locales aligned** — 114/114/114
+desktop EN and ES, 95/95/95 tablet, 50/50/50 both phones — with the return left
+in Prismic. No content change needed after all.
+
+**One thing the same field being in two places caught.** The name also heads the
+bio dialog (`aria-labelledby` points at it) and fills the card button's
+`aria-label`. The break exists to align three cards in a row; in a single-column
+dialog at a different type size it reads as arbitrary, and in an attribute it is
+a newline nobody asked for. Both now take a one-line form. The accessible-name
+spec does collapse whitespace, but a label we control should not be betting on
+it.

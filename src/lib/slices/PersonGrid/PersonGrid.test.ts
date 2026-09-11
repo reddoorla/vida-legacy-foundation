@@ -292,3 +292,101 @@ describe("without JavaScript", () => {
     expect(container.querySelectorAll(".person-open-cue").length).toBe(1);
   });
 });
+
+describe("an editorial line break in a name", () => {
+  // Erik, Discord 2026-09-11: "a line break between Holly and Aldridge so that
+  // the leadership team name blocks all align". Two of the three leadership
+  // names wrapped on their own and the third did not, so the roles and
+  // addresses under them sat at different heights. Where a NAME breaks is
+  // editorial — no rule can work out "Vince Speeg, MD, PhD" — so the return an
+  // editor types in Prismic is honoured rather than guessed at.
+  const broken = () => make({}, [{ ...person("Holly Aldridge", true), name: "Holly \nAldridge" }]);
+
+  it("keeps the newline in the card's name", () => {
+    const { container } = render(PersonGrid, { props: { slice: broken() } });
+    expect(container.querySelector("li h4")!.textContent).toContain("\n");
+  });
+
+  it("renders it rather than collapsing it, which is the whole defect", () => {
+    // Plain text in HTML collapses a newline to a space — that is exactly what
+    // Erik saw after adding the return in Prismic. `pre-line` is the mechanism
+    // that makes the stored break visible; without this class the content is
+    // correct and the page is not.
+    const { container } = render(PersonGrid, { props: { slice: broken() } });
+    expect(container.querySelector("li h4")!.className).toContain("sm:whitespace-pre-line");
+  });
+
+  it("ignores the break on a phone, where the cards are stacked", () => {
+    // Nicole approved the hard return for the row of cards, and it is right
+    // there. At 390px every name already fits on one line and the cards are
+    // stacked, so honouring it split a name that had room — measured 50/50/82
+    // against the others. Scoped to sm:, the newline collapses to a space below
+    // it, which is the browser default.
+    const cls = render(PersonGrid, { props: { slice: broken() } }).container.querySelector(
+      "li h4",
+    )!.className;
+    expect(cls).not.toMatch(/(^|\s)whitespace-pre-line/);
+  });
+
+  it("collapses the stray space the editor left before the return", () => {
+    // The stored value really is "Holly \nAldridge". pre-line (not pre-wrap)
+    // collapses that space; pre-wrap would indent the second line.
+    const { container } = render(PersonGrid, { props: { slice: broken() } });
+    const cls = container.querySelector("li h4")!.className;
+    expect(cls).not.toContain("whitespace-pre-wrap");
+  });
+
+  it("never opens a card with a blank line", () => {
+    const leading = () => make({}, [{ ...person("Holly Aldridge", true), name: "\nHolly" }]);
+    const { container } = render(PersonGrid, { props: { slice: leading() } });
+    expect(container.querySelector("li h4")!.textContent!.trim().startsWith("Holly")).toBe(true);
+    expect(container.querySelector("li h4")!.textContent).not.toMatch(/^\s*\n/);
+  });
+
+  it("keeps the name on one line in the button's accessible name", () => {
+    const { container } = render(PersonGrid, { props: { slice: broken() } });
+    const label = container.querySelector("button[data-bio-toggle]")!.getAttribute("aria-label")!;
+    expect(label).toContain("Holly Aldridge");
+    expect(label).not.toContain("\n");
+  });
+
+  it("keeps the name on one line in the bio dialog's heading", async () => {
+    // Same field, two layouts. The break aligns three cards in a row; in a
+    // single-column dialog at a different size it would read as arbitrary.
+    const { container } = render(PersonGrid, { props: { slice: broken() } });
+    await fireEvent.click(container.querySelector("button[data-bio-toggle]")!);
+    const heading = container.querySelector("dialog h2")!;
+    expect(heading.textContent!.trim()).toBe("Holly Aldridge");
+  });
+});
+
+describe("the name block reserves two lines so a row of cards aligns", () => {
+  // This, not the typed return, is what makes the leadership row line up.
+  // Measured in a browser with the return in place: desktop EN aligned, but a
+  // 390px phone put Holly's name on two lines against the others' one (roles at
+  // 50/50/82px), and Spanish — where no return was typed — was still 97/97/55.
+  // Which names wrap is a function of the viewport and of the words, so a break
+  // chosen for one is wrong in the others. Reserving the height is not.
+  it("reserves two lines from the breakpoint where cards sit side by side", () => {
+    const { container } = render(PersonGrid, { props: { slice: make() } });
+    expect(container.querySelector("li h4")!.className).toContain("sm:min-h-[2lh]");
+  });
+
+  it("reserves nothing on a phone, where the cards are stacked", () => {
+    // `w-full` below sm: one card per row, so there is no neighbour to align
+    // with and an unconditional reservation would only open a gap.
+    const cls = render(PersonGrid, { props: { slice: make() } }).container.querySelector(
+      "li h4",
+    )!.className;
+    expect(cls).not.toMatch(/(^|\s)min-h-\[2lh\]/);
+  });
+
+  it("reserves for every card, so the shortest name holds the row open too", () => {
+    const { container } = render(PersonGrid, {
+      props: { slice: make({}, [person("Ann Lee"), person("Maximilian Fotheringay")]) },
+    });
+    const names = [...container.querySelectorAll("li h4")];
+    expect(names.length).toBe(2);
+    for (const n of names) expect(n.className).toContain("sm:min-h-[2lh]");
+  });
+});
