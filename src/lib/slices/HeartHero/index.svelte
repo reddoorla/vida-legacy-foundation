@@ -6,6 +6,8 @@
   import type { Content } from "@prismicio/client";
   import { TEXTURE_LQIP } from "./texture-lqip";
   import { heartEndPct } from "./heart";
+  import { coverBox, shouldPlayHeroVideo, watchWide } from "./heroVideo";
+  import VimeoBackground from "$lib/components/VimeoBackground.svelte";
   import { runAutoOpen } from "$lib/utils/autoOpen";
 
   let { slice }: { slice: Content.HeartHeroSlice } = $props();
@@ -170,6 +172,23 @@
       ? HEART_END_Y
       : HEART_START_Y + Math.min(progress / HEART_OPEN_THROUGH, 1) * (HEART_END_Y - HEART_START_Y),
   );
+  // The clip layered over the still. `wide` starts false and is only ever set
+  // by an effect, so the SERVER renders no player at all — which is what makes
+  // the scriptless, reduced-motion and phone cases cost nothing rather than
+  // cost a hidden element. See ./heroVideo.ts for why each one declines, and
+  // VimeoBackground for why the embed also waits for a real interaction.
+  let vimeoId = $derived(slice.primary.vimeo_id?.trim() ?? "");
+  let wide = $state(false);
+
+  $effect(() => watchWide((w) => (wide = w)));
+
+  let playVideo = $derived(shouldPlayHeroVideo({ hasVideo: !!vimeoId, reducedMotion, wide }));
+
+  // The player is SIZED to cover, not fitted: an iframe ignores object-fit.
+  // Same stage measurements the heart is sized from, so the two can never
+  // disagree about how big the stage is.
+  let videoBox = $derived(coverBox(stageW, stageH));
+
   let copyIn = $derived(reducedMotion || progress >= COPY_AT);
   // The bar arrives with the calls to action: Variant3 holds it just below
   // the frame (y=860 of 860) and Variant4 has it in place — at rest the hero
@@ -245,6 +264,15 @@
           portraitMedia="(max-width: 767px)"
           class="h-full w-full object-cover"
         />
+        <!-- The same licensed asset in motion, over its own first frame. The
+             image above IS the poster — they are the same clip — so there is no
+             second asset to keep in step, and every state where the player is
+             absent, waiting or stalled shows the photograph the comp specified
+             rather than a gap. It carries no meaning the alt does not already
+             carry, so it is decorative throughout. -->
+        {#if playVideo}
+          <VimeoBackground {vimeoId} width={videoBox.width} height={videoBox.height} />
+        {/if}
         <div aria-hidden="true" class="hero-scrim pointer-events-none absolute inset-0"></div>
       </div>
     {:else}
@@ -393,6 +421,12 @@
   .texture-full.is-ready {
     opacity: 1;
   }
+
+  /* The player's own fade lives in VimeoBackground. What matters here is only
+     that it sits between the still and the scrim in DOM order, so the scrim
+     darkens it on exactly the terms it darkens the photograph — and so the
+     heart mask clips it, since a mask applies to everything an element paints,
+     children included. */
 
   @media (prefers-reduced-motion: reduce) {
     .heart-hero {
