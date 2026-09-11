@@ -187,6 +187,13 @@ If a session produced nothing worth an entry, that is itself worth one line.
 - **The footer is chrome** (`site-config.json` through the layout), not a slice.
   **`person_grid.primary.headshots` is off at launch** — VLF has no photographs
   of its people. → [layout.md](docs/layout.md)
+- **A hand-typed line break cannot align a row of cards.** `person_grid`
+  honours a return typed into a name (`whitespace-pre-line`, because where
+  "Vince Speeg, MD, PhD" breaks is editorial), but the alignment comes from
+  `sm:min-h-[2lh]` reserving two lines. Measured: a break chosen on desktop EN
+  put Holly's name on two lines against the others' one at 390px, and did
+  nothing at all for `es-mx`, where no return was typed. Which names wrap is a
+  function of width and of the words. → [layout.md](docs/layout.md)
 - **Anything a visitor can read that Prismic does not write is code**, in
   `$lib/ui-copy` / `$lib/contact-copy` / `$lib/form-validation`, keyed by the
   page's `lang`. Never point a language switch at a page that is not published;

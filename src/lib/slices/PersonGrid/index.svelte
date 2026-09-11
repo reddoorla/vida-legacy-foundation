@@ -35,6 +35,13 @@
   let labelTag = $derived(hasHeading ? "h3" : "h2");
   let nameTag = $derived(hasHeading ? "h4" : "h3");
 
+  /** A name as one line, for anywhere it goes into an ATTRIBUTE rather than
+   *  into the page. Names carry editorial line breaks (see the name heading
+   *  below), and "Read the bio for Holly\nAldridge" is a string no screen
+   *  reader should have to normalise on our behalf — the accessible-name spec
+   *  says it collapses, but a label we control should not be betting on it. */
+  const oneLine = (value: string) => value.replace(/\s+/g, " ").trim();
+
   // The comp draws each card twice — Figma "Headshot Bio" (5312:1454) and
   // "Bio Only" (5289:1368) — and this Boolean picks which. It is OFF for the
   // launch, and a document authored before the field reads the same way:
@@ -184,14 +191,56 @@
               {#if person.name}
                 <!-- Without a photograph the NAME is the card, at the comp's
                      36/42 display size instead of the 18px label the photo
-                     card sets under its picture. -->
+                     card sets under its picture.
+
+                     `whitespace-pre-line` makes a return typed in Prismic a real
+                     line break. Where a person's name breaks is editorial, not
+                     something CSS can work out — "Vince Speeg, MD, PhD" has no
+                     right answer a rule could find — and the leadership row
+                     wants every name on two lines so the roles and addresses
+                     below them line up across the three cards (Erik, Discord
+                     2026-09-11: "a line break between Holly and Aldridge so that
+                     the leadership team name blocks all align"). Only two of the
+                     three names wrapped on their own.
+
+                     `pre-line` and not `pre-wrap`: it honours the newline while
+                     still COLLAPSING the stray spaces around it, and the stored
+                     value really is "Holly \nAldridge". `.trim()` handles a
+                     leading or trailing return, which would otherwise open the
+                     card with a blank line.
+
+                     `sm:min-h-[2lh]` is what actually makes the row line up, and
+                     it is here because the hand-typed break DOES NOT. Measured
+                     with the return in place: desktop EN aligned at 97px, but a
+                     390px phone put the other two names on one line and Holly's
+                     on two (roles at 50/50/82), and Spanish — where nobody typed
+                     a return — was still 97/97/55. A break chosen for one
+                     viewport in one language is wrong in the others, because
+                     which names wrap is a function of width and of the words.
+                     Reserving two lines is not: it holds the role and the
+                     address at the same height whatever the name does. It
+                     starts at `sm:` because that is where the cards first sit
+                     side by side (`sm:w-[calc((100%-30px)/2)]`) — stacked on a
+                     phone there is nothing to align, and reserving a line there
+                     would only add a gap.
+
+                     The break is scoped to `sm:` for the same reason, and that
+                     is the half worth reading twice. Nicole approved the hard
+                     return (Discord, 2026-09-11: "I'm fine with a hard return on
+                     Aldridge"), and on a row of cards it is what makes the three
+                     name blocks *look* alike rather than merely line up. On a
+                     390px phone the cards are stacked and every name already
+                     fits on one line, so honouring it there split a name that
+                     had room to spare — measured at 50/50/82 against the others.
+                     Below `sm:` the newline collapses to a space, which is the
+                     default behaviour and the right one. -->
                 <svelte:element
                   this={nameTag}
                   class="{photo ? 't-label-lg' : 't-stat'} {board
                     ? 'text-green-btn'
-                    : 'text-green'}"
+                    : 'text-green'} sm:min-h-[2lh] sm:whitespace-pre-line"
                 >
-                  {person.name}
+                  {person.name.trim()}
                 </svelte:element>
               {/if}
               {#if person.role}
@@ -259,7 +308,7 @@
                 type="button"
                 data-bio-toggle
                 onclick={() => (openIndex = i)}
-                aria-label={copy.readBio(person.name || copy.thisPerson)}
+                aria-label={copy.readBio(oneLine(person.name ?? "") || copy.thisPerson)}
                 class="absolute inset-0 cursor-pointer rounded-[20px] focus-visible:outline-2 focus-visible:outline-offset-[-3px] focus-visible:outline-green"
               ></button>
             {/if}
@@ -310,8 +359,13 @@
       <div class="flex min-w-0 flex-col gap-10 md:p-5 {photos ? '' : 'max-w-[680px]'}">
         <div class="flex flex-col gap-2.5">
           {#if current.name}
+            <!-- One line here, deliberately. The break stored in the name is
+                 there to align three cards in a row; this dialog is a single
+                 column at a different type size, where the same break would
+                 read as arbitrary. Same field, two layouts, and only one of
+                 them asked for it. -->
             <h2 id={bioNameId} class="t-label-lg text-green">
-              {current.name}
+              {oneLine(current.name)}
             </h2>
           {/if}
           {#if current.role}
