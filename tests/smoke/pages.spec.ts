@@ -198,3 +198,67 @@ test.describe("without JavaScript", () => {
     }
   });
 });
+
+/**
+ * A person card must never cut off its own content.
+ *
+ * The leadership cards are `sm:aspect-square` and `overflow-hidden`: the card's
+ * height is its width, and the width is a third of the row from `md:` up. So
+ * as the viewport narrows through the three-up band the card gets SHORTER while
+ * the text inside it gets TALLER — the 28px name and the 16px role both wrap to
+ * more lines — and the two cross. Measured on production before the fix, at
+ * 768px Holly Aldridge's card was 126px tall holding 241px of content: her
+ * whole email address and most of her role were simply gone.
+ *
+ * The band is 768px to roughly 1030px, and the suite never looked at it. The
+ * Playwright matrix runs 1280 and 390 (playwright.config.ts), which sit either
+ * side of it — 1280 clears the content by 103px and 390 is stacked one-up. That
+ * is the whole reason this shipped, so the widths below are the point of the
+ * test and not an arbitrary sample: 1024 is where the first pixel is lost, 768
+ * is the worst case, and 1280/700 are the two known-good neighbours that must
+ * stay good.
+ */
+const THREE_UP_BAND = [1280, 1100, 1024, 980, 900, 860, 820, 768, 700];
+
+for (const path of ["/about", "/es/about"]) {
+  test(`person cards never clip their content — ${path}`, async ({ page }) => {
+    await page.goto(path);
+    await expect(page.locator("li.person-card").first()).toBeVisible();
+
+    const clipped: string[] = [];
+    for (const width of THREE_UP_BAND) {
+      await page.setViewportSize({ width, height: 900 });
+      // The card height follows the width through `aspect-ratio`, which is a
+      // layout read, not an effect — but the fonts it wraps against are not
+      // guaranteed loaded on the first frame, and a fallback face wraps
+      // differently. Wait for the real ones before measuring.
+      await page.evaluate(() => document.fonts.ready);
+      clipped.push(
+        ...(await page.evaluate((w) => {
+          const out: string[] = [];
+          for (const li of document.querySelectorAll("li.person-card")) {
+            const card = li.getBoundingClientRect();
+            // The lowest thing the card draws, whatever it is: the email when
+            // there is one, otherwise the role. Asserting on `scrollHeight`
+            // instead would read 0 here — the overflow is hidden, so the box
+            // never grows and only the child's own rect tells the truth.
+            let lowest = card.top;
+            for (const el of li.querySelectorAll("p, a, h2, h3, h4, h5")) {
+              lowest = Math.max(lowest, el.getBoundingClientRect().bottom);
+            }
+            const over = Math.round(lowest - card.bottom);
+            if (over > 0) {
+              const name = li.querySelector("h2, h3, h4, h5")?.textContent?.trim() ?? "?";
+              out.push(`${w}px: ${JSON.stringify(name)} clipped by ${over}px`);
+            }
+          }
+          return out;
+        }, width)),
+      );
+    }
+
+    expect(clipped, `content cut off by the card's own overflow:\n${clipped.join("\n")}`).toEqual(
+      [],
+    );
+  });
+}
