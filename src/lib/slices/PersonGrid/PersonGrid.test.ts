@@ -80,7 +80,7 @@ describe("PersonGrid slice", () => {
     const name = container.querySelector("li h4")!;
     expect(name.textContent?.trim()).toBe("Brooke Perucki");
     expect(name.className).toContain("t-stat");
-    expect(container.querySelector("li")?.className).toContain("sm:aspect-square");
+    expect(container.querySelector("li")?.className).toContain("sm:min-h-[calc((100cqw-30px)/2)]");
     expect(container.querySelector("li img[src='/icons/plus-circle.svg']")?.className).toContain(
       "bottom-5",
     );
@@ -155,17 +155,40 @@ describe("PersonGrid slice", () => {
     }
   });
 
-  it("takes its content's height while a card is full width, and the comp's square once they sit side by side", () => {
+  it("takes its content's height while a card is full width, and the comp's square as a FLOOR once they sit side by side", () => {
     // Nicole, on Discord (2026-09-09), from a 390px phone: "Height of the box
     // matches height of content instead of being a perfect square. Too much
     // real estate for the names." With `headshots` off there is nothing in a
     // card but a name, a role and an address, so a square left roughly the
     // lower two thirds of a full-bleed card empty. From `sm` the cards are two
     // and three up, where the square is the comp's shape and stays.
+    //
+    // It stays as a MINIMUM, not as an `aspect-ratio`. The same complaint has
+    // a second half nobody had looked for: in the three-up band the square is
+    // too SMALL, not too big — the card's height is its width, the width is a
+    // third of the row, and the 28px name and 16px role inside it wrap to more
+    // lines as that narrows. The two cross at about 1030px and the card, which
+    // is `overflow-hidden` for its rounded corners, silently ate the rest.
+    // Measured at 768px before the fix: a 126px card holding 241px of content,
+    // Holly Aldridge's whole email address gone. See the band walked in
+    // tests/smoke/pages.spec.ts.
+    //
+    // These are min-heights in `cqw` and not `aspect-square` because an
+    // aspect-ratio box answers `max-content` and `fit-content` FROM the ratio:
+    // both keywords measured out to exactly the square they were meant to
+    // escape, so neither `sm:min-h-max` nor `sm:min-h-fit` moved it a pixel.
+    // The expressions deliberately mirror the width classes on the same
+    // element, so the floor cannot drift from the shape it is a floor for.
     const { container } = render(PersonGrid, { props: { slice: make() } });
     const classes = container.querySelector("li")!.className.split(/\s+/);
-    expect(classes).toContain("sm:aspect-square");
-    expect(classes).not.toContain("aspect-square");
+    expect(classes).toContain("sm:w-[calc((100%-30px)/2)]");
+    expect(classes).toContain("sm:min-h-[calc((100cqw-30px)/2)]");
+    expect(classes).toContain("md:w-[calc((100%-60px)/3)]");
+    expect(classes).toContain("md:min-h-[calc((100cqw-60px)/3)]");
+    // No unprefixed floor: below `sm` the card is its content's height.
+    expect(classes.some((c) => /^min-h-/.test(c))).toBe(false);
+    // And `cqw` resolves against the row, so the row must be the container.
+    expect(container.querySelector("ul")!.className).toContain("@container");
   });
 
   it("gives the bio trigger a real accessible name, not a bare icon", () => {
