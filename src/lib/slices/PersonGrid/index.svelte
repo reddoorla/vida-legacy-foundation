@@ -94,11 +94,22 @@
   scrollbar's 15px cannot push the third to a new row. A card is the square
   headshot over a 20px-padded block: name, 10, role, 10, address.
 
-  The square holds from `sm` up, where the cards are two and three across. On
-  a phone each card is full width, and with `headshots` off it holds only a
-  name, a role and an address — a square left the lower two thirds of a
-  full-bleed card empty, so below `sm` the height is the content's (Nicole,
-  on Discord 2026-09-09: "Too much real estate for the names").
+  The square holds from `sm` up, where the cards are two and three across, but
+  as a FLOOR rather than a ratio: the card is at least as tall as it is wide
+  and taller if the content needs it. On a phone each card is full width, and
+  with `headshots` off it holds only a name, a role and an address — a square
+  left the lower two thirds of a full-bleed card empty, so below `sm` the
+  height is the content's (Nicole, on Discord 2026-09-09: "Too much real
+  estate for the names").
+
+  The floor is the other half of that same note. A true `aspect-square` is too
+  SMALL through the three-up band: the card's height follows its width, the
+  width is a third of the row, and the type inside does the opposite — the
+  28px name and 16px role wrap to more lines as the column narrows. They cross
+  at about 1030px, and `overflow-hidden` (there for the rounded corner) ate
+  the difference in silence. Measured at 768px: a 126px card holding 241px of
+  content, with Holly Aldridge's email address and most of her role simply
+  not drawn.
 
   The leadership band pays 60 above and below; the board band 80 above and 200
   below (the closing panel slides over it — see the slide-over note in
@@ -153,13 +164,30 @@
     </div>
 
     {#if people.length}
-      <ul class="flex min-w-0 flex-1 flex-wrap gap-[30px] {board ? 'md:items-center' : ''}">
+      <!-- `@container` so a card can state its own height in terms of the
+           ROW's width. Without it the square below has to be an
+           `aspect-ratio`, and an aspect-ratio box reports its intrinsic
+           block size FROM the ratio — `min-h-max` and `min-h-fit` both
+           resolve to the square they are supposed to be escaping, measured,
+           which is why neither works. `cqw` is the one unit that says "as
+           wide as this card is" without going through the ratio.
+           Safe on the <ul> specifically: `container-type` brings
+           `contain: layout`, which would trap a fixed-position descendant,
+           and the bio Modal is rendered at the end of the component, outside
+           ContentBand entirely. -->
+      <ul
+        class="@container flex min-w-0 flex-1 flex-wrap gap-[30px] {board ? 'md:items-center' : ''}"
+      >
         {#each people as person, i (i)}
           {@const photo = photos && isFilled.image(person.headshot)}
           <li
             class="person-card group relative flex w-full flex-col overflow-hidden rounded-[20px] sm:w-[calc((100%-30px)/2)] md:w-[calc((100%-60px)/3)] {board
               ? 'bg-background'
-              : 'bg-green-deep'} {photo ? '' : board ? 'min-h-[200px]' : 'sm:aspect-square'}"
+              : 'bg-green-deep'} {photo
+              ? ''
+              : board
+                ? 'min-h-[200px]'
+                : 'sm:min-h-[calc((100cqw-30px)/2)] md:min-h-[calc((100cqw-60px)/3)]'}"
           >
             <div
               aria-hidden="true"

@@ -1070,6 +1070,9 @@ without the code is inert. Either half alone still shows the licensed still.
 
 ## 2026-09-11 — A return typed into a name, and why it could not do the job (#72)
 
+> Superseded in part by 2026-09-12 — The card was eating its own content, and
+> "aligned" had been measured on the box.
+
 Erik, on Discord: _"Any problem with inserting a line break between Holly and
 Aldridge so that the leadership team name blocks all align?"_ Two of the three
 leadership names wrap on their own at desktop width; "Holly Aldridge" does not,
@@ -1187,3 +1190,93 @@ is per path because _"/about and /donate both draw a PageMasthead"_. `/donate`
 does not — it has one slice, `donation_form`, and no `.page-masthead` at all.
 The per-path key is still right the moment that changes; the comment is just
 describing a page that never arrived.
+
+## 2026-09-12 — The card was eating its own content, and "aligned" had been measured on the box (#74, release `aqWR8xEAAJQHvjPw`)
+
+Tucker: _"did we get holly aldridge to two lines? it doesn't look like it took
+on the site."_
+
+It had taken, in English. Production was already on `27e7888`; Prismic holds
+`"Holly \nAldridge"`; the CSS ships `.sm\:whitespace-pre-line`; and counting
+rendered line boxes — a Range over the text node, not the element's height —
+Holly is two lines at every width from 640 to 1440. So the answer to the
+question as asked was yes. Two other things fell out of going to look.
+
+**The name box is not the name.** The previous entry (2026-09-11, #72) reports
+"every viewport and both locales aligned — 114/114/114 desktop EN and ES". Those
+were **box** heights, and `sm:min-h-[2lh]` guarantees them: a one-line name in a
+two-line reservation measures exactly the same as a two-line name. On `/es/about`
+at 1440 the three names are 2L, 2L and **1L** in three 84px boxes, because the
+hard return was only ever typed into `en-us`. The roles line up; the name blocks
+do not, which is the thing Nicole approved the return for. Below about 1280 it
+hides itself — the card narrows until "Holly Aldridge" wraps on its own. Staged
+as release `aqWR8xEAAJQHvjPw`, one field, awaiting a human publish.
+
+The lesson is narrow and worth keeping: **a reservation makes the box a bad
+witness for the thing it reserves for.** Measure the line boxes.
+
+**And the card was cutting off its own content.** Leadership cards were
+`sm:aspect-square` and `overflow-hidden`. Height follows width; width is a third
+of the row from `md:` up; and the type inside moves the other way, because a
+28px name and a 16px role wrap to more lines as the column narrows. The two
+cross at about 1030px. Measured on production: at 1024 the first pixel goes, at
+900 Holly loses 57px, at 820 — iPad portrait — 101px, and at 768 her card is
+**126px tall holding 241px of content**, with her whole email address and most
+of "Program Intake Services Coordinator (PT)" simply not drawn. Both locales.
+
+It had been live since the cards were built and nobody saw it, which is not bad
+luck. **The Playwright matrix runs 1280 and 390** (playwright.config.ts), and
+those sit either side of the band: 1280 clears the content by 103px, 390 is
+stacked one-up and takes its content's height. The screenshots in review were
+taken at 1440. The band between the two cells was never anybody's viewport.
+
+**Three fixes that don't work, since the fourth looks arbitrary without them.**
+`sm:min-h-fit` computes to `fit-content`, and `fit-content` in the block axis is
+`min(max-content, max(min-content, stretch))` — `stretch` here is the flex line's
+cross size, i.e. the square. It resolved to the square and moved the card zero
+pixels. `sm:min-h-max` fails for a blunter reason: **a box with an
+`aspect-ratio` reports its intrinsic block sizes FROM the ratio**, so
+`max-content` was also exactly the square. Both were measured, not reasoned —
+`min-height: 400px` on the same element moved it to 400, which is what proves
+`min-height` was being honoured all along and the keywords were the problem.
+
+What works is to stop asking the box about itself. The row is now an
+`@container` and the floor is `min-height` in `cqw`:
+`sm:min-h-[calc((100cqw-30px)/2)] md:min-h-[calc((100cqw-60px)/3)]` — deliberately
+the same expressions as the `sm:w-`/`md:w-` classes on the same element, so the
+floor cannot drift from the shape it is a floor for. `aspect-square` is gone;
+the square is now a minimum, not a ratio. 1440, 1280, 700 and 640 still measure
+square to the pixel; 390 and 600 still take their content's height, which is
+Nicole's 2026-09-09 note and still the right answer there; 768–1100 grow to fit
+and stay uniform across the row. `container-type` is safe on the `<ul>`
+specifically because it brings `contain: layout`, which would trap a
+fixed-position descendant — and the bio Modal renders at the end of the
+component, outside ContentBand entirely.
+
+The gate walks 1280/1100/1024/980/900/860/820/768/700 on both locales and fails
+on the old code with 21 findings. It lives in `pages.spec.ts` rather than
+`rendering.spec.ts` because it has to set its own viewports, and that file's
+whole contract is that nothing in it does.
+
+**A belief corrected, and it is the one worth carrying.** #72 read Nicole's
+2026-09-09 note — _"Height of the box matches height of content instead of being
+a perfect square. Too much real estate for the names"_ — as a phone-only
+complaint and scoped `aspect-square` to `sm:`. That was half the note. The same
+fixed ratio is wrong at the other end for the mirror-image reason: in the
+three-up band the square is too **small**, not too big. One `aspect-ratio` was
+producing both defects, and the second one was invisible because it hid behind
+`overflow-hidden` instead of leaving a gap.
+
+**What was NOT changed, and why.** The board grid is ragged — at 1440 "Jennifer
+Milton, MBA, BSN" takes three lines against Vince's and Bruce's two, dropping
+her role line 25px below theirs, and by 900px both Vince and Jennifer are at
+four. This was offered as a fix and measurement talked it out of being one. The
+comp (`5312:1214`, pulled with `scripts/figma-compare/pull-figma.mjs`) draws
+those cards with **headshots**, an 18px uppercase name under a photograph, in
+hug-height frames of 87px and 113px centred against each other — and its own
+role lines land at y=2348, 2335 and 2341, so they are not aligned there either.
+`headshots` is off for launch, so the site renders a card the comp never drew,
+at 36px instead of 18px. There is no comp answer to match, and inventing an
+alignment the design never had is a decision for Nicole, not a defect fix. The
+cards clip nothing (every overflow measurement negative), so nothing here is
+broken; it is a question, and it is left open on purpose.
