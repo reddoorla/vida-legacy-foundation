@@ -8,11 +8,16 @@ import type { RequestHandler } from "./$types";
  * In production, forward to a real sink (Sentry, Datadog, Logflare).
  */
 export const POST: RequestHandler = async ({ request }) => {
+  // Read the body ONCE. `request.json()` consumes the stream before it fails
+  // to parse, so a `catch { request.text() }` fallback threw "Body is
+  // unusable" and turned every malformed report into a 500 — found by the
+  // first test ever written for this route (#59), never by a browser.
+  const text = await request.text();
   let payload: unknown;
   try {
-    payload = await request.json();
+    payload = JSON.parse(text);
   } catch {
-    payload = await request.text();
+    payload = text;
   }
   console.warn("[csp-report]", JSON.stringify(payload));
   return new Response(null, { status: 204 });
