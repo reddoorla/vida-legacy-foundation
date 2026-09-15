@@ -6,9 +6,12 @@ import {
   organizationJsonLd,
   composeTitle,
   SITE_NAME,
+  DEFAULT_OG_IMAGE,
   OG_IMAGE_WIDTH,
   OG_IMAGE_HEIGHT,
 } from "./seo";
+import { existsSync } from "node:fs";
+import { resolve } from "node:path";
 
 const PRISMIC = "https://images.prismic.io/acme/abc.png?auto=compress";
 
@@ -108,9 +111,53 @@ describe("resolveOgImage", () => {
     });
   });
 
+  it("inserts the slash a bare relative path is missing", () => {
+    // `src.startsWith("/")` → `startsWith("")` survived the scoped run: every
+    // static path in the suite already began with a slash, so the branch
+    // that adds one was never the one taken.
+    expect(resolveOgImage("og-default.png", "https://acme.com")).toEqual({
+      url: "https://acme.com/og-default.png",
+    });
+  });
+
   it("rejects a non-http(s) scheme instead of emitting it as a card", () => {
     expect(resolveOgImage("javascript:alert(1)", "https://acme.com")).toBeUndefined();
     expect(resolveOgImage("data:image/png;base64,AAAA", "https://acme.com")).toBeUndefined();
+    expect(resolveOgImage("ftp://cdn.example.com/card.jpg", "https://acme.com")).toBeUndefined();
+  });
+
+  it("lets plain http through as well as https — the guard is an AND", () => {
+    // 2026-09-05 audit (#60): the `!== "http:" && !== "https:"` guard survived
+    // "both ways". The tests above only ever passed an https URL and only ever
+    // rejected non-web schemes, so `&&` → `||` (which rejects EVERY scheme,
+    // http included) and `!== "http:"` → `=== "http:"` had nothing to fail.
+    expect(resolveOgImage("http://cdn.example.com/card.jpg", "https://acme.com")).toEqual({
+      url: "http://cdn.example.com/card.jpg",
+    });
+  });
+});
+
+describe("DEFAULT_OG_IMAGE", () => {
+  // 2026-09-05 audit (#60): blanking the constant survived — nothing read it.
+  // +layout.svelte does `page.data.meta_image || DEFAULT_OG_IMAGE || undefined`,
+  // so an empty default silently makes every page without a meta_image
+  // imageless, and Twitter downgrades the share to a small summary.
+  it("is set, so a page with no meta_image still gets a card", () => {
+    expect(DEFAULT_OG_IMAGE).not.toBe("");
+    expect(DEFAULT_OG_IMAGE || undefined).toBeDefined();
+  });
+
+  it("is a root-relative static asset that resolves against the page origin", () => {
+    expect(DEFAULT_OG_IMAGE.startsWith("/")).toBe(true);
+    expect(resolveOgImage(DEFAULT_OG_IMAGE, "https://acme.com")).toEqual({
+      url: `https://acme.com${DEFAULT_OG_IMAGE}`,
+    });
+  });
+
+  it("names a file that actually ships in static/", () => {
+    // The doc comment says "set this to a shipped asset". A default that 404s
+    // is worse than none: crawlers cache the broken card.
+    expect(existsSync(resolve(process.cwd(), "static", DEFAULT_OG_IMAGE.slice(1)))).toBe(true);
   });
 });
 
