@@ -19,7 +19,7 @@ vi.mock("@prismicio/svelte/kit", () => ({
 }));
 
 const client = vi.hoisted(() => ({ resolvePreviewURL: vi.fn() }));
-const createClient = vi.hoisted(() => vi.fn(() => client));
+const createClient = vi.hoisted(() => vi.fn((..._args: unknown[]) => client));
 vi.mock("$lib/prismicio", async (importOriginal) => ({
   ...(await importOriginal<typeof import("$lib/prismicio")>()),
   createClient: (...args: unknown[]) => createClient(...args),
