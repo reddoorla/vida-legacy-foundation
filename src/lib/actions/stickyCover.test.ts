@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach } from "vitest";
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import {
   stickyBands,
   stickyTop,
@@ -322,6 +322,195 @@ describe("stickyCovers action", () => {
     expect(footerAfter(main)).toBeNull();
     const action = stickyCovers(main);
     expect(document.body.style.getPropertyValue("--footer-h")).toBe("");
+    action?.destroy?.();
+  });
+});
+
+// Teardown. The blocks above assert the geometry — the part nine PRs went into
+// and the part the 2026-09-05 mutation audit found well killed. This one
+// asserts the other half: that every listener and observer the action attaches
+// is released again (#58). jsdom ships no ResizeObserver, so the action's
+// observer half only runs at all once one is stubbed in.
+class FakeResizeObserver {
+  static instances: FakeResizeObserver[] = [];
+  callback: ResizeObserverCallback;
+  observed: Element[] = [];
+  disconnects = 0;
+  constructor(cb: ResizeObserverCallback) {
+    this.callback = cb;
+    FakeResizeObserver.instances.push(this);
+  }
+  observe(el: Element) {
+    this.observed.push(el);
+  }
+  unobserve(el: Element) {
+    this.observed = this.observed.filter((other) => other !== el);
+  }
+  disconnect() {
+    this.disconnects++;
+    this.observed = [];
+  }
+  // Test helper — report a resize on what is being watched.
+  trigger() {
+    this.callback([], this as unknown as ResizeObserver);
+  }
+}
+
+/** The handlers passed to one of `window`'s listener methods for `type`.
+ *  Spying on `window`'s own method means every call recorded here was made on
+ *  `window` itself — a listener attached to any other target never appears. */
+const handlersFor = (spy: { mock: { calls: unknown[][] } }, type: string) =>
+  spy.mock.calls.filter((call) => call[0] === type).map((call) => call[1]);
+
+describe("stickyCovers — teardown", () => {
+  let main: HTMLElement;
+  let photo: HTMLElement;
+  let cta: HTMLElement;
+  let stats: HTMLElement;
+  let statement: HTMLElement;
+  let closing: HTMLElement;
+  let footer: HTMLElement;
+
+  const height = (el: HTMLElement, value: number) =>
+    Object.defineProperty(el, "offsetHeight", { value, configurable: true });
+
+  beforeEach(() => {
+    FakeResizeObserver.instances = [];
+    vi.stubGlobal("ResizeObserver", FakeResizeObserver);
+    Object.defineProperty(window, "innerHeight", { value: 900, configurable: true });
+
+    // The homepage shape: a photograph pinned on its own account, the stack the
+    // closing cream panel rolls up over, and the panel itself.
+    main = document.createElement("main");
+    document.body.append(main);
+    photo = section("image_band", "default", "sticky-cover");
+    cta = section("cta_banner", "onDark");
+    stats = section("stats_band");
+    statement = section("lead_text", "statement", "sticky-cover sticky-cover--bottom");
+    closing = section("cta_banner", "onCream");
+    height(photo, 400);
+    height(cta, 400);
+    height(stats, 330);
+    height(statement, 300);
+    main.append(photo, cta, stats, statement, closing);
+    footer = document.createElement("footer");
+    height(footer, 320);
+    main.after(footer);
+  });
+
+  afterEach(() => {
+    main.remove();
+    footer.remove();
+    vi.unstubAllGlobals();
+    vi.restoreAllMocks();
+  });
+
+  it("watches every section and the footer, and disconnects both observers on destroy", () => {
+    const action = stickyCovers(main);
+    const [sections, footerObserver] = FakeResizeObserver.instances;
+
+    expect(FakeResizeObserver.instances).toHaveLength(2);
+    // Every section, not just the pinned ones — a run member's height decides
+    // where the whole stack holds.
+    expect(sections.observed).toEqual([photo, cta, stats, statement, closing]);
+    // Same target: the footer's observer watches the footer and nothing else.
+    expect(footerObserver.observed).toEqual([footer]);
+    const atMount = sections.disconnects;
+
+    action?.destroy?.();
+
+    expect(sections.disconnects).toBe(atMount + 1);
+    expect(sections.observed).toEqual([]);
+    expect(footerObserver.disconnects).toBe(1);
+  });
+
+  it("re-measures on a watched section's own resize, and on the footer's", () => {
+    const action = stickyCovers(main);
+    const [sections, footerObserver] = FakeResizeObserver.instances;
+    expect(statement.style.getPropertyValue("--sticky-top")).toBe("600px");
+    expect(document.body.style.getPropertyValue("--footer-h")).toBe("320px");
+
+    height(statement, 200);
+    sections.trigger();
+    expect(statement.style.getPropertyValue("--sticky-top")).toBe("700px");
+
+    height(footer, 500);
+    footerObserver.trigger();
+    expect(document.body.style.getPropertyValue("--footer-h")).toBe("500px");
+
+    action?.destroy?.();
+  });
+
+  it("removes both resize handlers it added, by reference, and goes quiet", () => {
+    const add = vi.spyOn(window, "addEventListener");
+    const remove = vi.spyOn(window, "removeEventListener");
+
+    const action = stickyCovers(main);
+    const added = handlersFor(add, "resize");
+    // Two: the band measurement and the footer's.
+    expect(added).toHaveLength(2);
+
+    action?.destroy?.();
+
+    const removed = handlersFor(remove, "resize");
+    expect(removed).toHaveLength(2);
+    expect(removed[0]).toBe(added[0]);
+    expect(removed[1]).toBe(added[1]);
+
+    // Without the spy: after destroy a real resize writes nothing back —
+    // neither a band's offset nor the footer's reservation.
+    height(statement, 200);
+    window.dispatchEvent(new Event("resize"));
+    expect(statement.style.getPropertyValue("--sticky-top")).toBe("600px");
+    expect(document.body.style.getPropertyValue("--footer-h")).toBe("");
+  });
+
+  it("takes back the run markers it wrote", () => {
+    const action = stickyCovers(main);
+
+    // The two sections the panel rolls over are pinned by attribute.
+    expect(cta.getAttribute("data-cover-run")).toBe("");
+    expect(stats.getAttribute("data-cover-run")).toBe("");
+    expect(cta.style.getPropertyValue("--sticky-top")).toBe("-128px");
+    expect(stats.style.getPropertyValue("--sticky-top")).toBe("271px");
+
+    action?.destroy?.();
+
+    expect(cta.hasAttribute("data-cover-run")).toBe(false);
+    expect(stats.hasAttribute("data-cover-run")).toBe(false);
+    // Neither is a band in its own right, so its offset goes with the marker.
+    expect(cta.style.getPropertyValue("--sticky-top")).toBe("");
+    expect(stats.style.getPropertyValue("--sticky-top")).toBe("");
+    // A band's own offset is not the run's to take away.
+    expect(statement.style.getPropertyValue("--sticky-top")).toBe("600px");
+  });
+
+  it("stops following the slice zone once destroyed", async () => {
+    const action = stickyCovers(main);
+    action?.destroy?.();
+
+    const late = section("image_band", "default", "sticky-cover");
+    height(late, 500);
+    main.append(late);
+    // MutationObserver callbacks are microtasks.
+    await Promise.resolve();
+
+    expect(late.style.getPropertyValue("--sticky-top")).toBe("");
+  });
+
+  it("re-points its observer on a zone change instead of stacking another", async () => {
+    const action = stickyCovers(main);
+    const sections = FakeResizeObserver.instances[0];
+
+    const late = section("stats_band");
+    height(late, 100);
+    main.append(late);
+    await Promise.resolve();
+
+    // Still only the two constructed at mount, and each section observed once.
+    expect(FakeResizeObserver.instances).toHaveLength(2);
+    expect(sections.observed).toEqual([photo, cta, stats, statement, closing, late]);
+
     action?.destroy?.();
   });
 });

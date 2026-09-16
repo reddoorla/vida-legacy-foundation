@@ -349,3 +349,69 @@ describe("animateIn — prefers-reduced-motion", () => {
     expect(el.style.transition).toBe("");
   });
 });
+
+// Teardown. The suite above asserts what the action WRITES; this one asserts
+// that what it ATTACHED is released again — the half the 2026-09-05 mutation
+// audit found unguarded (#58).
+describe("animateIn — teardown", () => {
+  it("disconnects the observer watching THIS node, and leaves another element's alone", () => {
+    const first = document.createElement("div");
+    const second = document.createElement("div");
+    document.body.append(first, second);
+
+    const firstAction = animateIn(first);
+    const secondAction = animateIn(second);
+    const [firstObserver, secondObserver] = FakeIntersectionObserver.instances;
+
+    // Same target: each observer is watching the node its own action was given.
+    expect(firstObserver.observed).toEqual([first]);
+    expect(secondObserver.observed).toEqual([second]);
+
+    firstAction.destroy();
+
+    expect(firstObserver.disconnected).toBe(true);
+    expect(secondObserver.disconnected).toBe(false);
+
+    secondAction.destroy();
+    expect(secondObserver.disconnected).toBe(true);
+  });
+
+  it("never attaches a second observer, however often update runs", () => {
+    const el = document.createElement("div");
+    document.body.appendChild(el);
+
+    const action = animateIn(el);
+    action.update({ duration: 500 });
+    action.update();
+
+    expect(FakeIntersectionObserver.instances).toHaveLength(1);
+
+    action.destroy();
+    expect(FakeIntersectionObserver.instances[0].disconnected).toBe(true);
+  });
+
+  it("attaches nothing to release in triggered mode", () => {
+    const el = document.createElement("div");
+    document.body.appendChild(el);
+
+    const action = animateIn(el, false);
+    action.update(true);
+    action.update(false);
+    action.destroy();
+
+    expect(FakeIntersectionObserver.instances).toHaveLength(0);
+  });
+
+  it("attaches nothing to release under reduced motion", () => {
+    mockMatchMedia(true);
+    const el = document.createElement("div");
+    document.body.appendChild(el);
+
+    const action = animateIn(el);
+    action.update(true);
+    action.destroy();
+
+    expect(FakeIntersectionObserver.instances).toHaveLength(0);
+    expect(el.style.opacity).toBe("");
+  });
+});
