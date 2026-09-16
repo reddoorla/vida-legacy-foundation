@@ -1280,3 +1280,83 @@ at 36px instead of 18px. There is no comp answer to match, and inventing an
 alignment the design never had is a decision for Nicole, not a defect fix. The
 cards clip nothing (every overflow measurement negative), so nothing here is
 broken; it is a question, and it is left open on purpose.
+
+## 2026-09-15 — The four `use:` actions have their teardown tested, not just their maths (#77, `a5adf2a`)
+
+Closes #58, the last of the three issues the 2026-09-05 mutation audit filed.
+The 107 survivors across `animateIn`, `companionRun`, `stickyCover` and
+`trapFocus` were never a gap in rigour — they had a shape. The geometry that
+took nine PRs to get right is well killed; what nothing asserted was that any
+of it is ever taken down. Every listener and observer these actions attach was
+attached under test and released under no test at all. On a site whose whole
+premise is client-side navigation between prerendered pages, that is a leak on
+every navigation, and axe, svelte-check and the smoke suite are all blind to
+it.
+
+Each action now has one teardown `describe` asserting the release, not merely
+that a release happened: the handler removed from `window` or `document` is
+compared by reference to the one that was added, the observers are checked
+against the targets they were given (`companionSticky`'s watches the run and
+not the section it is attached to; `stickyCovers`' footer observer watches the
+footer and nothing else), and the re-entrant case is covered — an `update()`,
+or a slice-zone change through the MutationObserver, must leave one observer
+rather than two. Where a spy could be accused of proving only itself, there is
+a second assertion that does not use it: after `destroy()`, a real `resize`
+event on `window` must write nothing back.
+
+**The belief that turned out false, and it is the valuable line here.** The
+issue lists "`new ResizeObserver(...)` replaced with `undefined` — survives"
+as a missing assertion. It is not. **jsdom ships no `ResizeObserver`**, and
+both `companionSticky` and `stickyCovers` guard on `typeof ResizeObserver ===
+"undefined"`. Nothing was ever constructed, so there was nothing for a mutant
+to change: the entire observer half of two actions had run its `undefined`
+branch in every test this repo has ever executed. Stubbing one in is what made
+the branch reachable, and that single change — not the teardown assertions —
+accounts for 9 of `stickyCover`'s 23 newly-killed mutants (the construction at
+`:184`, the section filter at `:252`, the footer observer at `:264`–`:267`) and
+2 of `companionRun`'s 4. Roughly 40% of the win came from making the code run
+at all, and anyone reading the score movement would otherwise over-invest in
+the assertions.
+
+Measured, on the four source files only, baseline taken on an untouched
+`origin/main` worktree at `7118092`: **78.80 → 85.00**, +31 killed, −31
+survivors, 0 regressions. `stickyCover` 69.27 → 80.49 (63 → 40), `companionRun`
+81.25 → 89.58 (9 → 5), `animateIn` 83.50 → 85.44 (17 → 15), `trapFocus` 88.19 →
+89.58 (17 → 15). 500 mutants, about two minutes a run.
+
+**The instrument was wrong before the system was.** `#58` tells you to verify
+with `npx stryker run --mutate 'src/lib/actions/*.ts'`, "under a minute". That
+command is wrong: the CLI `--mutate` flag REPLACES the `mutate` array in
+`stryker.config.json` rather than narrowing it, so the config's
+`"!src/**/*.test.ts"` exclusion is dropped and Stryker mutates the test files
+too — 8 files, 1,384 mutants, and its own estimate was 50–90 minutes. It was
+caught only because the log said "Found 8 of 312 files" where four sources were
+expected. Name the files instead. The same trap is now written down in
+docs/mutation-audit.md, because the next person will copy the command out of
+the issue.
+
+**Every assertion was shown red before it was trusted.** Sixteen of seventeen
+mutations — each teardown line deleted or guard forced in turn, the mutation
+diffed to prove it applied, the restore verified — went red on the assertion
+that names them. The seventeenth did not, and is reported rather than quietly
+dropped: `trapFocus`'s `if (active) return` cannot be killed, because
+`update()` calls `activate()` only on a false→true transition, so `active` is
+always false when it runs. Its mirror in `deactivate()` _is_ reachable, since
+`destroy()` calls `deactivate()` unconditionally — which is exactly why that
+one died and this one could not. The pair at `:157`/`:158` survives for the
+same reason: a spurious `activate()` is a no-op _because_ of the guard, so the
+transition logic and its guards mask each other. Four equivalent mutants and
+`trapFocus.ts:137`'s restore-focus guard (focus restoration, not teardown) are
+left open on purpose.
+
+Two smaller corrections to the issue's own list. `host?.style.removeProperty
+("--footer-h")` was never surviving as a deletion — the existing footer test
+already killed it; only the optional-chaining variant survived, and still does.
+And the baseline re-measures at 106 survivors rather than 107, the difference
+being a `Timeout`, which Stryker counts as killed and which varies run to run.
+
+What was deliberately not done: the Playwright smoke suite and the axe audit
+were left to CI rather than run locally, so no browser was opened for this
+work; and no action source was changed. This PR is tests plus documentation —
+if a teardown here is actually broken, that is now a failing test rather than a
+silent leak, which is the whole point.
