@@ -105,6 +105,63 @@ assert the mathematics that took nine PRs to get right and say nothing about
 whether the observers are ever torn down. That is a leak on every navigation,
 and it is invisible to every gate the repo has.
 
+### Second pass — 2026-09-15, the actions' teardown (#58)
+
+The row above is closed. Its survivors were the DOM-wiring half of the four
+`use:` actions, and the fix was an extra `describe` per action asserting that
+what the action attached is released again: the same handler reference removed
+from the same target, the observers disconnected, the markers taken back, and
+the re-entrant case — an `update()`, or a slice-zone change — leaving one
+observer rather than two.
+
+| file              | before | after | survivors |
+| ----------------- | -----: | ----: | --------- |
+| `animateIn.ts`    |  83.50 | 85.44 | 17 → 15   |
+| `companionRun.ts` |  81.25 | 89.58 | 9 → 5     |
+| `stickyCover.ts`  |  69.27 | 80.49 | 63 → 40   |
+| `trapFocus.ts`    |  88.19 | 89.58 | 17 → 15   |
+| **total**         |  78.80 | 85.00 | 106 → 75  |
+
++31 killed, 0 regressions. The baseline re-measures at 106 survivors rather
+than the 107 filed: the odd one is a `Timeout`, which Stryker counts as killed
+and which varies run to run.
+
+**jsdom ships no `ResizeObserver`.** Both `companionSticky` and `stickyCovers`
+guard on `typeof ResizeObserver === "undefined"`, so until this pass stubbed one
+in, the entire observer half of both actions ran its `undefined` branch in every
+test this repo has ever run. That is the whole reason "`new ResizeObserver(...)`
+replaced with `undefined` survives" was on the list — nothing was ever
+constructed to survive anything.
+
+**Scope a run by NAMING THE FILES, not by globbing.** The CLI `--mutate` flag
+REPLACES the `mutate` array in `stryker.config.json` instead of narrowing it, so
+`--mutate 'src/lib/actions/*.ts'` drops the config's `"!src/**/*.test.ts"` and
+mutates the test files too — 8 files, 1,384 mutants and a 50–90 minute estimate,
+against 4 files, 500 mutants and about two minutes for:
+
+```sh
+npx stryker run --mutate 'src/lib/actions/animateIn.ts,src/lib/actions/companionRun.ts,src/lib/actions/stickyCover.ts,src/lib/actions/trapFocus.ts'
+```
+
+**What survives now is mostly not teardown, and five of them cannot be killed
+at all.** The 75 are dominated by `coverRun`'s geometry and `measure()`'s slack
+bookkeeping. The equivalent mutants are `trapFocus.ts:114`'s `if (active)
+return` (`update()` calls `activate()` only on a false→true transition, so
+`active` is always false there and the guard is unreachable from outside), the
+`!bands.includes(el)` guard forced TRUE (a run member is never also a band —
+the walk breaks at a `.sticky-cover` and the anchor is excluded), and the
+optional-chaining variants at `animateIn.ts:92`, `companionRun.ts:63` and
+`stickyCover.ts:285`, whose operands cannot be null where they run. The pair at
+`trapFocus.ts:157`/`:158` survives for a related reason: a spuriously called
+`activate()` is a no-op _because_ of the guard at `:114`, so the transition
+logic and its guards mask each other. `trapFocus.ts:137`'s restore-focus guard
+keeps its 4 survivors — that is focus restoration, not teardown, and it is left
+open deliberately.
+
+One correction to the issue's own list: `host?.style.removeProperty("--footer-h")`
+was never surviving as a deletion — the existing footer test already killed
+that. Only its optional-chaining variant survived, and still does.
+
 ## Reading the output
 
 `reports/mutation/mutation.html` (gitignored) is the interactive report — source

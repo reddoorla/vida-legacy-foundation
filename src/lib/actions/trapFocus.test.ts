@@ -386,3 +386,116 @@ describe("trapFocus — enabled option", () => {
     expect(e.defaultPrevented).toBe(false);
   });
 });
+
+// Teardown. The blocks above assert what the trap DOES while it is up; this one
+// asserts that the document-level listeners it attached come back down, and
+// that re-entering an already-active trap leaves no second pair behind (#58).
+/** The handlers passed to one of `document`'s listener methods for `type`.
+ *  Spying on `document`'s own method means every call recorded here was made on
+ *  `document` itself — a listener attached to the node, or to `window`, never
+ *  appears, which is the distinction the action's file header turns on. */
+const listenersFor = (spy: { mock: { calls: unknown[][] } }, type: string) =>
+  spy.mock.calls.filter((call) => call[0] === type).map((call) => call[1]);
+
+describe("trapFocus — teardown", () => {
+  it("removes the same keydown and focusin handlers it added, from document", () => {
+    const add = vi.spyOn(document, "addEventListener");
+    const remove = vi.spyOn(document, "removeEventListener");
+    const { overlay } = overlayWithButtons(["a", "b"]);
+
+    const action = mountTrap(overlay);
+    const addedKeydown = listenersFor(add, "keydown");
+    const addedFocusin = listenersFor(add, "focusin");
+    expect(addedKeydown).toHaveLength(1);
+    expect(addedFocusin).toHaveLength(1);
+
+    action.destroy();
+
+    const removedKeydown = listenersFor(remove, "keydown");
+    const removedFocusin = listenersFor(remove, "focusin");
+    expect(removedKeydown).toHaveLength(1);
+    expect(removedFocusin).toHaveLength(1);
+    // The same function objects, not merely a removal of the same event names.
+    expect(removedKeydown[0]).toBe(addedKeydown[0]);
+    expect(removedFocusin[0]).toBe(addedFocusin[0]);
+  });
+
+  it("neither cycles Tab nor recovers focus after destroy", () => {
+    const { overlay, buttons } = overlayWithButtons(["a", "b"]);
+    const outside = document.createElement("button");
+    document.body.appendChild(outside);
+    const action = mountTrap(overlay);
+    expect(document.activeElement).toBe(buttons[0]);
+
+    action.destroy();
+
+    // A Tab from outside the overlay is no longer intercepted...
+    const e = pressTab(document.body);
+    expect(e.defaultPrevented).toBe(false);
+    // ...and focus landing outside is no longer pulled back in.
+    outside.focus();
+    expect(document.activeElement).toBe(outside);
+  });
+
+  it("does not stack a second pair of listeners when update re-enables an active trap", () => {
+    const add = vi.spyOn(document, "addEventListener");
+    const remove = vi.spyOn(document, "removeEventListener");
+    const { overlay } = overlayWithButtons(["a"]);
+
+    const action = mountTrap(overlay);
+    action.update({});
+    action.update({ enabled: true });
+
+    expect(listenersFor(add, "keydown")).toHaveLength(1);
+    expect(listenersFor(add, "focusin")).toHaveLength(1);
+
+    action.destroy();
+
+    // One pair attached, one pair removed — nothing left on document.
+    expect(listenersFor(remove, "keydown")).toHaveLength(1);
+    expect(listenersFor(remove, "focusin")).toHaveLength(1);
+  });
+
+  it("attaches exactly one fresh pair after a disable/enable cycle", () => {
+    const add = vi.spyOn(document, "addEventListener");
+    const remove = vi.spyOn(document, "removeEventListener");
+    const { overlay } = overlayWithButtons(["a"]);
+
+    const action = mountTrap(overlay);
+    action.update({ enabled: false });
+    expect(listenersFor(remove, "keydown")).toHaveLength(1);
+    expect(listenersFor(remove, "focusin")).toHaveLength(1);
+
+    action.update({ enabled: true });
+    expect(listenersFor(add, "keydown")).toHaveLength(2);
+    expect(listenersFor(add, "focusin")).toHaveLength(2);
+
+    action.destroy();
+    expect(listenersFor(remove, "keydown")).toHaveLength(2);
+    expect(listenersFor(remove, "focusin")).toHaveLength(2);
+  });
+
+  it("attaches nothing to release when mounted disabled", () => {
+    const add = vi.spyOn(document, "addEventListener");
+    const remove = vi.spyOn(document, "removeEventListener");
+    const { overlay } = overlayWithButtons(["a"]);
+
+    const action = mountTrap(overlay, { enabled: false });
+    expect(listenersFor(add, "keydown")).toHaveLength(0);
+
+    action.destroy();
+    expect(listenersFor(remove, "keydown")).toHaveLength(0);
+  });
+
+  it("is idempotent — a second destroy does not remove a second time", () => {
+    const remove = vi.spyOn(document, "removeEventListener");
+    const { overlay } = overlayWithButtons(["a"]);
+
+    const action = mountTrap(overlay);
+    action.destroy();
+    action.destroy();
+
+    expect(listenersFor(remove, "keydown")).toHaveLength(1);
+    expect(listenersFor(remove, "focusin")).toHaveLength(1);
+  });
+});
