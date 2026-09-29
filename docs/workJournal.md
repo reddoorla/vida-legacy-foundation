@@ -1562,8 +1562,7 @@ requested late: 1421–1810 ms before, 1290–1855 ms after. Median TBT went fro
 hydration and `load` sit further apart, and that is unmeasured.
 
 **Production, before → after, excluding one stalled run:** performance mean
-85 → 86, LCP median 1617 → 1506 ms, accessibility, best practices and SEO still
-100. That is consistent with the preview A/B (median 86 → 89) and no stronger.
+85 → 86, LCP median 1617 → 1506 ms, accessibility, best practices and SEO still 100. That is consistent with the preview A/B (median 86 → 89) and no stronger.
 
 **The stalled run, and what it showed.** Run 2 scored 61 with a 17.3 s LCP. One
 1 KiB app chunk, `_app/immutable/chunks/CuBT3zgz.js`, took 16.9 s to download,
