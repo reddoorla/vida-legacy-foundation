@@ -1360,3 +1360,109 @@ were left to CI rather than run locally, so no browser was opened for this
 work; and no action source was changed. This PR is tests plus documentation —
 if a teardown here is actually broken, that is now a failing test rather than a
 silent leak, which is the whole point.
+
+## 2026-09-29 — Launch day: Holly off /about, the domain onto Turnstile, and GA4 in (release `arv2jRIAAI8wQzuS`, branch `claude/zen-euler-tdix5o`)
+
+Brooke's green light came with one condition: take Holly Aldridge off the About
+page, because she moved from employee to temporary contract. The removal went
+into a Prismic release as two item deletes, one per locale (the leadership
+`person_grid` in `about` en-us and es-mx), and `diff_release` showed nothing
+else changing. It was published over MCP on the operator's explicit "publish
+it" — a departure from this file's standing "publishing is a human step" rule,
+made by the operator, not by the session. Two consequences worth knowing: the
+leadership row is now two cards in a three-up grid, so from 768px there is an
+empty third slot; and `intake@vidalegacy.org` was printed only on Holly's card,
+so it now appears nowhere on the site. The operator decided it does not need
+listing anywhere else.
+
+**A belief corrected on contact.** The session told the operator nothing would
+rebuild the site after a Prismic publish, because nothing in this repo
+documents a hook. Netlify's deploy list said otherwise — three production
+deploys titled "Deploy triggered by hook: Prismic publish", the last at 17:44
+UTC. The hook lives in Netlify and Prismic settings, not here, so reading the
+repo could never have found it.
+
+**Turnstile.** "Site Forms 3" held one hostname of ten, the staging host. The
+apex and `www` went on through `PUT /challenges/widgets/{sitekey}` with every
+other setting sent back unchanged (the read-back confirmed mode, region and
+clearance level untouched, and the sitekey is the same). The staging host stays
+on the list. After DNS, the operator confirmed in an ordinary browser that
+`cf-turnstile-response` fills on vidalegacy.org — the one check automation
+cannot make (security.md, the 600010 note).
+
+**The cutover needed one more build than it looked like.** With the domain on
+Netlify, https, http→https and www→apex (301) all worked, but canonical,
+`og:url`, hreflang, all 8 `sitemap.xml` entries and `robots.txt` still named
+`vida-legacy-foundation-rd.netlify.app`. The origin is baked in at build time
+from Netlify's `URL` (svelte.config.js, `prerender.origin`), and adding a
+domain does not trigger a build. One API-triggered build (queued 18:39:46, ready
+18:40:12) switched every one of them.
+
+**The site record, and why the cockpit could not see it.** The Turso row was
+`building`, carried the netlify.app URL, had no report recipients and no header
+image. The cockpit shows only `maintained` and `launching`
+(`isDashboardVisible`), so a building site is invisible there — not a defect, it
+just surprised the operator. The operator set status `launching`, the URL and
+`To: brooke@vidalegacy.org` from the dashboard. The header image was generated
+and reviewed locally, but `header-image --write-back` and `launch` were both
+refused by the session's permission classifier, so the Launch draft, and with it
+the flip to `maintained` that starts client notifications, is still the
+operator's to run.
+
+**GA4, and why not the pasted snippet.** The operator supplied the standard
+gtag block for `G-34GXWCZ315`. Pasted into `app.html` it would half-work: the
+CSP issues nonces without `'unsafe-inline'`, so the inline config block is
+blocked on server-rendered routes and survives on prerendered ones only while it
+sits above the head placeholder (measured in reddoor-maintenance's
+2026-09-22 fleet-analytics design). That design's answer is an `initAnalytics`
+export from `@reddoorla/maintenance`, which has not shipped (0.101.0 has no such
+export), so `$lib/analytics` implements the same contract locally: off without
+a measurement id, off unless the hostname is exactly the production host,
+idempotent, and the `gtag` shim pushes the live `arguments` object, which gtag
+needs. It reads `analytics` from `site-config.json`, as the design specifies,
+so swapping to the package is a one-import change. CSP gained
+`www.googletagmanager.com` in `script-src`, and `*.google-analytics.com` /
+`*.googletagmanager.com` in `img-src` and `connect-src`, plus
+`*.analytics.google.com` in `connect-src` — Google's documented GA4 set, which
+is a superset of the design's step 3 (it leaves `googletagmanager` out of
+`connect-src` and `img-src`). The host gate is an exact match on
+`vidalegacy.org`; `www` never serves a page, it 301s. Seven unit tests, and the
+two that matter most were shown red first: deleting the host check fails two
+tests, and deleting the duplicate-loader check fails one.
+
+**The test environment, honestly.** The first `pnpm verify` stopped at the axe
+step with "a11y: no results written". That was not this change: Playwright 1.63
+wants chromium build 1243, and the container had 1194 and 1234. The passing run
+used a temporary symlink from 1243 to 1234, removed afterwards: prettier, eslint,
+svelte-check, build, 0 axe violations across 10 routes, 724 unit and 73 smoke
+tests. CI runs on its own browsers. That same run logged one CSP report that
+predates this change — `use.typekit.net/noj4tji.css` blocked under `connect-src`
+on `/dev/a11y-fixtures` — and it is left alone here.
+
+**Later the same session, with auto mode off and each command approved by the
+operator.** The GA4 property id `556595961` went onto the row (the operator's
+first number, `15868715457`, was the web data stream id — eleven digits, not a
+property). `header-image --write-back` stored the plate (0.66 MB). `launch`
+still stopped, but no longer on the classifier: its bootstrap step,
+`self-updating`, cannot run from a cloud session. First it failed on `GITHUB_TOKEN not set`,
+because `gh auth token` is asked with `GH_TOKEN` stripped and the container's
+`gh` is not logged in. With the token passed through it got as far as branch
+protection: the session's GitHub integration cannot read
+`branches/main/protection` ("Resource not accessible by integration", 403), and
+the proxy refuses the PUT ("Write access to this GitHub API path is not
+permitted through this proxy"). Nothing changed — the checkout stayed on its
+branch, clean, with no `maint/*` branch — and `launch` has to run from the
+laptop. The live settings it would have checked read fine over REST: repo
+auto-merge is off, and the `main: reviewed changes only` ruleset is active.
+
+That run exposed a defect in reddoor-maintenance, not in this repo:
+`branchProtectionContexts` (`src/github/gh.ts`) returns `[]` on any non-zero
+exit, not only a 404, so a refused READ reads as "no protection configured",
+and `protectBranch` then PUTs a protection of just the fleet's required check
+with `required_pull_request_reviews=null`. Here the write was refused too, so
+it cost nothing; with admin rights and a failing read it would silently
+replace `main`'s protection.
+
+Still open: `launch vida-legacy-foundation` from the laptop (URL, status,
+recipient, header image and property id are all on the row), then approving and
+sending the draft, which flips the site to `maintained`.

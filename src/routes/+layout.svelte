@@ -19,6 +19,7 @@
   import { disableSmoothScroll, restoreSmoothScroll } from "$lib/utils/instantNavScroll";
   import { stickyCovers } from "$lib/actions/stickyCover";
   import { prefersReducedMotion } from "$lib/transitions";
+  import { initAnalytics } from "$lib/analytics";
 
   let { data, children } = $props();
 
@@ -143,6 +144,10 @@
   // old language to assistive tech.
   $effect(() => {
     document.documentElement.lang = LOCALES[lang].html;
+  });
+
+  $effect(() => {
+    initAnalytics(siteConfig.analytics);
   });
 </script>
 

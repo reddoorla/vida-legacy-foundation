@@ -83,6 +83,7 @@ const config = {
           "https://challenges.cloudflare.com",
           // Little Green Light's JS embed variant of the donation form.
           "https://secure.lglforms.com",
+          "https://www.googletagmanager.com",
         ],
         // Event-handler ATTRIBUTES fall under script-src-attr, which a nonce
         // never covers. Svelte 5's SSR emits exactly one on every <img> that
@@ -113,7 +114,13 @@ const config = {
           // what catches this — it is otherwise silent.
           "https://p.typekit.net",
         ],
-        "img-src": ["self", "data:", "https://*.prismic.io"],
+        "img-src": [
+          "self",
+          "data:",
+          "https://*.prismic.io",
+          "https://*.google-analytics.com",
+          "https://*.googletagmanager.com",
+        ],
         // Prismic hosts non-image media (e.g. .mp4 assets) on
         // <repo>.cdn.prismic.io — first-party content, same origin family as
         // images.prismic.io already allowed under img-src.
@@ -129,7 +136,13 @@ const config = {
           // (see script-src) if the iframe proves awkward.
           "https://secure.lglforms.com",
         ],
-        "connect-src": ["self", "https://*.prismic.io"],
+        "connect-src": [
+          "self",
+          "https://*.prismic.io",
+          "https://*.google-analytics.com",
+          "https://*.analytics.google.com",
+          "https://*.googletagmanager.com",
+        ],
         // p.typekit.net is where Adobe Fonts serves the actual woff2 files.
         "font-src": [
           "self",
