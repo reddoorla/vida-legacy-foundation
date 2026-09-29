@@ -170,10 +170,12 @@ If a session produced nothing worth an entry, that is itself worth one line.
   (never a preview, localhost or CI), and appends Google's loader after `load`
   when idle, so it stays off the LCP path. Swap it for `initAnalytics` from
   `@reddoorla/maintenance` once the package ships it. → [security.md](docs/security.md)
-- **The home page's LCP waits on `/heart-mask.png`**, a CSS mask the browser
-  finds only after every stylesheet. HeartHero preloads it with
-  `crossorigin="anonymous"`: a mask fetch is CORS-mode, so a preload without
-  the attribute is not reused and the file downloads twice. → [rendering.md](docs/rendering.md)
+- **The home page's LCP waits on `/heart-mask.png` and on hydration.** The mask
+  is a CSS mask the browser finds only after every stylesheet, so HeartHero
+  preloads it with `crossorigin="anonymous"`: a mask fetch is CORS-mode, and a
+  preload without the attribute is not reused, so the file downloads twice. In a
+  run where one app chunk stalled for 17 s, LCP followed the chunk rather than
+  the mask, so more preloading is not the next lever. → [rendering.md](docs/rendering.md)
 - **Match the comp by measurement** (`scripts/figma-compare/`), never by eye.
   Figma trims Extended text boxes to cap height — use the `t-*` utilities. Never
   gate a layout on the comp's own 1440: a maximized 1440 window is 1425 of

@@ -1469,6 +1469,8 @@ sending the draft, which flips the site to `maintained`.
 
 ## 2026-09-29 — The heart mask was the LCP's last request, and preloading it alone moved nothing (#84)
 
+> Superseded in part by 2026-09-29 — Measured on production: gtag was already late, and LCP waits on hydration.
+
 The entry above ends with `launch` still to run from the laptop. It ran; the
 Launch draft was approved in the dashboard and is the only approved-unsent
 report in the fleet, so it goes to VLF's point of contact in the 09:23 UTC
@@ -1538,3 +1540,38 @@ critical path.
 Also found in passing: this session's container cannot reach `web.archive.org`
 (the tunnel is reset during TLS; `archive.org` answers), so whether an older
 site on this domain left inbound links that now 404 is unchecked.
+
+## 2026-09-29 — Measured on production: gtag was already late, and LCP waits on hydration (`e4af59e`)
+
+Corrects part of the entry above, which could only guess at the gtag change.
+#84 deployed to production at 20:42 UTC and was measured with the fleet's
+settings (desktop preset, devtools throttling, 5 runs), against the 3 runs taken
+at 19:33 before any of it.
+
+**Analytics still works, deferred.** In a real browser `load` fired at 2082 ms,
+`gtag/js` was requested at 2088 ms, and a `g/collect` hit with
+`tid=G-34GXWCZ315` went out at 2451 ms. No console errors, so the CSP hosts
+cover gtag's follow-up `googletagmanager.com/a` requests too. The mask was
+requested once, at 627 ms, through the preload.
+
+**Belief corrected: deferring gtag bought almost nothing on desktop.** The entry
+above called this keeping 173 KiB "off the critical path". But `initAnalytics`
+runs in a layout `$effect`, which only fires after hydration, so gtag was already
+requested late: 1421–1810 ms before, 1290–1855 ms after. Median TBT went from
+17 ms to 14 ms, which is noise. Any real value is on slow phones, where
+hydration and `load` sit further apart, and that is unmeasured.
+
+**Production, before → after, excluding one stalled run:** performance mean
+85 → 86, LCP median 1617 → 1506 ms, accessibility, best practices and SEO still 100. That is consistent with the preview A/B (median 86 → 89) and no stronger.
+
+**The stalled run, and what it showed.** Run 2 scored 61 with a 17.3 s LCP. One
+1 KiB app chunk, `_app/immutable/chunks/CuBT3zgz.js`, took 16.9 s to download,
+about two minutes after the deploy; the proxy logged no failure for the host, and
+the other four runs did not repeat it, so its cause is unknown. It is not this
+change's logic. What it revealed is worth more: first paint was on time (1.4 s)
+and the mask had long arrived, yet LCP landed 100 ms after that chunk did. So the
+home page's LCP waits on something hydration unblocks, not only on the mask and
+the photo. The likely candidate, unproven: the heart's rendered size is set from
+the client (`--heart-size`), and a larger heart after hydration is a new, larger
+LCP candidate. If that holds, the next real lever is an SSR heart size that
+matches what hydration computes, not any further preloading.
