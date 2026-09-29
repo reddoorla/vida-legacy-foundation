@@ -185,6 +185,29 @@ describe("HeartHero slice", () => {
     const full = container.querySelector(".texture-full");
     expect(full?.classList.contains("is-ready")).toBe(false);
   });
+
+  const maskPreloads = () =>
+    document.head.querySelectorAll<HTMLLinkElement>('link[rel="preload"][href="/heart-mask.png"]');
+
+  it("preloads the heart mask as a CORS image so the mask fetch reuses it", () => {
+    maskPreloads().forEach((l) => l.remove());
+    render(HeartHero, { props: { slice } });
+    const [link, ...rest] = maskPreloads();
+    expect(rest).toHaveLength(0);
+    expect(link?.getAttribute("as")).toBe("image");
+    expect(link?.getAttribute("crossorigin")).toBe("anonymous");
+    expect(link?.getAttribute("fetchpriority")).toBe("high");
+  });
+
+  it("does not preload the heart mask when there is no photo to mask", () => {
+    maskPreloads().forEach((l) => l.remove());
+    const bare = {
+      ...slice,
+      primary: { image: {}, eyebrow: null, heading: [] },
+    } as unknown as Content.HeartHeroSlice;
+    render(HeartHero, { props: { slice: bare } });
+    expect(maskPreloads()).toHaveLength(0);
+  });
 });
 
 describe("HeartHero's moving hero", () => {

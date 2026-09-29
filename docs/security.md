@@ -95,9 +95,12 @@ fleet's last free slot. The fleet-side half of this is
 `Turnstile widget` column no longer writes `pass` from an env var, and the
 runbook is `docs/runbooks/turnstile-widgets.md` in that repo.
 
-**At launch, adding the custom domain breaks Turnstile until the widget knows
-it.** `vidalegacy.org` and `www.vidalegacy.org` are two more hostnames and
-must be added to "Site Forms 3" as part of the DNS cutover, not after it.
+**Adding a custom domain breaks Turnstile until the widget knows it.**
+`vidalegacy.org` and `www.vidalegacy.org` went onto "Site Forms 3" through the
+Cloudflare API ahead of the 2026-09-29 DNS cutover, and a token was confirmed
+on the real domain in an ordinary browser afterwards. The widget now holds
+those two plus the netlify.app staging host. The same rule applies to any
+future hostname.
 
 Two things about testing it, both of which cost an afternoon:
 
@@ -130,3 +133,22 @@ need it (the challenge runs in Cloudflare's own iframe, under its own origin).
    nonce never authorises an inline handler, so the swap is blocked, `media`
    stays `"print"`, and fonts are fetched but never applied with no error on the
    happy path. The plain `<link rel="stylesheet">` here is deliberate.
+
+## Google Analytics, and why it is not the pasted snippet
+
+GA4 (`G-34GXWCZ315`) loads through `$lib/analytics`, called from the root
+layout. Google's standard snippet would half-work here: its inline
+`gtag('config', …)` block has no nonce, so the CSP blocks it on server-rendered
+routes. On prerendered ones it survives only while it sits above the head
+placeholder in `app.html`. `initAnalytics` instead injects the external loader,
+which needs only a host in `script-src`, and queues `js` and `config` itself.
+
+The CSP carries Google's documented GA4 set: `www.googletagmanager.com` in
+`script-src`; `*.google-analytics.com` and `*.googletagmanager.com` in
+`img-src` and `connect-src`; `*.analytics.google.com` in `connect-src`.
+
+It runs only when `location.hostname` is exactly `analytics.productionHost` in
+`site-config.json`, so deploy previews, the netlify.app host, localhost and CI
+never send hits. The loader is appended after the `load` event, when the
+browser is idle. The measured cost of loading it eagerly is in the
+2026-09-29 journal entries.
