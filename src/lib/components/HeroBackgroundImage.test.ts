@@ -32,6 +32,7 @@ describe("HeroBackgroundImage", () => {
     expect(img.height).toBe(2250);
     expect(img.alt).toBe("A hero image");
     expect(img.getAttribute("fetchpriority")).toBe("high");
+    expect(img.getAttribute("loading")).toBeNull();
   });
 
   it("emits a preload link so the browser discovers the LCP image pre-hydration", () => {
@@ -43,7 +44,7 @@ describe("HeroBackgroundImage", () => {
     expect(link.getAttribute("fetchpriority")).toBe("high");
   });
 
-  it("skips the preload link (but still renders the image) with preload={false}", () => {
+  it("skips the preload link and renders a lazy, normal-priority image with preload={false}", () => {
     // Two hero-ish slices on one page must not both claim fetchpriority=high
     // preloads — every instance after the real LCP hero opts out.
     const { container } = render(HeroBackgroundImage, {
@@ -53,7 +54,8 @@ describe("HeroBackgroundImage", () => {
     expect(document.head.querySelector("link[rel='preload']")).toBeNull();
     const img = container.querySelector("img")!;
     expect(img.src).toContain("w=1920");
-    expect(img.getAttribute("fetchpriority")).toBe("high");
+    expect(img.getAttribute("fetchpriority")).toBeNull();
+    expect(img.getAttribute("loading")).toBe("lazy");
   });
 
   it("passes non-Prismic URLs through untouched, with no srcset", () => {
