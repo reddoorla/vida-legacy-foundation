@@ -1575,3 +1575,33 @@ the photo. The likely candidate, unproven: the heart's rendered size is set from
 the client (`--heart-size`), and a larger heart after hydration is a new, larger
 LCP candidate. If that holds, the next real lever is an SSR heart size that
 matches what hydration computes, not any further preloading.
+
+## 2026-09-29 — Form-error text darkened to red-700 so it passes AA on beige (PR for review)
+
+A reddoor-maintenance worker session, on the operator's decision of 2026-09-29
+(fix the design and exempt axe's blend-mode crash in the gate). The error line
+under a field (`Field.svelte`) was `text-red-600`, `#e7000b` in Tailwind 4.3,
+which is **4.41:1** on the `#fdf5e8` beige: under the 4.5:1 AA needs for
+`text-sm`. `text-red-700` (`#c10007`) is **5.93:1** there, and 6.42:1 on white.
+One class on one line. The border, the summary box and the required asterisk
+are untouched.
+
+It was invisible until the gate could see the fixtures. Before 0.102.0, axe
+threw on the palette's `oklch(… 0 none)` tokens and skipped contrast on
+`/dev/a11y-fixtures` without a word. With the palette's 13 `@theme` lines
+applied locally, the gate measured 109 contrast nodes there and named
+`#s13-error` and `#s14-error`.
+
+Measured with this site's own `pnpm test:a11y`, on a packed build of the
+reddoor-maintenance branch that makes axe's plus-lighter crash "not measured",
+with the palette lines applied locally and not committed:
+
+- `text-red-600` (control): **fail**, `color-contrast on a11y fixtures`, the two
+  nodes above.
+- `text-red-700`: **exit 0**, 0 violations across 10 routes. `/` and `/es` each
+  have 1 element not measured for plus-lighter (`span[aria-current="true"]`),
+  and 24 contrast nodes are measured on each.
+
+Without the palette lines, this branch is still red for the palette alone:
+`rule-errored on a11y fixtures` (`oklch(0.205 0 none)`). That fix is kept out of
+this PR on purpose; the operator's PM session has it ready.
