@@ -1466,3 +1466,31 @@ replace `main`'s protection.
 Still open: `launch vida-legacy-foundation` from the laptop (URL, status,
 recipient, header image and property id are all on the row), then approving and
 sending the draft, which flips the site to `maintained`.
+
+## 2026-09-29 — The launch baseline measured the axe fixtures page, not the site (no change here; the fix is reddoor-maintenance `claude/blissful-feynman-xxghob`)
+
+`launch vida-legacy-foundation` stored Lighthouse 52/100/100/61 as this site's
+baseline. The operator corrected the row by hand to 72/100/100/100, measured on
+https://vidalegacy.org/ with Lighthouse 12.6.1's default mobile emulation. This
+session reran the recipe's own audit code against this checkout at `ea15d92` and
+got 52/100/100/61 exactly. The report shows what it measured:
+`http://localhost:<port>/dev/a11y-fixtures` on `vite dev`, desktop preset. The
+recipe never passed the row's url to Lighthouse. This repo sets no
+`package.json#reddoor.lighthouseUrl` (only `a11yRoutes`), so the audit fell back
+to the fleet default, the fixtures page.
+
+That page explains the SEO figure, not the dev server. `is-crawlable` (weight
+4.043) failed on the fixture's own `noindex, nofollow`, which it carries on
+purpose. `meta-description` (weight 1) failed because the fixture has none. The
+other eight weight-1 audits passed: 8 / 13.043 rounds to 61. Performance was the
+dev server: Speed Index 13.2 s, TBT 370 ms, LCP 2.6 s.
+
+The fix is in reddoor-maintenance: `launch` now points Lighthouse at the row's
+url. Through that path, from a cloud container, the site scores 77/100/100/100
+(desktop, three runs averaged). Two consequences for this site. First, the
+hand-corrected 72 is a mobile number, while every deployed audit in the fleet,
+the nightly included, runs the desktop preset. So the first nightly Performance
+figure differs from the baseline partly by preset. Second, `reddoor-maint audit`
+without `--url` still measures the fixtures page here. Setting `lighthouseUrl`
+would change that, but nothing needs it now that `launch` and the nightly both
+measure the deployed site. Nothing in this repo changed.
