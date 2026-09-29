@@ -1466,3 +1466,75 @@ replace `main`'s protection.
 Still open: `launch vida-legacy-foundation` from the laptop (URL, status,
 recipient, header image and property id are all on the row), then approving and
 sending the draft, which flips the site to `maintained`.
+
+## 2026-09-29 — The heart mask was the LCP's last request, and preloading it alone moved nothing (#84)
+
+The entry above ends with `launch` still to run from the laptop. It ran; the
+Launch draft was approved in the dashboard and is the only approved-unsent
+report in the fleet, so it goes to VLF's point of contact in the 09:23 UTC
+daily-reports run on 2026-09-30. On the fleet record the name became
+`Vida Legacy Foundation` (it had been the slug, and the test email read
+"vida-legacy-foundation is live"), the URL lost its trailing slash, and the
+Netlify id and `sc-domain:vidalegacy.org` went on.
+
+**Three different Lighthouse numbers, and only one of them comparable.**
+`launch` stored 52 / 100 / 100 / 61. It audits a local Vite dev server, because
+a `launching` site has no `deployedUrl` (reddoor-maintenance's
+`src/audits/lighthouse.ts`); that is a defect over there, filed as a task. A
+single run of Lighthouse's default mobile profile against production gave
+72 / 100 / 100 / 100, and that went onto the record first, which was also wrong:
+the fleet measures deployed sites with the desktop preset, devtools throttling,
+`uses-http2` skipped and 3 runs averaged. Measured that way production was
+85 / 100 / 100 / 100, and that is the baseline now on the Launch row and on
+`site_health`.
+
+**What gated LCP.** Lighthouse names `div.heart-mask` as the LCP element, not
+the photograph inside it: a masked element paints nothing until its mask image
+arrives, and `/heart-mask.png` (23 KB) is referenced only from CSS, so it is
+requested after every render-blocking stylesheet. On production (3 fleet-style
+runs) the preloaded photo was done by 570–938 ms, the mask started at 754–1066
+ms and ended at 1199–1473 ms, and LCP followed at 1458–1849 ms.
+
+**Belief corrected: this was bandwidth, not discovery.** The first change
+preloaded the mask (`fetchpriority="high"`, and `crossorigin="anonymous"`,
+because CSS masks are fetched in CORS mode and a no-CORS preload is not reused).
+A/B, 5 interleaved runs each, deploy preview against the netlify.app host
+(which serves `main` and, like the preview, loads no gtag, so the comparison is
+like for like): the mask's median start moved from 797 ms to 319 ms, and LCP
+did not improve — median 1342 ms before, 1456 ms after. The breakdown said why:
+load delay fell from ~600 ms to ~50 ms and load time rose from ~340 ms to
+~900 ms. The mask finished when it had before; it just shared the pipe longer.
+
+What was sharing it: two off-screen photos, `child-hospital-clinician` (34 KB)
+and `mother-daughter-embrace` (49 KB), requested at High priority from ~250 ms.
+`HeroBackgroundImage` put `fetchpriority="high"` on every `<img>`, including the
+`preload={false}` instances its own comment calls below-the-fold or secondary,
+and a test asserted exactly that, with no reason given. The image now follows
+`preload`: the one preloaded hero keeps high priority, and every other instance
+is `loading="lazy"` at default priority.
+
+Second A/B, same method: the off-screen photos moved from 249–560 ms to
+3761–4217 ms; the mask's median end from 1380 ms to 1196 ms; LCP median
+1443 → 1392 ms and mean 1710 → 1408 ms, the worst run 2582 → 1605 ms;
+performance median 86 → 89 and mean 84 → 87. The mask was requested exactly
+once in all ten preview loads.
+
+**Honest accounting.** The gain is modest and mostly in consistency, and it
+came from lazy-loading, not from the preload the PR started with. The preload
+earns its place only in combination. Runs are noisy: one baseline run hit
+2582 ms, so read the medians.
+
+**Not measured yet.** `initAnalytics` now queues `js` and `config` at once but
+appends Google's loader after `load`, when idle. Neither the preview nor the
+netlify.app host loads gtag (the host gate), so its effect can only be read on
+production after merge. The mobile trace had put gtag at 173 KiB and about
+230 ms of main-thread blocking.
+
+**Docs.** `CLAUDE.md` now states the launched state and three new rules
+(Turnstile hostnames, GA through `$lib/analytics`, the mask preload);
+`docs/security.md` gains the GA section and `docs/rendering.md` the mask's
+critical path.
+
+Also found in passing: this session's container cannot reach `web.archive.org`
+(the tunnel is reset during TLS; `archive.org` answers), so whether an older
+site on this domain left inbound links that now 404 is unchecked.
