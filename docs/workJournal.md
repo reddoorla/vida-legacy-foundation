@@ -1372,8 +1372,8 @@ it" — a departure from this file's standing "publishing is a human step" rule,
 made by the operator, not by the session. Two consequences worth knowing: the
 leadership row is now two cards in a three-up grid, so from 768px there is an
 empty third slot; and `intake@vidalegacy.org` was printed only on Holly's card,
-so it now appears nowhere on the site. Whether intake should be listed somewhere
-else is an open question for the client.
+so it now appears nowhere on the site. The operator decided it does not need
+listing anywhere else.
 
 **A belief corrected on contact.** The session told the operator nothing would
 rebuild the site after a Prismic publish, because nothing in this repo
@@ -1439,6 +1439,30 @@ tests. CI runs on its own browsers. That same run logged one CSP report that
 predates this change — `use.typekit.net/noj4tji.css` blocked under `connect-src`
 on `/dev/a11y-fixtures` — and it is left alone here.
 
-Still open: the numeric GA4 property id on the Turso row (`ga4_property_id`,
-which the report enrichment reads), the header image and the Launch draft, and
-the intake question for Brooke.
+**Later the same session, with auto mode off and each command approved by the
+operator.** The GA4 property id `556595961` went onto the row (the operator's
+first number, `15868715457`, was the web data stream id — eleven digits, not a
+property). `header-image --write-back` stored the plate (0.66 MB). `launch`
+still stopped, but no longer on the classifier: its bootstrap step,
+`self-updating`, cannot run from a cloud session. First it failed on `GITHUB_TOKEN not set`,
+because `gh auth token` is asked with `GH_TOKEN` stripped and the container's
+`gh` is not logged in. With the token passed through it got as far as branch
+protection: the session's GitHub integration cannot read
+`branches/main/protection` ("Resource not accessible by integration", 403), and
+the proxy refuses the PUT ("Write access to this GitHub API path is not
+permitted through this proxy"). Nothing changed — the checkout stayed on its
+branch, clean, with no `maint/*` branch — and `launch` has to run from the
+laptop. The live settings it would have checked read fine over REST: repo
+auto-merge is off, and the `main: reviewed changes only` ruleset is active.
+
+That run exposed a defect in reddoor-maintenance, not in this repo:
+`branchProtectionContexts` (`src/github/gh.ts`) returns `[]` on any non-zero
+exit, not only a 404, so a refused READ reads as "no protection configured",
+and `protectBranch` then PUTs a protection of just the fleet's required check
+with `required_pull_request_reviews=null`. Here the write was refused too, so
+it cost nothing; with admin rights and a failing read it would silently
+replace `main`'s protection.
+
+Still open: `launch vida-legacy-foundation` from the laptop (URL, status,
+recipient, header image and property id are all on the row), then approving and
+sending the draft, which flips the site to `maintained`.
