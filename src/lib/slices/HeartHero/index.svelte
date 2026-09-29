@@ -196,6 +196,18 @@
   let ctasIn = $derived(reducedMotion || progress >= CTAS_AT);
 </script>
 
+<svelte:head>
+  {#if hasImage}
+    <link
+      rel="preload"
+      as="image"
+      href="/heart-mask.png"
+      crossorigin="anonymous"
+      fetchpriority="high"
+    />
+  {/if}
+</svelte:head>
+
 <!--
   Homepage masthead. Geometry is the comp's (Figma 5155:1491, 1440x860):
     heart  669.436px wide at rest -> 46.49% of the band, opening to 187.2%

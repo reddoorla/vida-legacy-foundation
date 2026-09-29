@@ -158,10 +158,22 @@ If a session produced nothing worth an entry, that is itself worth one line.
 - **`p.typekit.net` belongs in `style-src`, and there are no inline event
   handlers here.** The CSP grants nonces without `'unsafe-inline'`, so the
   fleet's `onload=` font swap is silently never applied. → [security.md](docs/security.md)
-- **Turnstile is bound to a hostname list. At launch, `vidalegacy.org` and
-  `www.` must be added to widget "Site Forms 3" AS PART OF the DNS cutover,**
-  or the form mints no token and `/health` still says true. Error `110200` =
-  wrong hostname; `600010` = every automated browser, not a defect. → [security.md](docs/security.md)
+- **Turnstile is bound to a hostname list.** Widget "Site Forms 3" carries
+  `vidalegacy.org`, `www.vidalegacy.org` and the netlify.app staging host (the
+  first two added at the 2026-09-29 cutover). Any new hostname that serves the
+  form must go on it first, or the form mints no token and `/health` still says
+  true. Error `110200` = wrong hostname; `600010` = every automated browser, not
+  a defect. → [security.md](docs/security.md)
+- **GA4 is `$lib/analytics`, never a snippet in `app.html`.** The nonce-only CSP
+  blocks the snippet's inline `gtag('config')` on server-rendered routes. It
+  runs only on the exact `analytics.productionHost` in `site-config.json`
+  (never a preview, localhost or CI), and appends Google's loader after `load`
+  when idle, so it stays off the LCP path. Swap it for `initAnalytics` from
+  `@reddoorla/maintenance` once the package ships it. → [security.md](docs/security.md)
+- **The home page's LCP waits on `/heart-mask.png`**, a CSS mask the browser
+  finds only after every stylesheet. HeartHero preloads it with
+  `crossorigin="anonymous"`: a mask fetch is CORS-mode, so a preload without
+  the attribute is not reused and the file downloads twice. → [rendering.md](docs/rendering.md)
 - **Match the comp by measurement** (`scripts/figma-compare/`), never by eye.
   Figma trims Extended text boxes to cap height — use the `t-*` utilities. Never
   gate a layout on the comp's own 1440: a maximized 1440 window is 1425 of
@@ -224,6 +236,18 @@ it, in the operator's local notes, not here.
 Bootstrapped 2026-09-01. CI green, branch protection on (every change to `main`
 goes through a PR).
 
+**Launched 2026-09-29 on `vidalegacy.org`.** `http://` and `www` 301 to
+`https://vidalegacy.org/`. The netlify.app host still serves, with canonical,
+hreflang and `sitemap.xml` pointing at the apex; they take the origin from
+Netlify's `URL` at build time, so a domain change needs a rebuild. The fleet
+record is `maintained`, so contact-form submissions now email VLF's point of
+contact. **A test submission emails the client and cannot be recalled**: route
+it to yourself first with `reddoor-maint forms-notify-target vida-legacy-foundation --set on`,
+then `--set off --restore maintained`. GA4 `G-34GXWCZ315` and Search Console
+`sc-domain:vidalegacy.org` are on the fleet record. Turnstile has been live
+since 2026-09-04 ([docs/security.md](docs/security.md)). Turso is authoritative
+for the site record; Airtable is a legacy shadow write.
+
 **The CMS is live as of 2026-09-01.** `slicemachine.config.json` points at the
 real `vida-legacy` repo — the `your-prismic-repo-name` sentinel is **gone**, and
 loud-fail prerendering is armed. A 404 during prerender now fails the build.
@@ -251,11 +275,11 @@ button does. Documents _can_ be created over MCP, but only staged into a
 release; **publishing is a human step in the dashboard** — do not call
 `publish_release`.
 
-What is NOT done, in the order it blocks things:
+What is NOT done, or still load-bearing:
 
 1. `src/lib/site-config.json` **footer and nav are both populated.** One
    nav target is provisional: `Become a Donor` points at the operator's noted
-   registry URL, which the client has not confirmed. `Contact Us` keeps its
+   registry URL, which the client had still not confirmed at launch. `Contact Us` keeps its
    `/contact` href on purpose — the layout intercepts that link into the
    contact modal ([docs/forms.md](docs/forms.md)), and the route stays as the no-JS fallback and the
    crawler's target.
@@ -274,22 +298,7 @@ What is NOT done, in the order it blocks things:
    the menu). Add a chrome item for a page that is not published yet and it
    costs nothing; hard-code its path and the next build fails. A previewed
    release sees its own links.
-3. The Netlify site is up and `FORMS_INGEST_URL` / `FORMS_INGEST_TOKEN` are
-   set — `/health` reports `{"ok":true,"prismic":"ok"}` with both true.
-   **Turnstile is live as of 2026-09-04** ([docs/security.md](docs/security.md)). Contact submissions notify
-   the operator today, and that is the pre-launch guard working, **not** a
-   configuration gap: the site record already carries a real `@vidalegacy.org`
-   point of contact, and `resolveRecipients` short-circuits on
-   `status !== "maintained"` BEFORE it ever reads that field. So
-   `reddoor-maint forms-notify-target vida-legacy-foundation` printing
-   `OPERATOR ONLY` is structurally incapable of naming the client while the
-   site is `building` — do not read it as "the contact is missing", which an
-   earlier version of this file did. Nobody has to remember the flip either:
-   `updateLaunched` sets the status the moment the launch report sends, and
-   notifications start reaching VLF on their own. (Turso is authoritative for
-   the site record — Airtable is a legacy shadow write, not the source of
-   truth.)
-4. **The donation form ships hidden.** `DonationForm` (Figma `5328:1611`)
+3. **The donation form ships hidden.** `DonationForm` (Figma `5328:1611`)
    keeps the comp's form behind a `show_form` Boolean that defaults to off:
    the donate page renders the heading and intro with two buttons out to
    LGL's hosted form and PayPal. Flipping the Boolean in Prismic draws the

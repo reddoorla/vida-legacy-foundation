@@ -117,7 +117,8 @@
         width={image.dimensions?.width}
         height={image.dimensions?.height}
         {alt}
-        fetchpriority="high"
+        fetchpriority={preload ? "high" : undefined}
+        loading={preload ? undefined : "lazy"}
         decoding="async"
         class={passedClasses}
       />
@@ -130,7 +131,8 @@
       width={image.dimensions?.width}
       height={image.dimensions?.height}
       {alt}
-      fetchpriority="high"
+      fetchpriority={preload ? "high" : undefined}
+      loading={preload ? undefined : "lazy"}
       decoding="async"
       class={passedClasses}
     />

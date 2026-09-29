@@ -177,3 +177,24 @@ phone block above it: a media query adds no specificity, so at an equal
 No existing test could reach it — the rule needs reduced motion AND width
 < 768, and every other test runs at the config's 1280x720 — so
 `the reduced-motion phone frame` in the smoke suite pins it at 390x664.
+
+## The heart mask is the home page's LCP
+
+Lighthouse names `div.heart-mask` as the largest contentful paint, not the
+photograph inside it. A masked element paints nothing until its mask image has
+loaded. `/heart-mask.png` (23 KB) is referenced only from the component's CSS
+`mask-image`, so the browser cannot request it until every render-blocking
+stylesheet has arrived, Typekit's two-step `noj4tji.css` → `p.css` included.
+
+Measured on production 2026-09-29, before the fix, with the fleet's Lighthouse
+settings (desktop preset, devtools throttling, 3 runs). The preloaded hero photo
+started at 211–551 ms and finished by 570–938 ms. The mask started at 754–1066
+ms, after the last stylesheet, finished at 1199–1473 ms, and LCP followed at
+1458–1849 ms. The photo was never the wait; the mask was.
+
+HeartHero now preloads the mask from `<svelte:head>` with
+`fetchpriority="high"`, so it is requested alongside the photo. The preload
+carries `crossorigin="anonymous"` because CSS mask images are fetched in CORS
+mode. A preload without it does not match the mask request, so the browser
+downloads the file twice and warns that the preload went unused.
+`HeartHero.test.ts` holds both attributes.
