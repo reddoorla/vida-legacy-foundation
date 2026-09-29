@@ -4,6 +4,7 @@
 // `settings`-document loader behind the same exports.
 import config from "./site-config.json";
 import { DEFAULT_LANG, pathForDoc, type Lang } from "$lib/locale";
+import type { AnalyticsConfig } from "$lib/analytics";
 
 /** A nav entry. `href` is the target; an empty string renders the label
  *  without a link. `page` names a Prismic page by uid instead: the item links
@@ -39,6 +40,7 @@ export type FooterItem = FooterText | FooterImage;
 export type FooterColumn = { items: FooterItem[] };
 
 export type SiteConfig = {
+  analytics?: AnalyticsConfig;
   nav: {
     logo?: { url: string; maxWidth?: string };
     items: NavItem[];

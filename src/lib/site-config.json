@@ -1,4 +1,8 @@
 {
+  "analytics": {
+    "measurementId": "G-34GXWCZ315",
+    "productionHost": "vidalegacy.org"
+  },
   "nav": {
     "items": [
       {

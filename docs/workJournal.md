@@ -1360,3 +1360,85 @@ were left to CI rather than run locally, so no browser was opened for this
 work; and no action source was changed. This PR is tests plus documentation —
 if a teardown here is actually broken, that is now a failing test rather than a
 silent leak, which is the whole point.
+
+## 2026-09-29 — Launch day: Holly off /about, the domain onto Turnstile, and GA4 in (release `arv2jRIAAI8wQzuS`, branch `claude/zen-euler-tdix5o`)
+
+Brooke's green light came with one condition: take Holly Aldridge off the About
+page, because she moved from employee to temporary contract. The removal went
+into a Prismic release as two item deletes, one per locale (the leadership
+`person_grid` in `about` en-us and es-mx), and `diff_release` showed nothing
+else changing. It was published over MCP on the operator's explicit "publish
+it" — a departure from this file's standing "publishing is a human step" rule,
+made by the operator, not by the session. Two consequences worth knowing: the
+leadership row is now two cards in a three-up grid, so from 768px there is an
+empty third slot; and `intake@vidalegacy.org` was printed only on Holly's card,
+so it now appears nowhere on the site. Whether intake should be listed somewhere
+else is an open question for the client.
+
+**A belief corrected on contact.** The session told the operator nothing would
+rebuild the site after a Prismic publish, because nothing in this repo
+documents a hook. Netlify's deploy list said otherwise — three production
+deploys titled "Deploy triggered by hook: Prismic publish", the last at 17:44
+UTC. The hook lives in Netlify and Prismic settings, not here, so reading the
+repo could never have found it.
+
+**Turnstile.** "Site Forms 3" held one hostname of ten, the staging host. The
+apex and `www` went on through `PUT /challenges/widgets/{sitekey}` with every
+other setting sent back unchanged (the read-back confirmed mode, region and
+clearance level untouched, and the sitekey is the same). The staging host stays
+on the list. After DNS, the operator confirmed in an ordinary browser that
+`cf-turnstile-response` fills on vidalegacy.org — the one check automation
+cannot make (security.md, the 600010 note).
+
+**The cutover needed one more build than it looked like.** With the domain on
+Netlify, https, http→https and www→apex (301) all worked, but canonical,
+`og:url`, hreflang, all 8 `sitemap.xml` entries and `robots.txt` still named
+`vida-legacy-foundation-rd.netlify.app`. The origin is baked in at build time
+from Netlify's `URL` (svelte.config.js, `prerender.origin`), and adding a
+domain does not trigger a build. One API-triggered build (queued 18:39:46, ready
+18:40:12) switched every one of them.
+
+**The site record, and why the cockpit could not see it.** The Turso row was
+`building`, carried the netlify.app URL, had no report recipients and no header
+image. The cockpit shows only `maintained` and `launching`
+(`isDashboardVisible`), so a building site is invisible there — not a defect, it
+just surprised the operator. The operator set status `launching`, the URL and
+`To: brooke@vidalegacy.org` from the dashboard. The header image was generated
+and reviewed locally, but `header-image --write-back` and `launch` were both
+refused by the session's permission classifier, so the Launch draft, and with it
+the flip to `maintained` that starts client notifications, is still the
+operator's to run.
+
+**GA4, and why not the pasted snippet.** The operator supplied the standard
+gtag block for `G-34GXWCZ315`. Pasted into `app.html` it would half-work: the
+CSP issues nonces without `'unsafe-inline'`, so the inline config block is
+blocked on server-rendered routes and survives on prerendered ones only while it
+sits above the head placeholder (measured in reddoor-maintenance's
+2026-09-22 fleet-analytics design). That design's answer is an `initAnalytics`
+export from `@reddoorla/maintenance`, which has not shipped (0.101.0 has no such
+export), so `$lib/analytics` implements the same contract locally: off without
+a measurement id, off unless the hostname is exactly the production host,
+idempotent, and the `gtag` shim pushes the live `arguments` object, which gtag
+needs. It reads `analytics` from `site-config.json`, as the design specifies,
+so swapping to the package is a one-import change. CSP gained
+`www.googletagmanager.com` in `script-src`, and `*.google-analytics.com` /
+`*.googletagmanager.com` in `img-src` and `connect-src`, plus
+`*.analytics.google.com` in `connect-src` — Google's documented GA4 set, which
+is a superset of the design's step 3 (it leaves `googletagmanager` out of
+`connect-src` and `img-src`). The host gate is an exact match on
+`vidalegacy.org`; `www` never serves a page, it 301s. Seven unit tests, and the
+two that matter most were shown red first: deleting the host check fails two
+tests, and deleting the duplicate-loader check fails one.
+
+**The test environment, honestly.** The first `pnpm verify` stopped at the axe
+step with "a11y: no results written". That was not this change: Playwright 1.63
+wants chromium build 1243, and the container had 1194 and 1234. The passing run
+used a temporary symlink from 1243 to 1234, removed afterwards: prettier, eslint,
+svelte-check, build, 0 axe violations across 10 routes, 724 unit and 73 smoke
+tests. CI runs on its own browsers. That same run logged one CSP report that
+predates this change — `use.typekit.net/noj4tji.css` blocked under `connect-src`
+on `/dev/a11y-fixtures` — and it is left alone here.
+
+Still open: the numeric GA4 property id on the Turso row (`ga4_property_id`,
+which the report enrichment reads), the header image and the Launch draft, and
+the intake question for Brooke.
