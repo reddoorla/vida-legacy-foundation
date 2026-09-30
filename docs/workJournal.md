@@ -1605,3 +1605,22 @@ with the palette lines applied locally and not committed:
 Without the palette lines, this branch is still red for the palette alone:
 `rule-errored on a11y fixtures` (`oklch(0.205 0 none)`). That fix is kept out of
 this PR on purpose; the operator's PM session has it ready.
+
+## 2026-09-30 — Tailwind's none-hued palette gets explicit hues so axe can measure contrast (reddoor-maintenance BACKLOG 23/29)
+
+Tailwind 4.3.3 writes 13 palette tokens with a `none` hue: every
+`neutral-*`, plus `zinc-50` and `mauve-50`. Browsers render `none` as 0, but
+axe-core cannot parse it. From @reddoorla/maintenance 0.102.0 (#916), contrast
+that axe could not measure fails the a11y gate. `@theme` now overrides those
+13 tokens with the same lightness and chroma and a hue of 0. The values are
+copied from this repo's installed `tailwindcss/theme.css`, and they are the
+same lines as 29-navy#58. Chroma is 0, so the hue changes nothing on screen.
+
+Measured with this site's own `pnpm test:a11y`, on `main` (which includes #86's
+`text-red-700`) plus a packed build of reddoor-maintenance#1014:
+
+- Without these lines the gate fails `rule-errored on a11y fixtures`, because
+  axe cannot parse `oklch(0.205 0 none)`.
+- With them it exits 0, with 0 violations across 10 routes. The fixtures
+  measure 109 contrast nodes, `/` and `/es` 24 each. One element on each of
+  `/` and `/es` is named as not measured for `plus-lighter`.
