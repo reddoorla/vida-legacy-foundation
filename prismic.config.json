@@ -1,0 +1,5 @@
+{
+  "repositoryName": "vida-legacy",
+  "libraries": ["./src/lib/slices"],
+  "routes": []
+}

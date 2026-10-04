@@ -17,7 +17,7 @@ grep -rn "your-prismic-repo-name\|reddoor-wireframer\|<Site name>\|<Client>" \
 | -------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
 | `package.json` → `name`    | The site slug. Fleet audits match sites to Airtable rows by this.                                                                              |
 | `.github/workflows/ci.yml` | `netlify-site: "<slug>"` — drives the deploy-preview link CI comments on every PR.                                                             |
-| `slicemachine.config.json` | `repositoryName` → the real Prismic repo. **See "Placeholder builds" below.**                                                                  |
+| `prismic.config.json`      | `repositoryName` → the real Prismic repo. **See "Placeholder builds" below.**                                                                  |
 | `src/lib/seo.ts`           | `SITE_NAME` (defaults to `"Reddoor"` — every `<title>` says so until you change it), `SITE_LOCALE`, `DEFAULT_DESCRIPTION`, `DEFAULT_OG_IMAGE`. |
 | `src/app.html`             | `<html lang>` if the primary language is not English.                                                                                          |
 | `static/favicon.png`       | The client's icon.                                                                                                                             |
@@ -44,15 +44,25 @@ See [`.env.example`](../.env.example) for the annotated list.
 Renovate needs nothing per-repo: it authenticates as the org-wide
 `reddoor-renovate` GitHub App.
 
+### Slice previews in the Type Builder
+
+Once the site is deployed, set the Prismic repository's simulator URL to
+`https://<site>/slice-simulator` (Prismic → the repository → the Type Builder's
+preview settings; `pnpm exec prismic preview set-simulator <url>` does the same
+under your own login). Until it is set, every slice preview in the Type Builder
+is blank. The route may be framed by prismic.io and nothing else
+(`src/lib/security/cms-framing.ts`); Slice Machine used to provide this
+preview locally.
+
 ## Placeholder builds
 
-`slicemachine.config.json`'s `your-prismic-repo-name` sentinel is load-bearing.
+`prismic.config.json`'s `your-prismic-repo-name` sentinel is load-bearing.
 While it is in place, Prismic-backed routes 404 during prerender and the build
 tolerates it, so a fresh clone is green before the CMS exists. Replacing it with
 a real repository name re-arms loud-fail prerendering by design — after that, a
 404 during prerender fails the build. The sentinel is read in four places
 (`svelte.config.js`, `src/lib/prismicio.ts`, the route loaders, and
-`tests/smoke/routes.ts`); change it in `slicemachine.config.json` only.
+`tests/smoke/routes.ts`); change it in `prismic.config.json` only.
 
 ## Before pushing
 

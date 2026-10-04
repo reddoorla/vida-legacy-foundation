@@ -5,9 +5,10 @@
 
   let { slice }: { slice: Content.StatsBandSlice } = $props();
 
-  // Slice Machine writes Number fields back as strings often enough that the
-  // repo's CLAUDE.md calls it out as a regen trap — coerce rather than trust,
-  // and drop anything that still is not a number.
+  // Slice Machine wrote Number fields back as strings often enough that the
+  // repo's CLAUDE.md called it out as a regen trap (until the 2026-10-04 move
+  // to the Prismic CLI) — coerce rather than trust, and drop anything that
+  // still is not a number.
   const toNumber = (v: unknown) => {
     const n = typeof v === "number" ? v : Number(v);
     return Number.isFinite(n) ? n : null;
