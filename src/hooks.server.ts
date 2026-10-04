@@ -17,7 +17,7 @@ export const handle: Handle = async ({ event, resolve }) => {
   // The one route the Prismic Type Builder frames from another origin carries
   // no X-Frame-Options and names its framers in the CSP; every other response
   // stays SAMEORIGIN with kit.csp's `frame-ancestors 'self'`.
-  if (isCmsFramedRoute(event.url.pathname)) {
+  if (isCmsFramedRoute(event.route.id)) {
     response.headers.delete("X-Frame-Options");
     const policy = response.headers.get("Content-Security-Policy");
     if (policy) response.headers.set("Content-Security-Policy", widenFrameAncestors(policy));
