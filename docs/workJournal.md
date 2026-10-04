@@ -1685,7 +1685,7 @@ Removing Slice Machine also leaves `pnpm-workspace.yaml` overriding `uuid` and
 allowing builds for `@scarf/scarf` and `protobufjs`, none of which is in the
 lockfile any more; left alone here.
 
-## 2026-10-04 — The simulator leaves the public pages' bundle; an encoded path gets the simulator's framing (`fix/simulator-chunk-and-encoded-framing`)
+## 2026-10-04 — The simulator leaves the public pages' bundle; an encoded path gets the simulator's framing (#90)
 
 Ported from reddoor-starter#168, following caltex-landing#70. The starter's entry records the four bundle fixes that failed before this one. The simulator route imports `SliceSimulator` from the `@prismicio/svelte` barrel, which statically re-exports it, so Rolldown put the simulator into the barrel's shared chunk and every page that renders a `SliceZone` loaded it. `scripts/prismic-barrel.ts` declares that re-export-only module side-effect-free, and `SliceZone` is then bound directly.
 
