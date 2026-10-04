@@ -1624,3 +1624,63 @@ Measured with this site's own `pnpm test:a11y`, on `main` (which includes #86's
 - With them it exits 0, with 0 violations across 10 routes. The fixtures
   measure 109 contrast nodes, `/` and `/es` 24 each. One element on each of
   `/` and `/es` is named as not measured for `plus-lighter`.
+
+## 2026-10-04 — Off Slice Machine, onto the Prismic CLI (reddoor-maintenance#1090, `claude/prismic-cli`)
+
+Phase 4 of the fleet migration (reddoor-maintenance
+`docs/prismic-migration-plan-2026-10.md` §9), ported from reddoor-starter#166
+and following 29-navy's port, the nearest relative: a starter site with
+`kit.csp`, a hook that sets X-Frame-Options, and netlify.toml's `/*` block.
+Slice Machine is deprecated by Prismic since 2026-09-18; models are now edited
+in the Type Builder and the generated files come from `pnpm prismic:gen`.
+
+**The simulator could not be framed, twice over.** `kit.csp` sends
+`frame-ancestors 'self'` and the hook sends `X-Frame-Options: SAMEORIGIN` on
+every server-rendered response. But `/slice-simulator` was not server-rendered:
+the root layout's `prerender = "auto"` let the build write
+`slice-simulator.html`, so in production neither the hook nor a CSP header
+reached it (a prerendered page's CSP is a `<meta>`, which cannot carry
+frame-ancestors), and netlify.toml's `/*` block gave it SAMEORIGIN. Measured on
+vidalegacy.org before the change: `/slice-simulator` and `/` both carried
+`x-frame-options: SAMEORIGIN` from the edge cache with no CSP header;
+`/contact` and `/health` (functions) carried SAMEORIGIN and, on `/contact`,
+`frame-ancestors 'self'`. So the route is now `prerender = false`, and the hook
+drops X-Frame-Options on it and replaces frame-ancestors with
+`'self' http://localhost:* https://*.prismic.io https://prismic.io`. From
+`vite preview`, before and after: `/` and `/about` send neither header
+(prerendered; vite preview does not apply netlify.toml), `/health` sends
+SAMEORIGIN, and `/contact` and `/es/contact` send SAMEORIGIN with
+`frame-ancestors 'self'`, both times. The
+simulator's CSP is otherwise identical to `/contact`'s. The prerendered set
+went from eight entries to seven.
+
+**What the live check cannot yet show.** Every server-rendered response here
+passes through the hook, which sets SAMEORIGIN itself, so this site has no
+control route proving netlify.toml's static header stays off a function
+response. caltex-landing measured exactly that on 2026-10-04 (its `/health`, a
+function with no hook, carried none). The first deploy of this branch is the
+authority: `curl -sSI https://vidalegacy.org/slice-simulator` must show no
+X-Frame-Options.
+
+**A hook test that could not fail.** Ported as-is, the starter's framing tests
+stayed green with the hook's `X-Frame-Options` delete removed: nothing upstream
+of the hook sets that header, so the delete is defensive. A case with an
+upstream `X-Frame-Options: DENY` now goes red on that mutant. Seven other
+mutants (listed in the PR) each turned a gate red.
+
+**No stale model, two stale comments.** The regenerated types export the same
+77 names as the Slice Machine file and the slice index maps the same 17
+components. Formatted alike, the two files differ only in doc comments the old
+file had not caught up with: DonationForm's variation description (the
+"either two buttons out… or the on-page form" wording that came with the
+hidden-form change) and the display names of the OnDark and OnCream variations
+of CtaBanner, LeadText and SectionGrid, which the models spell with a space.
+svelte-check: 0 errors before and after; `prismicio.ts` already imported the
+types by relative path, so fixing the four paths kept them in the program and
+`src/app.d.ts` needed nothing.
+
+The nightly drift sweep read this site's 18 models as matching Prismic at
+`b99cce9`, the base of this change, so nothing was owed to Prismic first.
+Removing Slice Machine also leaves `pnpm-workspace.yaml` overriding `uuid` and
+allowing builds for `@scarf/scarf` and `protobufjs`, none of which is in the
+lockfile any more; left alone here.
