@@ -1684,3 +1684,15 @@ The nightly drift sweep read this site's 18 models as matching Prismic at
 Removing Slice Machine also leaves `pnpm-workspace.yaml` overriding `uuid` and
 allowing builds for `@scarf/scarf` and `protobufjs`, none of which is in the
 lockfile any more; left alone here.
+
+## 2026-10-04 — The simulator leaves the public pages' bundle; an encoded path gets the simulator's framing (`fix/simulator-chunk-and-encoded-framing`)
+
+Ported from reddoor-starter#168, following caltex-landing#70. The starter's entry records the four bundle fixes that failed before this one. The simulator route imports `SliceSimulator` from the `@prismicio/svelte` barrel, which statically re-exports it, so Rolldown put the simulator into the barrel's shared chunk and every page that renders a `SliceZone` loaded it. `scripts/prismic-barrel.ts` declares that re-export-only module side-effect-free, and `SliceZone` is then bound directly.
+
+Measured from the build manifest as each client node's static-import closure, gzipped, `main` → branch: home and `[uid]` (every Prismic page in both locales) went 57,710 → 53,767, and `/dev/a11y-fixtures` went 150,845 → 146,494. Each reached the simulator chunk before and none does after. `/slice-simulator` went 57,809 → 58,408 and now carries the code in its own node. The root layout (63,598) and `/contact` (48,303) never reached it.
+
+The hook asked `isCmsFramedRoute(event.url.pathname)`, the raw path, while SvelteKit routes on the decoded one. From `vite preview` of `main`, `/slice%2Dsimulator` and `/slice%2dsimulator` rendered the simulator with `X-Frame-Options: SAMEORIGIN` and `frame-ancestors 'self'`. That failed closed, but it was the wrong route test. The hook now asks `event.route.id`, and both encoded paths answer like `/slice-simulator`.
+
+Vitest's `include` here is `src/**` only, so the starter's `scripts/prismic-barrel.test.ts` lives at `src/prismic-barrel.test.ts` and imports the plugin without an extension. A `.ts` extension fails `svelte-check`, because this tsconfig does not set `allowImportingTsExtensions`. `vite.config.ts` imports it the same way. The upstream X-Frame-Options test keeps its intent. It now gives the simulator and an ordinary page their route ids, and with the hook's delete removed it still goes red. The smoke control is `/contact`, a server-rendered 200; `/privacy` is a 404 here.
+
+Against a `main` build, the ported tests failed 4 of 18 in vitest (the bundle check, the encoded path, the null route and the exact match) and 2 of 4 in the new smoke spec (both encoded paths). On the branch, all of them pass. With the plugin removed and the site rebuilt, the bundle check fails. With the hook back on the pathname, two of the hook tests fail.
