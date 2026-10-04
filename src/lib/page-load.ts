@@ -1,7 +1,7 @@
 import { error } from "@sveltejs/kit";
 import { NotFoundError, RepositoryNotFoundError } from "@prismicio/client";
 
-import type { PageDocument } from "../prismicio-types";
+import type { PageDocument } from "../../prismicio-types";
 import { pageMeta } from "$lib/page-meta";
 import {
   DEFAULT_LANG,

@@ -10,6 +10,7 @@ This starter maps to **OWASP ASVS Level 2** as a baseline and treats the OWASP T
 - **HSTS** — `max-age=63072000; includeSubDomains; preload` ([netlify.toml](../netlify.toml)).
 - **X-Frame-Options** `SAMEORIGIN`, **X-Content-Type-Options** `nosniff`, **Referrer-Policy** `strict-origin-when-cross-origin`, **Permissions-Policy** disabling camera/microphone/geolocation/FLoC, **Cross-Origin-Opener-Policy** `same-origin`.
 - Headers are set both at the edge ([netlify.toml](../netlify.toml)) and in [hooks.server.ts](../src/hooks.server.ts) so they travel with the app, not the host.
+- **One exception to the framing rules: `/slice-simulator`.** The Prismic Type Builder renders slice previews by framing it from `*.prismic.io`, and X-Frame-Options has no multi-origin form, so that route sends no X-Frame-Options and `frame-ancestors 'self' http://localhost:* https://*.prismic.io https://prismic.io` instead ([cms-framing.ts](../src/lib/security/cms-framing.ts)). It is `prerender = false` on purpose: as a static file it would get netlify.toml's `/*` `X-Frame-Options: SAMEORIGIN`, which the hook cannot remove. The page renders only the slices it is handed.
 
 ### Output handling
 

@@ -50,8 +50,9 @@ describe("StatsBand slice", () => {
   });
 
   it("coerces a Number field that came back as a string", () => {
-    // Slice Machine regeneration is documented in CLAUDE.md as turning Number
-    // fields into strings; the component must not render "NaN".
+    // Slice Machine regeneration was documented as turning Number fields into
+    // strings (CLAUDE.md, until the 2026-10-04 move to the Prismic CLI); the
+    // component must not render "NaN".
     const { container } = render(StatsBand, {
       props: { slice: withItems([{ value: "42", suffix: "%", description: "Coerced." }]) },
     });

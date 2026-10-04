@@ -108,10 +108,18 @@ If a session produced nothing worth an entry, that is itself worth one line.
 
 ## Traps
 
-- **`src/lib/slices/index.js` and `src/prismicio-types.d.ts` are generated** by
-  Slice Machine. Regenerating overwrites curated `mocks.json` content with
-  lorem — re-curate after any regen, and check Number fields didn't come back
-  as strings.
+- **`src/lib/slices/index.ts` and `prismicio-types.d.ts` are generated** by
+  the Prismic CLI (`pnpm prismic:gen`; Slice Machine is gone, deprecated by
+  Prismic 2026-09-18). Edit a model's JSON, regenerate, commit both; the
+  `prismic-codegen` job fails a PR whose generated files are stale. Run by an
+  agent, the CLI refuses without `--task-id` and `--user-intent` (analytics
+  only), and `pnpm prismic:gen` cannot pass them to both commands, so an agent
+  runs the two itself: `pnpm exec prismic task-id` once, then
+  `pnpm exec prismic gen types --task-id <id> --user-intent "<the ask>"` and
+  the same for `gen slice-index`. Never `prismic push` or `prismic pull`: both
+  delete to match, and `pull` removes whole slice directories, components
+  included. Curated `mocks.json` content is not touched by either `gen`
+  command.
 - **The `your-prismic-repo-name` sentinel is load-bearing.** It keeps a
   clone's build green before the CMS exists. See docs/NEW-SITE.md.
 - **`RepositoryNotFoundError` extends `NotFoundError`.** Catching `NotFoundError`
@@ -250,7 +258,8 @@ then `--set off --restore maintained`. GA4 `G-34GXWCZ315` and Search Console
 since 2026-09-04 ([docs/security.md](docs/security.md)). Turso is authoritative
 for the site record; Airtable is a legacy shadow write.
 
-**The CMS is live as of 2026-09-01.** `slicemachine.config.json` points at the
+**The CMS is live as of 2026-09-01.** `prismic.config.json` (until 2026-10-04,
+`slicemachine.config.json`) points at the
 real `vida-legacy` repo — the `your-prismic-repo-name` sentinel is **gone**, and
 loud-fail prerendering is armed. A 404 during prerender now fails the build.
 That was verified: `pnpm verify` passes green against the live repo.
@@ -269,12 +278,12 @@ What is in Prismic:
   render and are in `sitemap.xml`. (`home` is `apdOUREAADAAAfBa`, if you need
   the id.)
 
-Slice and custom-type models CAN be pushed from a session: `@slicemachine/manager`
-is in the pnpm store (not a top-level dep; load its CJS entry, the ESM one fails
-on a directory import) and, once `~/.prismic` holds a login, its
-`slices.pushSlice` / `customTypes.pushCustomType` do what Slice Machine's Push
-button does. Documents _can_ be created over MCP, but only staged into a
-release; **publishing is a human step in the dashboard** — do not call
+Slice Machine is gone from this repo (2026-10-04, reddoor-maintenance#1090),
+and `@slicemachine/manager`, which a session once loaded from the pnpm store to
+push models, went with it. Models are edited in the Prismic Type Builder or as
+JSON here, then `pnpm prismic:gen`; never `prismic push` or `prismic pull` from
+a session (both delete to match). Documents _can_ be created over MCP, but only
+staged into a release; **publishing is a human step in the dashboard** — do not call
 `publish_release`.
 
 What is NOT done, or still load-bearing:

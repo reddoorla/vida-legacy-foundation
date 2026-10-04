@@ -37,23 +37,23 @@ describe("isPlaceholderRepo", () => {
   // repo, and that mutant survived the 2026-09-05 audit.
   it("is true for exactly the template's sentinel name", async () => {
     vi.resetModules();
-    vi.doMock("../../slicemachine.config.json", () => ({
+    vi.doMock("../../prismic.config.json", () => ({
       default: { repositoryName: "your-prismic-repo-name" },
     }));
     const mod = await import("./prismicio");
     expect(mod.isPlaceholderRepo).toBe(true);
-    vi.doUnmock("../../slicemachine.config.json");
+    vi.doUnmock("../../prismic.config.json");
     vi.resetModules();
   });
 
   it("is false for any other repository name", async () => {
     vi.resetModules();
-    vi.doMock("../../slicemachine.config.json", () => ({
+    vi.doMock("../../prismic.config.json", () => ({
       default: { repositoryName: "your-prismic-repo-nam" },
     }));
     const mod = await import("./prismicio");
     expect(mod.isPlaceholderRepo).toBe(false);
-    vi.doUnmock("../../slicemachine.config.json");
+    vi.doUnmock("../../prismic.config.json");
     vi.resetModules();
   });
 });
