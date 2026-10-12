@@ -1,4 +1,4 @@
-import { env } from "$env/dynamic/private";
+import * as env from "$app/env/private";
 import { createIngestAction } from "@reddoorla/maintenance/forms";
 import { LANGS, langFromParam, type Lang } from "$lib/locale";
 import { contactCopy } from "$lib/contact-copy";

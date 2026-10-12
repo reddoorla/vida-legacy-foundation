@@ -1,6 +1,6 @@
 <script lang="ts">
   import { afterNavigate, beforeNavigate } from "$app/navigation";
-  import type { BeforeNavigate } from "@sveltejs/kit";
+  import type { BeforeNavigate } from "$app/navigation";
   import type { Snippet } from "svelte";
   import { fade } from "$lib/transitions";
 

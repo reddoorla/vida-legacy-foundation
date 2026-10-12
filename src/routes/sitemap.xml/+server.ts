@@ -7,12 +7,13 @@ import {
   localizePath,
   pathForDoc,
 } from "$lib/locale";
+import { siteOrigin } from "$lib/seo";
 import type { RequestHandler } from "./$types";
 
 export const prerender = true;
 
 export const GET: RequestHandler = async ({ fetch, url }) => {
-  const origin = url.origin;
+  const origin = siteOrigin(url);
 
   // One entry per page document in every locale ("home" renders at the
   // locale root: "/" and "/es"). Empty on an unconfigured starter so the

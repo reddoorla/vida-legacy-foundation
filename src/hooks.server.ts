@@ -1,4 +1,4 @@
-import type { Handle } from "@sveltejs/kit";
+import type { Handle } from "@sveltejs/kit/hooks";
 import { LOCALES, langFromParam } from "$lib/locale";
 import { isCmsFramedRoute, widenFrameAncestors } from "$lib/security/cms-framing";
 
