@@ -27,9 +27,9 @@ vi.mock("$app/forms", () => ({
     return { destroy: () => form.removeEventListener("submit", onSubmit) };
   },
 }));
-// TurnstileWidget reads $env/dynamic/public at module scope; no sitekey → it
+// TurnstileWidget reads $app/env/public at module scope; no sitekey → it
 // renders nothing here.
-vi.mock("$env/dynamic/public", () => ({ env: {} }));
+vi.mock("$app/env/public", () => ({ PUBLIC_TURNSTILE_SITE_KEY: undefined }));
 
 const ContactModal = (await import("./ContactModal.svelte")).default;
 
