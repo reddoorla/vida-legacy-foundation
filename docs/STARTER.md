@@ -75,7 +75,7 @@ Opt-in patterns that need an extra dependency live in [`docs/recipes/`](recipes/
 
 ## SEO routes
 
-`robots.txt` and `sitemap.xml` are prerendered server routes (not static files) so both can emit absolute URLs on the deploy origin — Netlify's `URL` build env feeds `kit.prerender.origin` in `svelte.config.js`.
+`robots.txt` and `sitemap.xml` are prerendered server routes (not static files) so both can emit absolute URLs on the deploy origin. Kit 3 prerenders them with its `http://sveltekit-prerender` placeholder, and `$lib/seo`'s `siteOrigin` puts Netlify's `URL` from the build in its place (`productionOrigin` in `sveltekit.config.js`, handed over by `vite.config.ts`'s `define`). `paths.origin` is deliberately not set: kit 3 would then refuse form posts from every other host.
 
 ## Getting Started
 
