@@ -35,9 +35,24 @@ jobs:
             echo "::error::main-gate: $HEAD_REF by $AUTHOR. Only staging, or a $BOT patch or minor on a renovate/ branch, may merge into main. Open this PR against staging."
             exit 1
           fi
-          others="$(gh api --paginate "repos/$REPO/pulls/$PR/commits" --jq '.[] | .author.login // "(unlinked)"' | grep -vxF "$BOT" || true)"
+          commits="$(gh api --paginate "repos/$REPO/pulls/$PR/commits" --jq '.[] | "\(.sha[0:7]) \(.author.login // "-") \(.committer.login // "-") \(.commit.verification.verified)"')"
+          if [ -z "$commits" ]; then
+            echo "::error::main-gate: could not read the commits of #$PR."
+            exit 1
+          fi
+          others="$(printf '%s\n' "$commits" | awk -v bot="$BOT" '$2 != bot || $3 != "web-flow" || $4 != "true"')"
           if [ -n "$others" ]; then
-            echo "::error::main-gate: commits on $HEAD_REF not authored by $BOT: $(echo "$others" | sort -u | tr '\n' ' ')"
+            echo "::error::main-gate: every commit on $HEAD_REF must be authored by $BOT and committed and signed by GitHub (web-flow, verified). Not so: $(printf '%s' "$others" | tr '\n' ';')"
+            exit 1
+          fi
+          files="$(gh api --paginate "repos/$REPO/pulls/$PR/files" --jq '.[].filename')"
+          if [ -z "$files" ]; then
+            echo "::error::main-gate: could not read the files of #$PR."
+            exit 1
+          fi
+          outside="$(printf '%s\n' "$files" | grep -vxE 'package\.json|pnpm-lock\.yaml|pnpm-workspace\.yaml|\.nvmrc|\.github/workflows/[^/]+\.ya?ml' || true)"
+          if [ -n "$outside" ]; then
+            echo "::error::main-gate: a fast-track update may change only dependency manifests and workflow pins. Also changed: $(printf '%s' "$outside" | tr '\n' ' ')"
             exit 1
           fi
           if ! gh api "repos/$REPO/issues/$PR/labels" --jq '.[].name' | grep -qxF "$LABEL"; then
