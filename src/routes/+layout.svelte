@@ -5,7 +5,13 @@
   import { repositoryName } from "$lib/prismicio";
   import "../app.css";
   import Seo from "$lib/components/Seo.svelte";
-  import { composeTitle, organizationJsonLd, DEFAULT_OG_IMAGE, SITE_NAME } from "$lib/seo";
+  import {
+    composeTitle,
+    organizationJsonLd,
+    DEFAULT_OG_IMAGE,
+    SITE_NAME,
+    siteOrigin,
+  } from "$lib/seo";
   import LandscapeModal from "$lib/components/LandscapeModal.svelte";
   import ContactModal from "$lib/components/ContactModal.svelte";
   import { contactModal } from "$lib/contact-modal.svelte";
@@ -36,11 +42,15 @@
   // components that own them (see $lib/ui-copy).
   const copy = $derived(ui(lang));
 
+  // Prerendered pages see kit 3's placeholder origin; siteOrigin swaps in the
+  // build's production URL (sveltekit.config.js says why not paths.origin).
+  const origin = $derived(siteOrigin(page.url));
+
   // hreflang needs absolute URLs; loaders hand over root-relative paths.
   const alternates = $derived(
     (page.data.alternates ?? []).map((a: { lang: string; href: string }) => ({
       lang: a.lang,
-      href: new URL(a.href, page.url.origin).href,
+      href: new URL(a.href, origin).href,
     })),
   );
   const switchTo = $derived(switchTarget(lang, page.data.alternates, page.url.pathname));
@@ -48,14 +58,14 @@
   // Who the site belongs to, for the search engines and the knowledge panel —
   // an NGO, its logo, and the phone and address the footer already carries, so
   // the two cannot say different things. Emitted once, from the layout, so
-  // every page has it; `page.url.origin` keeps it correct on the preview host
+  // every page has it; `origin` keeps it correct on the preview host
   // as well as the real domain.
   const orgJsonLd = $derived(
     organizationJsonLd({
       type: "NGO",
       name: SITE_NAME,
-      url: new URL(localizePath("/", lang), page.url.origin).href,
-      logo: new URL("/logo-lockup.svg", page.url.origin).href,
+      url: new URL(localizePath("/", lang), origin).href,
+      logo: new URL("/logo-lockup.svg", origin).href,
       ...orgContact(),
     }),
   );

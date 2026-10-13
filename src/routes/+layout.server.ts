@@ -1,4 +1,4 @@
-import { building } from "$app/environment";
+import { building } from "$app/env";
 import type { LayoutServerLoad } from "./$types";
 import { createClient, isPlaceholderRepo } from "$lib/prismicio";
 import { LOCALES, langFromParam, type Lang } from "$lib/locale";

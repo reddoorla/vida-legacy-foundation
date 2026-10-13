@@ -2,6 +2,8 @@ import { describe, it, expect } from "vitest";
 import {
   jsonLdScript,
   canonicalUrl,
+  siteOrigin,
+  PRERENDER_PLACEHOLDER_ORIGIN,
   resolveOgImage,
   organizationJsonLd,
   composeTitle,
@@ -204,5 +206,30 @@ describe("organizationJsonLd", () => {
       sameAs: [],
     }) as Record<string, unknown>;
     expect("sameAs" in ld).toBe(false);
+  });
+});
+
+// Kit 3 gives page.url "http://sveltekit-prerender" while prerendering unless
+// paths.origin is set, and this site does not set it (sveltekit.config.js).
+describe("siteOrigin and the prerender placeholder", () => {
+  const placeholder = { origin: PRERENDER_PLACEHOLDER_ORIGIN, pathname: "/about/" };
+
+  it("puts the build's production origin in place of the placeholder", () => {
+    expect(siteOrigin(placeholder, "https://www.example.com")).toBe("https://www.example.com");
+    expect(canonicalUrl(placeholder, "https://www.example.com")).toBe(
+      "https://www.example.com/about/",
+    );
+  });
+
+  it("keeps the requesting host per request, whatever the build origin", () => {
+    const live = new URL("https://example-site.netlify.app/about/?utm_source=x");
+    expect(siteOrigin(live, "https://www.example.com")).toBe("https://example-site.netlify.app");
+    expect(canonicalUrl(live, "https://www.example.com")).toBe(
+      "https://example-site.netlify.app/about/",
+    );
+  });
+
+  it("keeps the placeholder when the build had no URL (a local build)", () => {
+    expect(canonicalUrl(placeholder, null)).toBe(`${PRERENDER_PLACEHOLDER_ORIGIN}/about/`);
   });
 });

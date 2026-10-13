@@ -1696,3 +1696,30 @@ The hook asked `isCmsFramedRoute(event.url.pathname)`, the raw path, while Svelt
 Vitest's `include` here is `src/**` only, so the starter's `scripts/prismic-barrel.test.ts` lives at `src/prismic-barrel.test.ts` and imports the plugin without an extension. A `.ts` extension fails `svelte-check`, because this tsconfig does not set `allowImportingTsExtensions`. `vite.config.ts` imports it the same way. The upstream X-Frame-Options test keeps its intent. It now gives the simulator and an ordinary page their route ids, and with the hook's delete removed it still goes red. The smoke control is `/contact`, a server-rendered 200; `/privacy` is a 404 here.
 
 Against a `main` build, the ported tests failed 4 of 18 in vitest (the bundle check, the encoded path, the null route and the exact match) and 2 of 4 in the new smoke spec (both encoded paths). On the branch, all of them pass. With the plugin removed and the site rebuilt, the bundle check fails. With the hook back on the pathname, two of the hook tests fail.
+
+## 2026-10-12 — SvelteKit 3 and adapter-netlify 7 on `staging`, and the staging flow (#98, #100; promotion #101)
+
+This repo is the pilot for two of the operator's 2026-10-12 decisions (reddoor-maintenance Operator decisions 113 and 116). One is the fleet's kit 3 migration. The other is the feature → staging → main flow (reddoor-maintenance#545). `staging` was cut from `main` at `fa46e29`, and Netlify now builds branch deploys for `main` and `staging`, at `staging--vida-legacy-foundation-rd.netlify.app`. `main-gate` (#98) and the migration (#100) landed on `staging`. Only the operator merges the promotion, #101.
+
+**Three things in the kit 3 port were vida's own, and one hid from the unit suite.**
+
+- **The `lang` matcher.** Kit 3 takes a matcher's return value as the param, and only `undefined` is no match. `isLangPrefix(param)` lifted as written returns `false` for `about`, and kit 3 accepts that as a match.
+- **`src/params.ts` imports `./lib/locale.ts` by relative path, with its extension.** With `$lib` there, the build failed (`Cannot find package '$lib'`) while all 765 unit tests passed: kit loads that file outside Vite's aliases, and vitest resolves `$lib` anyway.
+- **Origins on prerendered output.** `robots.txt`, `sitemap.xml`, the layout's hreflang and the organization JSON-LD read `url.origin` on prerendered output. Kit 2 filled that from `prerender.origin`. Kit 3, with `paths.origin` deliberately unset, would have shipped `http://sveltekit-prerender/sitemap.xml` in production's `robots.txt`. All five now go through `siteOrigin`. Built with `URL` set, no `.html`, `.xml` or `.txt` carries the placeholder; with the layout reverted, six did.
+
+**One test only skipped locally.** `src/prismic-barrel.test.ts` read kit 2's generated path, so `built` was false. Its skip guard refuses only in CI, so locally it skipped rather than failed, and CI caught it.
+
+**`main-gate` took two review rounds and the operator's word.**
+
+- **Round 1:** a commit's author is only an email, and the bot's is published in `renovate.yml`. Commits must now be committed by `web-flow` and verified, and files are limited to manifests.
+- **Round 2:** a writer can have GitHub sign a bot-authored commit (`PUT contents` with an author override). The gate now reads the repository activity log for who pushed.
+  - It reads back only to the branch's latest `branch_creation`, because Renovate reuses branch names. `renovate/npm-sharp-vulnerability` carries a human `branch_deletion` from 09-16 from an earlier life of that name.
+  - Renames count under both names.
+- The operator answered: fix and land, no third round.
+
+**Smoke on staging, with production as the control.** The fleet Playwright config always starts a local server. A throwaway wrapper pointed it at each URL, with Playwright's bundled Chromium, because this repo's pinned Playwright wants a headless shell the cloud image lacks.
+
+- The first run failed every test on both targets. The browser had never launched, so the instrument was broken, not the site.
+- Fixed, both runs gave 68 passed, and the same 6 failed on both. Those 6 load `/dev/a11y-fixtures`, which is never deployed.
+
+**Docs.** `docs/STARTER.md`, `docs/security.md` and `docs/NEW-SITE.md` pointed CSP edits and the origin at `svelte.config.js`, which no longer exists. They point at `sveltekit.config.js` now; the journal's older entries stay as written.
