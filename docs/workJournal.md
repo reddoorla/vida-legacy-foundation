@@ -1729,6 +1729,7 @@ This repo is the pilot for two of the operator's 2026-10-12 decisions (reddoor-m
 Renovate's bump (#113) was red on `svelte-check`: `'$$_rotalumiSecilS0.$$slot_def' is of type 'unknown'` at `<SliceSimulator let:slices>`. 3.0.0's `SliceSimulator` renders `{@render children?.({ slices })}` and has no `<slot>`, while 2.2.x has only the slot, so no page works on both and the fix ships with the bump. The page now uses the `children` snippet, which erp-industrial already had. That is why its own bump (erp-industrial#75) was the one green PR in the fleet.
 
 **What else 3.0.0 changes**, read from the published `dist` (2.2.2's is byte-identical to 2.2.1's):
+
 - `PrismicImage` derives a missing `height` or `width` attribute from the aspect ratio. No `PrismicImage` here passes either alone.
 - The kit `PrismicPreview` moved from `invalidateAll` to `refreshAll`. This site renders its own `$lib/components/PrismicPreview.svelte`.
 - The rest is formatting.
@@ -1736,6 +1737,7 @@ Renovate's bump (#113) was red on `svelte-check`: `'$$_rotalumiSecilS0.$$slot_de
 **The defect that hid it.** The existing simulator specs checked only framing headers. A simulator that mounts and renders nothing passed all of them, and that is exactly what v3 does with the slot form.
 
 The new test:
+
 - serves a host page at `https://simulator-smoke.prismic.io/` through `page.route`. Outside dev, `@prismicio/simulator` accepts its handshake only from Prismic's https origins; `vite dev` skips that check.
 - grants it Chrome's `local-network-access` permission;
 - runs the library's `ready` / `connect` / `setSliceZone` handshake;
