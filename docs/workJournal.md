@@ -1723,3 +1723,26 @@ This repo is the pilot for two of the operator's 2026-10-12 decisions (reddoor-m
 - Fixed, both runs gave 68 passed, and the same 6 failed on both. Those 6 load `/dev/a11y-fixtures`, which is never deployed.
 
 **Docs.** `docs/STARTER.md`, `docs/security.md` and `docs/NEW-SITE.md` pointed CSP edits and the origin at `svelte.config.js`, which no longer exists. They point at `sveltekit.config.js` now; the journal's older entries stay as written.
+
+## 2026-10-20 — `@prismicio/svelte` 3 on `staging`, and a smoke test that makes the simulator render a slice (#119)
+
+Renovate's bump (#113) was red on `svelte-check`: `'$$_rotalumiSecilS0.$$slot_def' is of type 'unknown'` at `<SliceSimulator let:slices>`. 3.0.0's `SliceSimulator` renders `{@render children?.({ slices })}` and has no `<slot>`, while 2.2.x has only the slot, so no page works on both and the fix ships with the bump. The page now uses the `children` snippet, which erp-industrial already had. That is why its own bump (erp-industrial#75) was the one green PR in the fleet.
+
+**What else 3.0.0 changes**, read from the published `dist` (2.2.2's is byte-identical to 2.2.1's):
+- `PrismicImage` derives a missing `height` or `width` attribute from the aspect ratio. No `PrismicImage` here passes either alone.
+- The kit `PrismicPreview` moved from `invalidateAll` to `refreshAll`. This site renders its own `$lib/components/PrismicPreview.svelte`.
+- The rest is formatting.
+
+**The defect that hid it.** The existing simulator specs checked only framing headers. A simulator that mounts and renders nothing passed all of them, and that is exactly what v3 does with the slot form.
+
+The new test:
+- serves a host page at `https://simulator-smoke.prismic.io/` through `page.route`. Outside dev, `@prismicio/simulator` accepts its handshake only from Prismic's https origins; `vite dev` skips that check.
+- grants it Chrome's `local-network-access` permission;
+- runs the library's `ready` / `connect` / `setSliceZone` handshake;
+- asserts that a `stats_band` with a filled CTA (so `PrismicLink` runs under v3) renders inside `.slice-simulator--root`.
+
+**Belief corrected on contact.** The test's first version failed on the known-good v2 page. Chrome blocks a public origin from framing localhost (`ERR_BLOCKED_BY_LOCAL_NETWORK_ACCESS_CHECKS`) until the permission is granted. The instrument was wrong, not the site.
+
+**Measured.** The test passed on v2, went red on v3 without the fix, and went red when the snippet was renamed: the handshake still returned 200, but no slice rendered. Driving the PR's Netlify deploy preview through the same handshake rendered the slice on a production build, where the origin check is live.
+
+The starter carries the same slot form: reddoorla/reddoor-starter#195.
