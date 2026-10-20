@@ -12,6 +12,65 @@ for (const path of ["/slice-simulator", "/slice%2Dsimulator", "/slice%2dsimulato
   });
 }
 
+// The Type Builder frames /slice-simulator from an https://*.prismic.io page
+// and sends it slices through @prismicio/simulator's channel. Outside
+// development the simulator ignores the handshake from any other origin, so
+// the host page is served at a prismic.io URL that Playwright answers itself.
+// The handshake mirrors the library's ChannelEmitter: the frame posts `ready`,
+// the host answers with `connect` and a MessagePort, acknowledges `ready`, then
+// sends `setSliceZone` over the port.
+const HOST = "https://simulator-smoke.prismic.io/";
+const EYEBROW = "Simulator smoke eyebrow";
+const SLICE = {
+  id: "stats_band$smoke",
+  slice_type: "stats_band",
+  slice_label: null,
+  variation: "default",
+  version: "initial",
+  primary: { eyebrow: EYEBROW, cta_label: null, cta_link: { link_type: "Any" } },
+  items: [],
+};
+
+test("/slice-simulator renders a slice the Type Builder sends it", async ({ page, baseURL }) => {
+  await page.route(HOST, (route) =>
+    route.fulfill({
+      contentType: "text/html",
+      body: `<!doctype html><iframe src="${baseURL}/slice-simulator" width="1280" height="800"></iframe>
+<script>
+  const frame = document.querySelector("iframe");
+  const ok = (requestID) => ({ requestID, status: 200, msg: "ok", data: undefined });
+  addEventListener("message", (event) => {
+    if (event.source !== frame.contentWindow || event.data?.type !== "ready") return;
+    const ready = event.data.requestID;
+    const channel = new MessageChannel();
+    channel.port1.onmessage = ({ data }) => {
+      if (data.requestID === "emitter-connect") {
+        frame.contentWindow.postMessage(ok(ready), "*");
+        channel.port1.postMessage({ requestID: "client-slices", type: "setSliceZone", data: [${JSON.stringify(SLICE)}] });
+      } else if (data.requestID === "client-slices") {
+        window.setSliceZoneStatus = data.status;
+      } else if (data.type) {
+        channel.port1.postMessage(ok(data.requestID));
+      }
+    };
+    frame.contentWindow.postMessage({ requestID: "emitter-connect", type: "connect", data: {} }, "*", [channel.port2]);
+  });
+</script>`,
+    }),
+  );
+  // Chrome's Local Network Access check blocks a public origin from framing
+  // localhost unless the browser has granted that origin the permission.
+  await page.context().grantPermissions(["local-network-access"], { origin: new URL(HOST).origin });
+  await page.goto(HOST);
+  await expect
+    .poll(() => page.evaluate(() => (window as { setSliceZoneStatus?: number }).setSliceZoneStatus))
+    .toBe(200);
+  const slice = page
+    .frameLocator("iframe")
+    .locator('.slice-simulator--root [data-slice-type="stats_band"]');
+  await expect(slice).toContainText(EYEBROW);
+});
+
 test("an ordinary page stays SAMEORIGIN and does not let Prismic frame it", async ({ request }) => {
   const response = await request.get("/contact");
   expect(response.status()).toBe(200);
