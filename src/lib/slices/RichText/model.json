@@ -1,6 +1,6 @@
 {
-  "id": "rich_text",
   "type": "SharedSlice",
+  "id": "rich_text",
   "name": "RichText",
   "description": "RichText",
   "variations": [
