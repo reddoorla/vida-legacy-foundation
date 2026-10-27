@@ -68,6 +68,25 @@ describe("theme-contrast", () => {
     expect(computed(box, "--tw-translate-y")).toBe("-100%");
   });
 
+  it("draws text at its own and its ancestors' opacity, as a browser composites it", () => {
+    // text-primary on the cream is 7.71:1 at full ink; at 30% it is 1.67:1.
+    const full = el('<p><span data-probe class="text-primary">x</span></p>');
+    expect(contrast(textColour(full), groundOf(full))).toBeCloseTo(7.71, 1);
+    const faint = el('<p><span data-probe class="text-primary opacity-30">x</span></p>');
+    expect(contrast(textColour(faint), groundOf(faint))).toBeCloseTo(1.67, 1);
+    // An ancestor's opacity multiplies in: 50% of 60% is 30%.
+    const nested = el(
+      '<div class="opacity-50"><p class="opacity-60"><span data-probe class="text-primary">x</span></p></div>',
+    );
+    expect(textColour(nested).a).toBeCloseTo(0.3, 5);
+    expect(contrast(textColour(nested), groundOf(nested))).toBeCloseTo(1.67, 1);
+  });
+
+  it("refuses a ground drawn inside a faded element instead of measuring it", () => {
+    const span = el('<div class="opacity-50 bg-dark"><span data-probe>x</span></div>');
+    expect(() => groundOf(span)).toThrow(/opacity 0.50 is not modelled/);
+  });
+
   it("reads a lockup's wordmark fill from the shipped file", () => {
     expect(svgMainFill("/logo-lockup.svg")).toEqual(themeColour("primary"));
     expect(svgMainFill("/logo-lockup-cream.svg")).toEqual(themeColour("background"));

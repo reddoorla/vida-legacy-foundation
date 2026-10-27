@@ -127,6 +127,22 @@ describe("CtaBanner onDark variation", () => {
     expect(container.querySelector("h2")).not.toBeNull();
   });
 
+  it("keeps the eyebrow, statement and copy readable on the band's ground", () => {
+    // Set in cream and green for a dark band. Measured, not named: any ground
+    // passes as long as each clears AA body on it (the statement is t-lead,
+    // 20-24px light, below large text). A band that stops painting its ground
+    // leaves cream copy on the page cream at 1:1.
+    const { container, getByText } = render(CtaBanner, { props: { slice: makeOnDark() } });
+    const parts = {
+      eyebrow: getByText("Compassion in Action"),
+      statement: container.querySelector("h2")!,
+      copy: getByText("Partner with us today."),
+    };
+    for (const [what, el] of Object.entries(parts)) {
+      expect(contrast(textColour(el), groundOf(el)), what).toBeGreaterThanOrEqual(4.5);
+    }
+  });
+
   it("does not read the default variation's background select", () => {
     // onDark's primary has no `background` field; reading it unguarded would
     // fall through to the light ground and lose the night-blue band.
@@ -169,6 +185,21 @@ describe("CtaBanner onCream variation", () => {
     const { container } = render(CtaBanner, { props: { slice: makeOnCream() } });
     expect(container.querySelectorAll("h1, h2, h3, h4, h5, h6").length).toBe(1);
     expect(container.textContent).toContain("Make a contribution");
+  });
+
+  it("paints its own ground under the eyebrow and the statement", () => {
+    // The section is transparent so the panel's rounded corners show the
+    // pinned band beneath (navy on the homepage). So the panel must paint its
+    // own ground, and the copy is measured against the panel alone, laid over
+    // that navy: a panel gone transparent leaves dark-green copy on navy.
+    // Eyebrow at AA body (12px); the statement is display size, large text.
+    const { container, getByText } = render(CtaBanner, { props: { slice: makeOnCream() } });
+    const section = container.querySelector("section")!;
+    const at = (el: Element) => groundOf(el, { within: section, under: "dark" });
+    const eyebrow = getByText("Make a contribution");
+    const statement = container.querySelector("h2")!;
+    expect(contrast(textColour(eyebrow), at(eyebrow))).toBeGreaterThanOrEqual(4.5);
+    expect(contrast(textColour(statement), at(statement))).toBeGreaterThanOrEqual(3);
   });
 
   it("survives an empty eyebrow, heading and button", () => {

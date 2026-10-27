@@ -94,6 +94,10 @@ describe("LeadText slice", () => {
     // The highlight span is what breaks the line (display:block in the
     // scoped style), so the label must survive to the DOM.
     expect(h2?.querySelector(".highlight")?.textContent).toBe("Help that Lasts.");
+    // The statement is set in cream: it must clear large text's 3:1 (it is
+    // display size, 32px and up) on the ground the band paints, so a band
+    // that stops painting its own ground and shows the page cream is caught.
+    expect(contrast(textColour(h2!), groundOf(h2!))).toBeGreaterThanOrEqual(3);
   });
 
   it("lays both VLF variations out float-right, or fills on request", () => {

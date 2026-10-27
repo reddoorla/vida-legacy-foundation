@@ -19,11 +19,23 @@ import { compile } from "tailwindcss";
  * instead is the hole an earlier version of this file had: it stripped the `!`
  * and saw only the token it was looking for.
  *
+ * `opacity` is modelled the way a browser composites it: an element and its
+ * whole subtree are drawn at the product of their own and every ancestor's
+ * opacity. Text and borders take that product into their alpha, so ink at
+ * `opacity-30` is laid over its ground at 30%. A background drawn inside a
+ * faded element is the one case that alpha cannot express (the faded group
+ * would cover its own ground and what lies under it at once), so `groundOf`
+ * throws there rather than answer.
+ *
  * What it does not model: variants (`hover:`, `md:` — only declarations made
  * directly in a rule count, see `declaredAnywhere` for the rest), compound
- * selectors, and Svelte's scoped component styles, which vitest does not load.
- * The page's own text colour, which nothing on this site sets, is the UA's
- * black.
+ * selectors, and Svelte's scoped component styles, which vitest does not load:
+ * a ground a component sets in its own `<style>` block is invisible, so text
+ * on it is measured against the nearest utility ground outside it. Nor UA
+ * styles beyond `body`: a `<dialog>`'s UA `color: CanvasText` is not seen, so
+ * text that inherits through a dialog without its own colour is measured as
+ * inheriting from outside it. The page's own text colour, which nothing on
+ * this site sets, is the UA's black.
  */
 
 const root = process.cwd();
@@ -246,11 +258,11 @@ function parseColour(raw: string, el: Element | null): Rgba {
   if (named) return named;
   if (/^currentcolor$/i.test(v)) {
     if (!el) throw new Error("currentColor outside an element");
-    return textColour(el);
+    return inkOf(el);
   }
   if (v === "inherit") {
     if (!el?.parentElement) return NAMED.black;
-    return textColour(el.parentElement);
+    return inkOf(el.parentElement);
   }
   const variable = /^var\((--[\w-]+)(?:,\s*(.+))?\)$/.exec(v);
   if (variable) {
@@ -290,8 +302,8 @@ export function themeColour(tokenOrColour: string): Rgba {
   return parseColour(v, null);
 }
 
-/** The text colour `el` renders in: its own `color`, else its parent's. */
-export function textColour(el: Element): Rgba {
+/** The `color` value `el` inherits or sets, before any opacity. */
+function inkOf(el: Element): Rgba {
   for (let n: Element | null = el; n; n = n.parentElement) {
     const v = computed(n, "color");
     if (v !== undefined && v !== "inherit") return parseColour(v, n);
@@ -299,10 +311,36 @@ export function textColour(el: Element): Rgba {
   return NAMED.black;
 }
 
-/** `prop`'s colour on `el` (a border, a fill), or undefined when unset. */
+/** `el`'s own `opacity` (a number or a percentage), 1 when unset. */
+function opacityOwn(el: Element): number {
+  const v = computed(el, "opacity")?.trim();
+  if (v === undefined || v === "inherit" || v === "initial") return 1;
+  const pct = /^([\d.]+)%$/.exec(v);
+  const n = pct ? Number(pct[1]) / 100 : Number(v);
+  if (!Number.isFinite(n)) throw new Error(`theme-contrast cannot read the opacity "${v}"`);
+  return Math.min(1, Math.max(0, n));
+}
+
+/** The opacity `el` is drawn at: its own times every ancestor's. */
+export function fadeOf(el: Element): number {
+  let f = 1;
+  for (let n: Element | null = el; n; n = n.parentElement) f *= opacityOwn(n);
+  return f;
+}
+
+const faded = (c: Rgba, f: number): Rgba => (f === 1 ? c : { ...c, a: c.a * f });
+
+/** The text colour `el` renders in: its own `color`, else its parent's, at
+ *  the opacity `el` and its ancestors draw it. */
+export function textColour(el: Element): Rgba {
+  return faded(inkOf(el), fadeOf(el));
+}
+
+/** `prop`'s colour on `el` (a border, a fill) at `el`'s opacity, or
+ *  undefined when unset. */
 export function colourOf(el: Element, prop: string): Rgba | undefined {
   const v = computed(el, prop);
-  return v === undefined ? undefined : parseColour(v, el);
+  return v === undefined ? undefined : faded(parseColour(v, el), fadeOf(el));
 }
 
 function over(top: Rgba, bottom: Rgba): Rgba {
@@ -324,7 +362,13 @@ export function groundOf(
 ): Rgba {
   const layers: Rgba[] = [];
   for (let n: Element | null = el; n; n = n.parentElement) {
-    const bg = colourOf(n, "background-color");
+    const v = computed(n, "background-color");
+    const bg = v === undefined ? undefined : parseColour(v, n);
+    if (bg && bg.a > 0 && fadeOf(n) < 1) {
+      throw new Error(
+        `a ground drawn at opacity ${fadeOf(n).toFixed(2)} is not modelled (<${n.tagName.toLowerCase()} class="${n.className}">)`,
+      );
+    }
     if (bg && bg.a > 0) layers.push(bg);
     if (bg?.a === 1 || n === opts.within) break;
   }

@@ -118,6 +118,29 @@ describe("Footer", () => {
     expect(contrast(textColour(line), groundOf(line))).toBeGreaterThanOrEqual(4.5);
   });
 
+  it("keeps detail rows and plain rows readable on the footer's ground", () => {
+    // The 12px label rows: a plain row, a linked detail row and an unlinked
+    // one. Whatever colour each tone is given, it must clear AA body on the
+    // ground the footer paints (the brand green, #9cbf5b, is 1.94:1 on cream).
+    const { getByText } = render(Footer, {
+      props: {
+        columns: [
+          {
+            items: [
+              { text: "Who we are" },
+              { text: "726-234-6910", href: "tel:+17262346910", tone: "detail" },
+              { text: "San Antonio, TX 78240", tone: "detail" },
+            ],
+          },
+        ],
+      },
+    });
+    for (const text of ["Who we are", "726-234-6910", "San Antonio, TX 78240"]) {
+      const row = getByText(text);
+      expect(contrast(textColour(row), groundOf(row)), text).toBeGreaterThanOrEqual(4.5);
+    }
+  });
+
   it("default branch when columns is empty/undefined (fleet default preserved)", () => {
     const { container } = render(Footer, { props: { columns: [] } });
     expect(container.querySelector("footer")?.textContent).toContain("Company Name");

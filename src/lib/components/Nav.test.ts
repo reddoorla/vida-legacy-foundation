@@ -120,6 +120,9 @@ function toggleProblems(group: Element, at: (el: Element) => ReturnType<typeof g
   need("toggle outline", contrast(colourOf(track, "border-color")!, ground), 3);
   for (const seg of track.querySelectorAll("span")) {
     const name = `toggle "${seg.textContent?.trim()}"`;
+    // An inert side (no translation) is a disabled control, which WCAG 1.4.3
+    // exempts; it is faded on purpose and is not measured.
+    if (seg.getAttribute("aria-disabled") === "true") continue;
     need(name, contrast(textColour(seg), at(seg)), 4.5);
     if (seg.hasAttribute("aria-current")) need(`${name} pill`, contrast(at(seg), ground), 1.5);
   }

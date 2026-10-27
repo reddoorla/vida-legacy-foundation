@@ -76,6 +76,9 @@ describe("LangToggle", () => {
           need("outline", contrast(colourOf(track, "border-color")!, at(track)), 3);
           for (const seg of track.querySelectorAll("span")) {
             const name = `"${seg.textContent?.trim()}"`;
+            // The inert side is a disabled control, which WCAG 1.4.3 exempts:
+            // it is faded on purpose and is not measured.
+            if (seg.getAttribute("aria-disabled") === "true") continue;
             need(name, contrast(textColour(seg), at(seg)), 4.5);
             if (seg.hasAttribute("aria-current")) {
               need(`${name} pill`, contrast(at(seg), at(track)), 1.5);

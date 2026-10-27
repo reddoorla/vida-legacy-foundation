@@ -246,12 +246,14 @@ test("/ pins the lead paragraph only on a screen that can hold it", async ({ pag
   await expect(band, "the home page no longer opens with the lead paragraph").toHaveCount(1);
 
   // Only the phone half is a contract: whether a wide screen pins the band is
-  // the comp's effect, a design value a human may change.
+  // the comp's effect, a design value a human may change. The poll waits for
+  // the in-flow value the stylesheet gives, not merely "not sticky", which
+  // `static` (before the CSS applies) would also satisfy.
   if (width < 768) {
     await expect
       .poll(() => band.evaluate((el) => getComputedStyle(el).position), {
         message: "the lead paragraph is still pinned on a screen too short to hold it",
       })
-      .not.toBe("sticky");
+      .toBe("relative");
   }
 });

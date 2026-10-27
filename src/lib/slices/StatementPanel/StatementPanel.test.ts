@@ -40,7 +40,9 @@ describe("StatementPanel slice", () => {
     // the type clamps to 20px on a phone, which is body size, where it fails —
     // and the axe gate runs one viewport, so it would not catch that. So hold
     // body-size AA (4.5) whatever colour the statement wears, computed from
-    // the @theme tokens rather than naming one.
+    // the @theme tokens rather than naming one. The ground measured is the
+    // page's cream: `.panel` sets its own in the component's scoped <style>,
+    // which vitest does not load, so a change to that ground is not seen here.
     const { container } = render(StatementPanel, { props: { slice } });
     const statement = container.querySelector(".statement")!;
     expect(contrast(textColour(statement), groundOf(statement))).toBeGreaterThanOrEqual(4.5);
