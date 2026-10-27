@@ -36,8 +36,15 @@ describe("MediaText slice", () => {
   // breakpoint (from the compiled stylesheet, 0 when none) and compares the
   // two, then falls back to source order on a tie. No class or order value is
   // named: any way of putting the image first passes.
+  // Tailwind emits a negative order as `calc(1 * -1)`.
+  const orderValue = (v: string) => {
+    const calc = /^calc\(\s*(-?[\d.]+)\s*\*\s*(-?[\d.]+)\s*\)$/.exec(v);
+    const n = calc ? Number(calc[1]) * Number(calc[2]) : Number(v);
+    if (!Number.isFinite(n)) throw new Error(`cannot read the order "${v}"`);
+    return n;
+  };
   const lgOrder = (el: Element) => {
-    const values = declaredAnywhere(el, "order").map(Number);
+    const values = declaredAnywhere(el, "order").map(orderValue);
     return values.length ? values[values.length - 1] : 0;
   };
   const imageFirst = (container: HTMLElement) => {
