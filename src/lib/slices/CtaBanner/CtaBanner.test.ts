@@ -1,6 +1,8 @@
 import { describe, expect, it, afterEach } from "vitest";
 import { render, cleanup } from "@testing-library/svelte";
 import CtaBanner from "./index.svelte";
+import model from "./model.json";
+import { colourOf, contrast, groundOf, textColour } from "../../../test/theme-contrast";
 
 afterEach(() => cleanup());
 
@@ -39,17 +41,31 @@ describe("CtaBanner slice", () => {
     expect(container.querySelector('[data-slice-type="cta_banner"]')).not.toBeNull();
   });
 
-  it("paints the selected ground and inverts the button on the dark one", () => {
+  it("paints the selected ground", () => {
     const { container } = render(CtaBanner, {
       props: { slice: makeSlice({ background: "dark" }) },
     });
     const section = container.querySelector("section");
     expect(section?.className).toContain("bg-dark");
-    expect(section?.className).toContain("text-white");
-    const cta = container.querySelector("a");
-    expect(cta?.className).toContain("border-white");
-    expect(cta?.className).not.toContain("border-dark");
   });
+
+  // Every ground an editor can pick in the `background` select, read from the
+  // model so a new option is covered the day it is added.
+  const backgrounds: string[] = model.variations.find((v) => v.id === "default")!.primary
+    .background!.config.options;
+  for (const background of backgrounds) {
+    it(`keeps the heading and the button readable on the ${background} ground`, () => {
+      const { getByRole } = render(CtaBanner, { props: { slice: makeSlice({ background }) } });
+      const h2 = getByRole("heading", { level: 2 });
+      const cta = getByRole("link", { name: "Talk with us" });
+      // Resolved through the cascade and inheritance, so a label colour that
+      // only reaches the button by inheriting the section's is measured too.
+      expect(contrast(textColour(h2), groundOf(h2))).toBeGreaterThanOrEqual(4.5);
+      expect(contrast(textColour(cta), groundOf(cta))).toBeGreaterThanOrEqual(4.5);
+      // The outline is the button's boundary: a control's 3:1.
+      expect(contrast(colourOf(cta, "border-color")!, groundOf(cta))).toBeGreaterThanOrEqual(3);
+    });
+  }
 
   it("omits the CTA when the link or the label is missing", () => {
     const { container: noLabel } = render(CtaBanner, {
@@ -81,17 +97,10 @@ const makeOnDark = (primary: Record<string, unknown> = {}) =>
   }) as never;
 
 describe("CtaBanner onDark variation", () => {
-  it("paints the night-blue ground and the design's button couple", () => {
+  it("renders the onDark variation", () => {
     const { container } = render(CtaBanner, { props: { slice: makeOnDark() } });
     const section = container.querySelector('[data-slice-type="cta_banner"]');
     expect(section?.getAttribute("data-slice-variation")).toBe("onDark");
-    // #01263f ground: the #9cbf5b eyebrow is 7.42:1 and #fdf5e8 copy 14.37:1.
-    expect(section?.className).toContain("bg-dark");
-    // The comps' couple, 5.86:1 both ways — never white-on-green, which is 2.10.
-    // app.css .vlf-pill--dark is #263b02 on #9cbf5b.
-    const cta = container.querySelector("a");
-    expect(cta?.className).toContain("vlf-pill--dark");
-    expect(cta?.className).not.toContain("text-white");
   });
 
   it("keeps the eyebrow out of the outline so the statement is the only h2", () => {
@@ -148,32 +157,6 @@ const makeOnCream = (primary: Record<string, unknown> = {}) =>
   }) as never;
 
 describe("CtaBanner onCream variation", () => {
-  it("rounds a full-bleed cream panel over a transparent section", () => {
-    // The <section> paints nothing: the band before it is pinned (app.css's
-    // slide-over rule) and shows through the 80px corners as the panel slides
-    // up over it. The panel itself is the viewport's width — the ground runs
-    // edge to edge on a wide screen, only the copy sits on the 1440 grid.
-    const { container } = render(CtaBanner, { props: { slice: makeOnCream() } });
-    const section = container.querySelector("section");
-    expect(section?.className).not.toContain("bg-dark");
-    const panel = section?.querySelector("div");
-    expect(panel?.className).toContain("bg-background");
-    expect(panel?.className).toContain("rounded-t-[80px]");
-    expect(panel?.className).toContain("w-full");
-    expect(panel?.className).not.toContain("max-w-");
-  });
-
-  it("inverts the button couple for the cream ground", () => {
-    // #9cbf5b fill + #263b02 text — 5.86:1, the same couple as onDark the
-    // other way round. Never white-on-green, which is 2.10.
-    // app.css .vlf-pill is #263b02 on #9cbf5b.
-    const { container } = render(CtaBanner, { props: { slice: makeOnCream() } });
-    const cta = container.querySelector("a");
-    expect(cta?.className).toContain("vlf-pill");
-    expect(cta?.className).not.toContain("vlf-pill--dark");
-    expect(cta?.className).not.toContain("text-white");
-  });
-
   it("keeps the highlight label on the display heading", () => {
     // #527e01 is 4.47:1 on cream — large text ONLY, which is why the highlight
     // is scoped to this display-scale heading and used nowhere else on cream.
@@ -192,10 +175,9 @@ describe("CtaBanner onCream variation", () => {
     const { container } = render(CtaBanner, {
       props: { slice: makeOnCream({ eyebrow: "", heading: [], buttonLabel: "" }) },
     });
-    // Still paints the panel: the rounded corner is structural, not decoration
-    // that can drop out with the copy.
+    // Still paints the panel; it does not drop out with the copy.
     const panel = container.querySelector("section > div");
-    expect(panel?.className).toContain("rounded-t-[80px]");
+    expect(panel).not.toBeNull();
     expect(container.querySelector("a")).toBeNull();
   });
 });

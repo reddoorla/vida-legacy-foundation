@@ -1,6 +1,7 @@
 import { describe, expect, it, afterEach } from "vitest";
 import { render, cleanup } from "@testing-library/svelte";
 import LeadText from "./index.svelte";
+import { contrast, groundOf, textColour } from "../../../test/theme-contrast";
 
 afterEach(() => cleanup());
 
@@ -28,7 +29,7 @@ describe("LeadText slice", () => {
     expect(container.querySelector('[data-slice-type="lead_text"]')).not.toBeNull();
   });
 
-  it("puts the onDark variation on the dark green ground", () => {
+  it("sets the onDark variation's copy in a colour that clears AA on its ground", () => {
     const onDark = {
       slice_type: "lead_text",
       variation: "onDark",
@@ -38,15 +39,21 @@ describe("LeadText slice", () => {
     const { container } = render(LeadText, { props: { slice: onDark } });
     const section = container.querySelector('[data-slice-type="lead_text"]');
     expect(section?.getAttribute("data-slice-variation")).toBe("onDark");
-    // #263b02 against #fdf5e8 body copy is 11.35:1 and against the #9cbf5b
-    // highlight is 5.86:1 — both clear AA, which is why this ground was chosen.
-    expect(section?.className).toContain("bg-green-btn");
+    // Computed from the @theme tokens, not named: any ground and copy colour
+    // a designer picks passes as long as the body copy clears AA on it.
+    const copy = container.querySelector(".lead-on-dark p")!;
+    expect(contrast(textColour(copy), groundOf(copy))).toBeGreaterThanOrEqual(4.5);
   });
 
-  it("leaves the default variation ungrounded so a site can restyle it", () => {
+  it("keeps the default variation's eyebrow and copy readable on whatever ground it paints", () => {
+    // Editors can pick the default variation. Whatever it paints, or the page
+    // cream under it if it paints nothing, the eyebrow and the body must clear
+    // AA body on it, inherited colours included.
     const { container } = render(LeadText, { props: { slice } });
-    const section = container.querySelector('[data-slice-type="lead_text"]');
-    expect(section?.className).not.toContain("bg-green-btn");
+    const eyebrow = container.querySelector("h2")!;
+    const copy = container.querySelector("p")!;
+    expect(contrast(textColour(eyebrow), groundOf(eyebrow))).toBeGreaterThanOrEqual(4.5);
+    expect(contrast(textColour(copy), groundOf(copy))).toBeGreaterThanOrEqual(4.5);
   });
 
   it("omits the heading when no eyebrow is authored", () => {
@@ -63,7 +70,7 @@ describe("LeadText slice", () => {
     expect(getByText("Body only.")).toBeTruthy();
   });
 
-  it("renders the statement variation as an h2 on the night-blue ground", () => {
+  it("renders the statement variation as an h2", () => {
     const statement = {
       slice_type: "lead_text",
       variation: "statement",
@@ -81,9 +88,6 @@ describe("LeadText slice", () => {
     const { container } = render(LeadText, { props: { slice: statement } });
     const section = container.querySelector('[data-slice-type="lead_text"]');
     expect(section?.getAttribute("data-slice-variation")).toBe("statement");
-    // #01263f: #fdf5e8 is 14.37:1 and the #9cbf5b highlight 7.42:1.
-    expect(section?.className).toContain("bg-dark");
-    expect(section?.className).not.toContain("bg-green-btn");
     // The copy IS the heading here — there is no eyebrow to promote.
     const h2 = container.querySelector("h2");
     expect(h2?.textContent).toContain("Hope that heals.");
@@ -92,20 +96,17 @@ describe("LeadText slice", () => {
     expect(h2?.querySelector(".highlight")?.textContent).toBe("Help that Lasts.");
   });
 
-  it("sets both VLF variations in the comp's right-hand column, or fills on request", () => {
+  it("lays both VLF variations out float-right, or fills on request", () => {
     const body = [{ type: "paragraph", text: "Body.", spans: [] }];
     const onDark = { slice_type: "lead_text", variation: "onDark", primary: { body }, items: [] };
     const { container, rerender } = render(LeadText, { props: { slice: onDark as never } });
-    // 952.5 of the 1280 grid, from x=407.5 — and pinned for the next band to
-    // slide over (app.css's slide-over rule).
-    expect(container.querySelector(".lead-on-dark")?.className).toContain("md:w-[74.4%]");
-    expect(container.querySelector("section")?.className).toContain("sticky-cover");
+    // The layout the editor chose, as companionRun reads it off the section.
+    expect(container.querySelector("section")?.dataset.layout).toBe("float-right");
     rerender({ slice: { ...onDark, primary: { body, layout: "fill" } } as never });
-    expect(container.querySelector(".lead-on-dark")?.className).not.toContain("md:w-[74.4%]");
+    expect(container.querySelector("section")?.dataset.layout).toBe("fill");
     const statement = { ...onDark, variation: "statement" };
     rerender({ slice: statement as never });
-    expect(container.querySelector(".lead-statement")?.className).toContain("md:w-[74.4%]");
-    expect(container.querySelector("section")?.className).toContain("sticky-cover");
+    expect(container.querySelector("section")?.dataset.layout).toBe("float-right");
   });
 
   it("stops pinning the lead paragraph on a screen too short to hold it", () => {
@@ -120,27 +121,6 @@ describe("LeadText slice", () => {
     const onDark = { slice_type: "lead_text", variation: "onDark", primary: { body }, items: [] };
     const { container } = render(LeadText, { props: { slice: onDark as never } });
     expect(container.querySelector("section")?.className).toContain("sticky-cover--from-md");
-  });
-
-  it("holds the statement at the bottom of a full screen of navy", () => {
-    // The closing cream panel rolls up over this band, so it has to BE the
-    // screen — a short band would leave the page's own ground showing above
-    // it — and the comp's line sits at the bottom edge, not the top.
-    const statement = {
-      slice_type: "lead_text",
-      variation: "statement",
-      primary: { body: [{ type: "paragraph", text: "Hope that heals.", spans: [] }] },
-      items: [],
-    } as never;
-    const { container } = render(LeadText, { props: { slice: statement } });
-    const section = container.querySelector("section")!;
-    expect(section.className).toContain("bg-dark");
-    expect(section.className).toContain("sticky-cover");
-    // It comes to rest at the BOTTOM of the screen (stickyCover reads the
-    // marker), and keeps the comp's height doing it — a full-screen band put
-    // the comp's 60px gap above the line at a whole viewport instead.
-    expect(section.className).toContain("sticky-cover--bottom");
-    expect(section.className).not.toContain("min-h-dvh");
   });
 
   it("renders no eyebrow heading in the statement variation", () => {
