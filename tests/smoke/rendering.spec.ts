@@ -248,7 +248,10 @@ test("/ pins the lead paragraph only on a screen that can hold it", async ({ pag
   // Only the phone half is a contract: whether a wide screen pins the band is
   // the comp's effect, a design value a human may change. The poll waits for
   // the in-flow value the stylesheet gives, not merely "not sticky", which
-  // `static` (before the CSS applies) would also satisfy.
+  // `static` (before the CSS applies) would also satisfy. "relative" is what
+  // `main > section` gives every in-flow band for paint order; a change that
+  // makes in-flow sections `static` keeps the phone contract but turns this
+  // red, and that trade is chosen, not missed.
   if (width < 768) {
     await expect
       .poll(() => band.evaluate((el) => getComputedStyle(el).position), {

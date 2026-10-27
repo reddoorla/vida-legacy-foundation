@@ -2,7 +2,7 @@ import { render } from "@testing-library/svelte";
 import { describe, it, expect } from "vitest";
 import type { Content } from "@prismicio/client";
 import MediaText from "./index.svelte";
-import { declaredAnywhere } from "../../../test/theme-contrast";
+import { computedAt } from "../../../test/theme-contrast";
 
 function makeSlice(variation: "imageRight" | "imageLeft") {
   return {
@@ -32,10 +32,13 @@ describe("MediaText slice", () => {
 
   // The editor's "Image left" is the whole of that variation: at desktop width
   // the image sits before the copy, and "Image right" keeps it after. jsdom
-  // lays nothing out, so this reads the `order` each column declares at the
-  // breakpoint (from the compiled stylesheet, 0 when none) and compares the
+  // lays nothing out, so this reads the `order` the cascade gives each column
+  // at 1280px (from the compiled stylesheet, 0 when none) and compares the
   // two, then falls back to source order on a tie. No class or order value is
-  // named: any way of putting the image first passes.
+  // named: any way of putting the image first passes. This holds for a lone or
+  // odd media_text row only: app.css alternates the sides on even rows with an
+  // unlayered `nth-child(even of …)` rule that beats either variation, and the
+  // helper cannot see compound selectors.
   // Tailwind emits a negative order as `calc(1 * -1)`.
   const orderValue = (v: string) => {
     const calc = /^calc\(\s*(-?[\d.]+)\s*\*\s*(-?[\d.]+)\s*\)$/.exec(v);
@@ -43,10 +46,9 @@ describe("MediaText slice", () => {
     if (!Number.isFinite(n)) throw new Error(`cannot read the order "${v}"`);
     return n;
   };
-  const lgOrder = (el: Element) => {
-    const values = declaredAnywhere(el, "order").map(orderValue);
-    return values.length ? values[values.length - 1] : 0;
-  };
+  // The order the cascade gives each column at a desktop width, so an order
+  // declared for another breakpoint (`max-lg:`, `xl:`) is not read as lg's.
+  const lgOrder = (el: Element) => orderValue(computedAt(el, "order", 1280) ?? "0");
   const imageFirst = (container: HTMLElement) => {
     const media = container.querySelector("img")!.closest(".mt-media")!;
     const copy = container.querySelector("h2")!.closest(".mt-copy")!;

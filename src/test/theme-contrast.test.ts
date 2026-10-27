@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it } from "vitest";
 import {
   computed,
+  computedAt,
   contrast,
   declaredAnywhere,
   groundOf,
@@ -85,6 +86,14 @@ describe("theme-contrast", () => {
   it("refuses a ground drawn inside a faded element instead of measuring it", () => {
     const span = el('<div class="opacity-50 bg-dark"><span data-probe>x</span></div>');
     expect(() => groundOf(span)).toThrow(/opacity 0.50 is not modelled/);
+  });
+
+  it("applies a declaration at the widths its query holds and nowhere else", () => {
+    const box = el('<div data-probe class="order-1 lg:order-2 max-lg:order-3 xl:order-4"></div>');
+    expect(computedAt(box, "order", 390)).toBe("3");
+    expect(computedAt(box, "order", 1100)).toBe("2");
+    expect(computedAt(box, "order", 1280)).toBe("4");
+    expect(computed(box, "order")).toBe("1");
   });
 
   it("reads a lockup's wordmark fill from the shipped file", () => {
