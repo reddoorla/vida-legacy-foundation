@@ -113,6 +113,9 @@ test("/slice-simulator renders a slice the Type Builder sends it", async ({ page
 // the stylesheet has applied before the narrower reads accept "stacked". A
 // wrong side at any width is red, so `xl:order-2` (wrong between 1024 and
 // 1279px) fails at 1024 while moving the whole split to `xl` passes.
+// "Stacked" means the two columns do not overlap vertically, so a stacked
+// layout that narrows or centres one column is still stacked (review 5);
+// left edges are compared only when the columns share a row.
 //
 // The read uses getBoundingClientRect, which "`@smoke` is earned" bans in the
 // gate as `boundingBox`. The rule exists to keep px out of the gate, and this
@@ -177,6 +180,7 @@ for (const variation of ["imageLeft", "imageRight"] as const) {
               };
               const photo = column(img, heading);
               const copy = column(heading, img);
+              if (photo.bottom <= copy.top || copy.bottom <= photo.top) return "stacked";
               if (photo.left < copy.left) return "photo left";
               if (photo.left > copy.left) return "photo right";
               return "stacked";
