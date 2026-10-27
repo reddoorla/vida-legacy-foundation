@@ -96,16 +96,29 @@ test("/slice-simulator renders a slice the Type Builder sends it", async ({ page
   expect(errors).toEqual([]);
 });
 
-// MediaText's variation is the editor's choice of side: in the two-column
-// layout "Image left" puts the photo left of the copy and "Image right" puts
-// it right. Only a browser's cascade can answer that (a hand-written media
-// query evaluator in vitest returned false greens for `not-*` variants and
-// nested `@media`, review 3), so this reads where the two columns are painted,
-// relative to each other. No class, order value or px is named, and no
-// position is pinned: any markup or CSS that keeps the photo on the chosen
-// side passes. One slice per load, because app.css alternates the sides on
-// even media_text rows. The widths are both ends of the component's own `lg:`
-// grid; the frame is resized between them so media queries re-evaluate.
+// MediaText's variation is the editor's choice of side: wherever the layout
+// has two columns, "Image left" puts the photo left of the copy and "Image
+// right" puts it right. Only a browser's cascade can answer that (a
+// hand-written media query evaluator in vitest returned false greens for
+// `not-*` variants and nested `@media`, review 3), so this reads where the two
+// columns are painted, relative to each other. No class, order value or px is
+// named: any markup or CSS that keeps the photo on the chosen side passes. One
+// slice per load, because app.css alternates the sides on even media_text rows.
+//
+// Which widths have two columns is the designer's call (the split is `lg:`
+// today), so no width below the widest is required to have them. The frame is
+// resized from 1920px down, and at each width the photo must be on the chosen
+// side or the layout stacked; only at 1920, wider than any breakpoint the
+// band's 72rem content could split at, must there be columns, which also proves
+// the stylesheet has applied before the narrower reads accept "stacked". A
+// wrong side at any width is red, so `xl:order-2` (wrong between 1024 and
+// 1279px) fails at 1024 while moving the whole split to `xl` passes.
+//
+// The read uses getBoundingClientRect, which "`@smoke` is earned" bans in the
+// gate as `boundingBox`. The rule exists to keep px out of the gate, and this
+// compares only which column's left edge comes first; no position or size is
+// asserted, and a gap change passes. This file has no `@smoke` tag: every spec
+// under tests/smoke runs in `pnpm test`, and nothing here selects on the tag.
 const MEDIA_TEXT = (variation: "imageLeft" | "imageRight") => ({
   id: `media_text$${variation}`,
   slice_type: "media_text",
@@ -116,7 +129,7 @@ const MEDIA_TEXT = (variation: "imageLeft" | "imageRight") => ({
     heading: [{ type: "heading2", text: "Simulator smoke heading", spans: [] }],
     body: [{ type: "paragraph", text: "Simulator smoke body.", spans: [] }],
     media: {
-      url: "https://images.example/simulator-smoke.jpg",
+      url: "https://images.prismic.io/vida-legacy-foundation/simulator-smoke.jpg",
       alt: "Simulator smoke photo",
       dimensions: { width: 800, height: 600 },
       edit: { x: 0, y: 0, zoom: 1, background: "transparent" },
@@ -127,48 +140,52 @@ const MEDIA_TEXT = (variation: "imageLeft" | "imageRight") => ({
   items: [],
 });
 
+// The photo is on Prismic's image host, which the CSP allows, and never loads:
+// the column tracks do not depend on its size.
+const WIDTHS = [1920, 1440, 1280, 1024];
+
 for (const variation of ["imageLeft", "imageRight"] as const) {
-  test(
-    `MediaText ${variation} puts the photo on that side in the two-column layout`,
-    { tag: "@smoke" },
-    async ({ page, baseURL }) => {
-      await page.route("https://images.example/**", (route) => route.abort());
-      await page.setViewportSize({ width: 1600, height: 900 });
-      await simulate(page, baseURL, [MEDIA_TEXT(variation)]);
-      const frame = page.frameLocator("iframe");
-      const section = frame.locator('.slice-simulator--root [data-slice-type="media_text"]');
-      await expect(section).toHaveCount(1);
-      for (const width of [1024, 1440]) {
-        await page.locator("iframe").evaluate((el, w) => {
-          (el as HTMLIFrameElement).width = String(w);
-        }, width);
-        await expect
-          .poll(
-            () =>
-              section.evaluate((el, w) => {
-                if (el.ownerDocument.defaultView!.innerWidth !== w) return "frame not resized";
-                const img = el.querySelector("img");
-                const heading = el.querySelector("h2");
-                if (!img || !heading) return "photo or heading missing";
-                // The column each sits in: the ancestor whose parent also
-                // holds the other.
-                const column = (node: Element, other: Element) => {
-                  let n = node;
-                  while (n.parentElement && !n.parentElement.contains(other)) n = n.parentElement;
-                  return n.getBoundingClientRect();
-                };
-                const photo = column(img, heading);
-                const copy = column(heading, img);
-                if (photo.left < copy.left) return "photo left";
-                if (photo.left > copy.left) return "photo right";
-                return "stacked";
-              }, width),
-            { message: `${variation} at a ${width}px frame` },
-          )
-          .toBe(variation === "imageLeft" ? "photo left" : "photo right");
-      }
-    },
-  );
+  test(`MediaText ${variation} never puts the photo on the other side`, async ({
+    page,
+    baseURL,
+  }) => {
+    await page.route("https://images.prismic.io/**", (route) => route.abort());
+    await page.setViewportSize({ width: 2000, height: 900 });
+    await simulate(page, baseURL, [MEDIA_TEXT(variation)]);
+    const frame = page.frameLocator("iframe");
+    const section = frame.locator('.slice-simulator--root [data-slice-type="media_text"]');
+    await expect(section).toHaveCount(1);
+    const chosen = variation === "imageLeft" ? "photo left" : "photo right";
+    for (const width of WIDTHS) {
+      await page.locator("iframe").evaluate((el, w) => {
+        (el as HTMLIFrameElement).width = String(w);
+      }, width);
+      await expect
+        .poll(
+          () =>
+            section.evaluate((el, w) => {
+              if (el.ownerDocument.defaultView!.innerWidth !== w) return "frame not resized";
+              const img = el.querySelector("img");
+              const heading = el.querySelector("h2");
+              if (!img || !heading) return "photo or heading missing";
+              // The column each sits in: the ancestor whose parent also
+              // holds the other.
+              const column = (node: Element, other: Element) => {
+                let n = node;
+                while (n.parentElement && !n.parentElement.contains(other)) n = n.parentElement;
+                return n.getBoundingClientRect();
+              };
+              const photo = column(img, heading);
+              const copy = column(heading, img);
+              if (photo.left < copy.left) return "photo left";
+              if (photo.left > copy.left) return "photo right";
+              return "stacked";
+            }, width),
+          { message: `${variation} at a ${width}px frame` },
+        )
+        .toMatch(width === WIDTHS[0] ? chosen : new RegExp(`^(${chosen}|stacked)$`));
+    }
+  });
 }
 
 test("an ordinary page stays SAMEORIGIN and does not let Prismic frame it", async ({ request }) => {
