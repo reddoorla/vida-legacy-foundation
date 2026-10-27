@@ -127,9 +127,6 @@ interface Rule {
   decls: Decl[];
   /** Declarations in nested blocks (`@media`, `&:hover`, `@supports`). */
   nested: Decl[];
-  /** Declarations that apply only under a width query, with the queries
-   *  (outermost first) they sit under — for `computedAt`. */
-  atWidth: { queries: string[]; decls: Decl[] }[];
 }
 
 const unescape = (s: string) =>
@@ -141,35 +138,17 @@ function flatten(nodes: Node[]): Decl[] {
   return nodes.flatMap((n) => [...n.decls, ...flatten(n.children)]);
 }
 
-/** The blocks under a rule that only a `@media` query gates, with the chain
- *  of queries; a `&:hover` or `@supports` block is not one of them. */
-function widthBlocks(nodes: Node[], queries: string[]): { queries: string[]; decls: Decl[] }[] {
-  return nodes.flatMap((n) => {
-    if (!n.prelude.startsWith("@media")) return [];
-    const q = [...queries, n.prelude.slice("@media".length).trim()];
-    return [{ queries: q, decls: n.decls }, ...widthBlocks(n.children, q)];
-  });
-}
-
-function collect(
-  nodes: Node[],
-  layer: number,
-  out: Rule[],
-  conditional = false,
-  queries: string[] = [],
-) {
+function collect(nodes: Node[], layer: number, out: Rule[], conditional = false) {
   for (const n of nodes) {
     const layerAt = /^@layer\s+([\w-]+)$/.exec(n.prelude);
     if (layerAt) {
-      collect(n.children, LAYERS.indexOf(layerAt[1]), out, conditional, queries);
+      collect(n.children, LAYERS.indexOf(layerAt[1]), out, conditional);
       continue;
     }
     // A rule inside a media or supports query applies only sometimes: its
     // declarations count for `declaredAnywhere`, never for `computed`.
     if (n.prelude.startsWith("@media") || n.prelude.startsWith("@supports")) {
-      // A `@supports` block poisons the chain so `computedAt` never applies it.
-      const q = n.prelude.startsWith("@media") ? n.prelude.slice(6).trim() : "@supports";
-      collect(n.children, layer, out, true, [...queries, q]);
+      collect(n.children, layer, out, true);
       continue;
     }
     if (n.prelude.startsWith("@")) continue;
@@ -184,10 +163,6 @@ function collect(
         order: out.length,
         decls: conditional ? [] : n.decls,
         nested: conditional ? [...n.decls, ...flatten(n.children)] : flatten(n.children),
-        atWidth: [
-          ...(conditional ? [{ queries, decls: n.decls }] : []),
-          ...widthBlocks(n.children, queries),
-        ],
       });
     }
   }
@@ -252,62 +227,6 @@ export function computed(el: Element, prop: string): string | undefined {
 function compareKeys(a: number[], b: number[]): number {
   for (let i = 0; i < a.length; i++) if (a[i] !== b[i]) return a[i] - b[i];
   return 0;
-}
-
-const REM = 16;
-const length = (v: string) => {
-  const m = /^([\d.]+)(px|rem|em)$/.exec(v.trim());
-  if (!m) throw new Error(`theme-contrast cannot read the media length "${v}"`);
-  return Number(m[1]) * (m[2] === "px" ? 1 : REM);
-};
-
-/** Whether a `@media` prelude holds at a viewport `width` (px). Width ranges
- *  only (`width >= 64rem`, `min-width:`, `max-width:`, joined by `and`); any
- *  other feature (hover, motion, print) is taken not to hold. */
-function mediaHolds(query: string, width: number): boolean {
-  if (query === "@supports") return false;
-  return query.split(/\s+and\s+/).every((part) => {
-    const range = /^\(\s*width\s*(>=|<=|>|<)\s*([\d.]+\w+)\s*\)$/.exec(part.trim());
-    if (range) {
-      const x = length(range[2]);
-      return { ">=": width >= x, "<=": width <= x, ">": width > x, "<": width < x }[range[1]]!;
-    }
-    const minmax = /^\(\s*(min|max)-width\s*:\s*([\d.]+\w+)\s*\)$/.exec(part.trim());
-    if (minmax)
-      return minmax[1] === "min" ? width >= length(minmax[2]) : width <= length(minmax[2]);
-    return false;
-  });
-}
-
-/**
- * The value the cascade gives `prop` on `el` at a viewport `width` (px): as
- * `computed`, plus the declarations whose width queries hold there, so
- * `lg:order-2` counts at 1280 and `max-lg:order-2` does not.
- */
-export function computedAt(el: Element, prop: string, width: number): string | undefined {
-  type Win = { value: string; key: number[] };
-  let best: Win | undefined;
-  for (const r of matching(el)) {
-    const blocks = [
-      { queries: [] as string[], decls: r.decls },
-      ...r.atWidth.filter((b) => b.queries.every((q) => mediaHolds(q, width))),
-    ];
-    for (const b of blocks) {
-      for (const d of b.decls) {
-        if (d.prop !== prop) continue;
-        const layer = d.important ? UNLAYERED - r.layer : r.layer;
-        const key = [d.important ? 1 : 0, 0, layer, r.specificity, r.order];
-        if (!best || compareKeys(key, best.key) > 0) best = { value: d.value, key };
-      }
-    }
-  }
-  const inline = (el as HTMLElement).style?.getPropertyValue(prop);
-  if (inline) {
-    const important = (el as HTMLElement).style.getPropertyPriority(prop) === "important";
-    const key = [important ? 1 : 0, 1, 0, 0, 0];
-    if (!best || compareKeys(key, best.key) > 0) best = { value: inline, key };
-  }
-  return best?.value;
 }
 
 /** Every value any rule for one of `el`'s classes declares for `prop`,

@@ -2,7 +2,6 @@ import { render } from "@testing-library/svelte";
 import { describe, it, expect } from "vitest";
 import type { Content } from "@prismicio/client";
 import MediaText from "./index.svelte";
-import { computedAt } from "../../../test/theme-contrast";
 
 function makeSlice(variation: "imageRight" | "imageLeft") {
   return {
@@ -30,43 +29,7 @@ describe("MediaText slice", () => {
     expect(getByRole("img").getAttribute("alt")).toBe("Pool");
   });
 
-  // The editor's "Image left" is the whole of that variation: at desktop width
-  // the image sits before the copy, and "Image right" keeps it after. jsdom
-  // lays nothing out, so this reads the `order` the cascade gives each column
-  // at both ends of the two-column layout, lg's 1024px and 1440px (from the
-  // compiled stylesheet, 0 when none), and compares the
-  // two, then falls back to source order on a tie. No class or order value is
-  // named: any way of putting the image first passes. This holds for a lone or
-  // odd media_text row only: app.css alternates the sides on even rows with an
-  // unlayered `nth-child(even of …)` rule that beats either variation, and the
-  // helper cannot see compound selectors.
-  // Tailwind emits a negative order as `calc(1 * -1)`.
-  const orderValue = (v: string) => {
-    const calc = /^calc\(\s*(-?[\d.]+)\s*\*\s*(-?[\d.]+)\s*\)$/.exec(v);
-    const n = calc ? Number(calc[1]) * Number(calc[2]) : Number(v);
-    if (!Number.isFinite(n)) throw new Error(`cannot read the order "${v}"`);
-    return n;
-  };
-  // The order the cascade gives each column at one viewport width, so an
-  // order declared for another breakpoint (`max-lg:`, `xl:`) is not read as
-  // lg's.
-  const orderAt = (el: Element, width: number) => orderValue(computedAt(el, "order", width) ?? "0");
-  const imageFirst = (container: HTMLElement, width: number) => {
-    const media = container.querySelector("img")!.closest(".mt-media")!;
-    const copy = container.querySelector("h2")!.closest(".mt-copy")!;
-    const [m, c] = [orderAt(media, width), orderAt(copy, width)];
-    if (m !== c) return m < c;
-    return !!(media.compareDocumentPosition(copy) & Node.DOCUMENT_POSITION_FOLLOWING);
-  };
-
-  it("puts the image before the copy for imageLeft and after it for imageRight", () => {
-    for (const width of [1024, 1440]) {
-      const left = render(MediaText, { props: { slice: makeSlice("imageLeft") } });
-      expect(imageFirst(left.container, width), `imageLeft at ${width}px`).toBe(true);
-      left.unmount();
-      const right = render(MediaText, { props: { slice: makeSlice("imageRight") } });
-      expect(imageFirst(right.container, width), `imageRight at ${width}px`).toBe(false);
-      right.unmount();
-    }
-  });
+  // Which side the photo sits on for "Image left" and "Image right" is a
+  // layout fact jsdom cannot compute: it is held in a real browser by
+  // tests/smoke/slice-simulator.spec.ts.
 });
