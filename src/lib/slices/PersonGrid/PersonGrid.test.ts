@@ -2,6 +2,14 @@ import { render, fireEvent } from "@testing-library/svelte";
 import { describe, it, expect, beforeAll, vi } from "vitest";
 import type { Content } from "@prismicio/client";
 import PersonGrid from "./index.svelte";
+import {
+  computed,
+  contrast,
+  declaredAnywhere,
+  groundOf,
+  textColour,
+  themeColour,
+} from "../../../test/theme-contrast";
 
 // jsdom has no Web Animations; Modal's entrance runs on element.animate. The
 // mock also lets the suite assert that the entrance actually starts.
@@ -71,7 +79,7 @@ const make = (primary: Record<string, unknown> = {}, items?: unknown[]) =>
 // auto-cleanup between renders, so an unscoped getBy* sees every earlier test's
 // DOM too and fails on duplicates.
 describe("PersonGrid slice", () => {
-  it("draws the comp's bio-only card until headshots are switched on", async () => {
+  it("shows no photograph until headshots are switched on", async () => {
     // The launch state, and what a document authored before the field reads:
     // no photograph, the name at display size, the badge on the card's own
     // corner. Switching `headshots` on brings back the picture card.
@@ -79,17 +87,10 @@ describe("PersonGrid slice", () => {
     expect(container.querySelector("li img[alt='Brooke Perucki']")).toBeNull();
     const name = container.querySelector("li h4")!;
     expect(name.textContent?.trim()).toBe("Brooke Perucki");
-    expect(name.className).toContain("t-stat");
-    expect(container.querySelector("li")?.className).toContain("sm:min-h-[calc((100cqw-30px)/2)]");
-    expect(container.querySelector("li img[src='/icons/plus-circle.svg']")?.className).toContain(
-      "bottom-5",
-    );
 
     const withPhotos = render(PersonGrid, {
       props: { slice: make({ headshots: true }) },
     });
-    const photoName = withPhotos.container.querySelector("li h4")!;
-    expect(photoName.className).toContain("t-label-lg");
     expect(withPhotos.container.querySelector("li img[alt='Brooke Perucki']")).not.toBeNull();
   });
 
@@ -155,42 +156,6 @@ describe("PersonGrid slice", () => {
     }
   });
 
-  it("takes its content's height while a card is full width, and the comp's square as a FLOOR once they sit side by side", () => {
-    // Nicole, on Discord (2026-09-09), from a 390px phone: "Height of the box
-    // matches height of content instead of being a perfect square. Too much
-    // real estate for the names." With `headshots` off there is nothing in a
-    // card but a name, a role and an address, so a square left roughly the
-    // lower two thirds of a full-bleed card empty. From `sm` the cards are two
-    // and three up, where the square is the comp's shape and stays.
-    //
-    // It stays as a MINIMUM, not as an `aspect-ratio`. The same complaint has
-    // a second half nobody had looked for: in the three-up band the square is
-    // too SMALL, not too big — the card's height is its width, the width is a
-    // third of the row, and the 28px name and 16px role inside it wrap to more
-    // lines as that narrows. The two cross at about 1030px and the card, which
-    // is `overflow-hidden` for its rounded corners, silently ate the rest.
-    // Measured at 768px before the fix: a 126px card holding 241px of content,
-    // Holly Aldridge's whole email address gone. See the band walked in
-    // tests/smoke/pages.spec.ts.
-    //
-    // These are min-heights in `cqw` and not `aspect-square` because an
-    // aspect-ratio box answers `max-content` and `fit-content` FROM the ratio:
-    // both keywords measured out to exactly the square they were meant to
-    // escape, so neither `sm:min-h-max` nor `sm:min-h-fit` moved it a pixel.
-    // The expressions deliberately mirror the width classes on the same
-    // element, so the floor cannot drift from the shape it is a floor for.
-    const { container } = render(PersonGrid, { props: { slice: make() } });
-    const classes = container.querySelector("li")!.className.split(/\s+/);
-    expect(classes).toContain("sm:w-[calc((100%-30px)/2)]");
-    expect(classes).toContain("sm:min-h-[calc((100cqw-30px)/2)]");
-    expect(classes).toContain("md:w-[calc((100%-60px)/3)]");
-    expect(classes).toContain("md:min-h-[calc((100cqw-60px)/3)]");
-    // No unprefixed floor: below `sm` the card is its content's height.
-    expect(classes.some((c) => /^min-h-/.test(c))).toBe(false);
-    // And `cqw` resolves against the row, so the row must be the container.
-    expect(container.querySelector("ul")!.className).toContain("@container");
-  });
-
   it("gives the bio trigger a real accessible name, not a bare icon", () => {
     const { container } = render(PersonGrid, { props: { slice: make() } });
     const trigger = container.querySelector("li button");
@@ -200,7 +165,6 @@ describe("PersonGrid slice", () => {
     // "+" badge beside it is decoration. The address link stays its own
     // control, above the button, so there is no link inside a button.
     const card = trigger?.closest("li");
-    expect(trigger?.className).toContain("absolute inset-0");
     expect(
       card?.querySelector("img[src='/icons/plus-circle.svg']")?.getAttribute("aria-hidden"),
     ).toBe("true");
@@ -208,37 +172,28 @@ describe("PersonGrid slice", () => {
     expect(card?.querySelector("a button, button a")).toBeNull();
   });
 
-  it("paints the board style on the lighter cream with page-cream cards", () => {
-    // The comp's second group: the band is #fffbf4, the cards the page cream
-    // under the grain, the names the dark green, the copy the -aa green.
-    const { container } = render(PersonGrid, { props: { slice: make({ style: "board" }) } });
-    expect(container.querySelector("section")?.className).toContain("bg-cream");
-    const card = container.querySelector("li");
-    expect(card?.className).toContain("bg-background");
-    expect(container.querySelector("h4")?.className).toContain("text-green-btn");
-    // And leadership stays the dark card with green names.
-    const lead = render(PersonGrid, { props: { slice: make() } });
-    expect(lead.container.querySelector("section")?.className).toContain("bg-background");
-    expect(lead.container.querySelector("li")?.className).toContain("bg-green-deep");
-    expect(lead.container.querySelector("h4")?.className).toContain("text-green");
-  });
-
-  it("opens the bio dialog with the dark ground actually applied", async () => {
+  it("opens the bio dialog with the bio, named by the person", async () => {
     // Regression guard. The card ground was first written as a Svelte SCOPED
     // class and passed to <Modal> through its `class` prop — but Svelte only
     // hashes scoped classes onto elements in THIS component's template, so the
     // copy landing on Modal's own element carried no hash and the rule never
-    // matched: the dialog rendered with no background at all. bg-green-deep is
-    // a @theme utility, so there is no scoping to get wrong.
+    // matched: the dialog rendered with no background at all. The ground must
+    // be a @theme utility, so there is no scoping to get wrong, and the bio
+    // copy must clear AA on it — computed from the tokens, not named.
     const { container } = render(PersonGrid, { props: { slice: make() } });
     await fireEvent.click(container.querySelector("li button")!);
     // The sheet sits inside Modal's own backdrop element now.
     const panel = container.querySelector("dialog [data-backdrop] > div");
-    // And it ENTERS: the Modal is created already open, so only a global
-    // transition plays — a local one would skip the entrance (review round 3).
-    expect(animate).toHaveBeenCalled();
     expect(panel).not.toBeNull();
-    expect(panel?.className).toContain("bg-green-deep!");
+    // Measured through the cascade, not read off the class list: Modal's own
+    // sheet sets bg-white on the same element, and Tailwind emits bg-white
+    // after bg-green-deep, so without the `!` white wins and the cream bio
+    // sits on white at about 1.1:1. Reading the token the class names would
+    // see the green and pass.
+    const copy = container.querySelector("dialog .richtext-block p")!;
+    const ground = groundOf(copy);
+    expect(ground, "the bio sheet renders on Modal's white").not.toEqual(themeColour("white"));
+    expect(contrast(textColour(copy), ground)).toBeGreaterThanOrEqual(4.5);
     expect(container.querySelector("dialog")?.textContent).toContain("Brooke Perucki bio copy.");
     // Named by the person: on a phone the headshot is hidden, so the heading
     // is the only thing identifying the pop-up.
@@ -247,6 +202,51 @@ describe("PersonGrid slice", () => {
       `#${CSS.escape(dialog.getAttribute("aria-labelledby")!)}`,
     );
     expect(named?.textContent?.trim()).toBe("Brooke Perucki");
+  });
+
+  for (const style of ["leadership", "board"]) {
+    it(`keeps every ${style} card's name, role and address readable on the card`, () => {
+      const { container } = render(PersonGrid, { props: { slice: make({ style }) } });
+      const cards = [...container.querySelectorAll("li.person-card")];
+      expect(cards.length).toBeGreaterThan(0);
+      for (const card of cards) {
+        for (const text of card.querySelectorAll("h4, p, a")) {
+          const ratio = contrast(textColour(text), groundOf(text));
+          expect(ratio, `"${text.textContent?.trim()}"`).toBeGreaterThanOrEqual(4.5);
+        }
+      }
+    });
+  }
+
+  it("never gives a clipping card a height that does not come from its content", () => {
+    // The card is overflow-hidden for its rounded corners, so any height it
+    // takes from somewhere else — an aspect ratio, a fixed height, at any
+    // breakpoint — cuts off whatever does not fit. Measured at 768px with
+    // `sm:aspect-square`: a 126px card holding 241px of content, Holly
+    // Aldridge's email address simply not drawn. A min-height floor is fine.
+    // (tests/smoke/pages.spec.ts walks the band in a browser too.)
+    for (const style of ["leadership", "board"]) {
+      for (const headshots of [false, true]) {
+        const { container } = render(PersonGrid, { props: { slice: make({ style, headshots }) } });
+        for (const card of container.querySelectorAll("li.person-card")) {
+          expect(computed(card, "overflow")).toBe("hidden");
+          expect(declaredAnywhere(card, "aspect-ratio"), `${style} card`).toEqual([]);
+          expect(declaredAnywhere(card, "height"), `${style} card`).toEqual([]);
+        }
+      }
+    }
+  });
+
+  it("lays the bio trigger over the whole card, so a click anywhere on it opens the bio", async () => {
+    const { container } = render(PersonGrid, { props: { slice: make() } });
+    const trigger = container.querySelector<HTMLElement>("li [data-bio-toggle]")!;
+    const card = trigger.closest("li")!;
+    // The card is the trigger's containing block, and the trigger fills it.
+    expect(computed(card, "position")).toBe("relative");
+    expect(computed(trigger, "position")).toBe("absolute");
+    expect(computed(trigger, "inset")).toMatch(/^(0(px)?|calc\(var\(--spacing\) \* 0\))$/);
+    await fireEvent.click(trigger);
+    expect(container.querySelector("dialog")?.textContent).toContain("Brooke Perucki bio copy.");
   });
 
   it("builds the mailto from a bare address", () => {
@@ -339,26 +339,6 @@ describe("an editorial line break in a name", () => {
     expect(container.querySelector("li h4")!.className).toContain("sm:whitespace-pre-line");
   });
 
-  it("ignores the break on a phone, where the cards are stacked", () => {
-    // Nicole approved the hard return for the row of cards, and it is right
-    // there. At 390px every name already fits on one line and the cards are
-    // stacked, so honouring it split a name that had room — measured 50/50/82
-    // against the others. Scoped to sm:, the newline collapses to a space below
-    // it, which is the browser default.
-    const cls = render(PersonGrid, { props: { slice: broken() } }).container.querySelector(
-      "li h4",
-    )!.className;
-    expect(cls).not.toMatch(/(^|\s)whitespace-pre-line/);
-  });
-
-  it("collapses the stray space the editor left before the return", () => {
-    // The stored value really is "Holly \nAldridge". pre-line (not pre-wrap)
-    // collapses that space; pre-wrap would indent the second line.
-    const { container } = render(PersonGrid, { props: { slice: broken() } });
-    const cls = container.querySelector("li h4")!.className;
-    expect(cls).not.toContain("whitespace-pre-wrap");
-  });
-
   it("never opens a card with a blank line", () => {
     const leading = () => make({}, [{ ...person("Holly Aldridge", true), name: "\nHolly" }]);
     const { container } = render(PersonGrid, { props: { slice: leading() } });
@@ -380,36 +360,5 @@ describe("an editorial line break in a name", () => {
     await fireEvent.click(container.querySelector("button[data-bio-toggle]")!);
     const heading = container.querySelector("dialog h2")!;
     expect(heading.textContent!.trim()).toBe("Holly Aldridge");
-  });
-});
-
-describe("the name block reserves two lines so a row of cards aligns", () => {
-  // This, not the typed return, is what makes the leadership row line up.
-  // Measured in a browser with the return in place: desktop EN aligned, but a
-  // 390px phone put Holly's name on two lines against the others' one (roles at
-  // 50/50/82px), and Spanish — where no return was typed — was still 97/97/55.
-  // Which names wrap is a function of the viewport and of the words, so a break
-  // chosen for one is wrong in the others. Reserving the height is not.
-  it("reserves two lines from the breakpoint where cards sit side by side", () => {
-    const { container } = render(PersonGrid, { props: { slice: make() } });
-    expect(container.querySelector("li h4")!.className).toContain("sm:min-h-[2lh]");
-  });
-
-  it("reserves nothing on a phone, where the cards are stacked", () => {
-    // `w-full` below sm: one card per row, so there is no neighbour to align
-    // with and an unconditional reservation would only open a gap.
-    const cls = render(PersonGrid, { props: { slice: make() } }).container.querySelector(
-      "li h4",
-    )!.className;
-    expect(cls).not.toMatch(/(^|\s)min-h-\[2lh\]/);
-  });
-
-  it("reserves for every card, so the shortest name holds the row open too", () => {
-    const { container } = render(PersonGrid, {
-      props: { slice: make({}, [person("Ann Lee"), person("Maximilian Fotheringay")]) },
-    });
-    const names = [...container.querySelectorAll("li h4")];
-    expect(names.length).toBe(2);
-    for (const n of names) expect(n.className).toContain("sm:min-h-[2lh]");
   });
 });

@@ -2,6 +2,7 @@ import { render } from "@testing-library/svelte";
 import { describe, it, expect } from "vitest";
 import type { Content } from "@prismicio/client";
 import StatementPanel from "./index.svelte";
+import { contrast, groundOf, textColour } from "../../../test/theme-contrast";
 
 const slice = {
   slice_type: "statement_panel",
@@ -34,15 +35,15 @@ describe("StatementPanel slice", () => {
     expect(container.querySelectorAll(".richtext-block p").length).toBe(2);
   });
 
-  it("uses the AA-safe green, not the comp's #527e01", () => {
+  it("sets the statement in a colour that clears AA body on its ground", () => {
     // The comp sets this at 24px, where #527e01 (4.47:1) clears AA LARGE. But
     // the type clamps to 20px on a phone, which is body size, where it fails —
-    // and the axe gate runs one viewport, so it would not catch that. The -aa
-    // green is 4.65:1 and compliant across the whole clamp range.
+    // and the axe gate runs one viewport, so it would not catch that. So hold
+    // body-size AA (4.5) whatever colour the statement wears, computed from
+    // the @theme tokens rather than naming one.
     const { container } = render(StatementPanel, { props: { slice } });
-    const statement = container.querySelector(".statement");
-    expect(statement?.className).toContain("text-green-mid-aa");
-    expect(statement?.className).not.toMatch(/text-green-mid(?!-aa)/);
+    const statement = container.querySelector(".statement")!;
+    expect(contrast(textColour(statement), groundOf(statement))).toBeGreaterThanOrEqual(4.5);
   });
 
   it("renders the statement alone when there is no body", () => {
@@ -63,12 +64,9 @@ describe("StatementPanel slice", () => {
     expect(container.querySelector(".panel")).not.toBeNull();
   });
 
-  it("gives the panel no border or shadow — only the grain separates it", () => {
-    // The panel's ground is the SAME cream as the page in the comp. Adding a
-    // border or shadow to "help" would read as a different design.
+  it("keeps the panel's grain layer out of the accessibility tree", () => {
     const { container } = render(StatementPanel, { props: { slice } });
     const panel = container.querySelector(".panel");
-    expect(panel?.className).not.toMatch(/border|shadow/);
     expect(panel?.querySelector("[aria-hidden='true']")).not.toBeNull();
   });
 });

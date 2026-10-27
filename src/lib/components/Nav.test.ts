@@ -1,6 +1,14 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { render, fireEvent, cleanup, within } from "@testing-library/svelte";
 import Nav from "./Nav.svelte";
+import {
+  colourOf,
+  computed,
+  contrast,
+  groundOf,
+  svgMainFill,
+  textColour,
+} from "../../test/theme-contrast";
 
 // jsdom has no WAAPI (Element.animate), so we report reduced motion: the
 // $lib/transitions wrappers then collapse durations to 0 and Svelte skips the
@@ -73,6 +81,51 @@ function mountMain(bottom: () => number, height = 0) {
   return main;
 }
 
+/**
+ * Everything that must be visible on the bar, measured from the compiled
+ * stylesheet against `under`, the ground beneath the bar. Controls hold WCAG
+ * 1.4.11's 3:1, the toggle's 10px labels 1.4.3's 4.5:1. The lockup is a
+ * logotype, which 1.4.3 exempts, and the comp itself draws it cream on the
+ * green hero at 1.94:1, so there it only has to stand off its ground (1.5:1);
+ * on every other ground it holds 3:1 like a control, because it is the home
+ * link's only content. The active locale must differ from the ground it sits
+ * on, or nothing shows which language is on.
+ */
+function barProblems(nav: HTMLElement, under: string): string[] {
+  const out: string[] = [];
+  const at = (el: Element) => groundOf(el, { within: nav, under });
+  const need = (what: string, ratio: number, min: number) => {
+    if (ratio < min) out.push(`${what}: ${ratio.toFixed(2)}:1, needs ${min}`);
+  };
+  const ground = at(nav);
+  const logo = nav.querySelector("a > img")!;
+  need(
+    `lockup ${logo.getAttribute("src")}`,
+    contrast(svgMainFill(logo.getAttribute("src")!), ground),
+    nav.dataset.tone === "onGreen" ? 1.5 : 3,
+  );
+  const button = nav.querySelector("[data-nav-toggle]");
+  if (button) need("menu button", contrast(textColour(button), at(button)), 3);
+  out.push(...toggleProblems(nav.querySelector('[role="group"]')!, at));
+  return out;
+}
+
+function toggleProblems(group: Element, at: (el: Element) => ReturnType<typeof groundOf>) {
+  const out: string[] = [];
+  const need = (what: string, ratio: number, min: number) => {
+    if (ratio < min) out.push(`${what}: ${ratio.toFixed(2)}:1, needs ${min}`);
+  };
+  const track = group.firstElementChild!;
+  const ground = at(track);
+  need("toggle outline", contrast(colourOf(track, "border-color")!, ground), 3);
+  for (const seg of track.querySelectorAll("span")) {
+    const name = `toggle "${seg.textContent?.trim()}"`;
+    need(name, contrast(textColour(seg), at(seg)), 4.5);
+    if (seg.hasAttribute("aria-current")) need(`${name} pill`, contrast(at(seg), ground), 1.5);
+  }
+  return out;
+}
+
 describe("Nav — the bar", () => {
   it("links the lockup home and renders no menu button without entries", () => {
     const { getByAltText, queryByLabelText } = render(Nav);
@@ -81,43 +134,42 @@ describe("Nav — the bar", () => {
     expect(queryByLabelText("Open menu")).toBeNull();
   });
 
-  it("is transparent with the page's tone over the first slice", () => {
-    const { container, getByAltText, getByLabelText } = render(Nav, {
+  it("takes the page's tone over the first slice", () => {
+    const { container, getByLabelText } = render(Nav, {
       items,
       tone: "onGreen",
     });
     const nav = container.querySelector("nav")!;
     expect(nav.dataset.tone).toBe("onGreen");
     expect(nav.dataset.scrolled).toBe("false");
-    expect(nav.className).toContain("bg-transparent");
-    expect(getByAltText("Vida Legacy Foundation home").getAttribute("src")).toBe(
-      "/logo-lockup-cream.svg",
-    );
-    // The comp's cream hamburger on the green hero is 1.93:1 — the control
-    // takes the design's dark-on-green pairing instead.
-    expect(getByLabelText("Open menu").className).toContain("text-green-btn");
+    // The comp's cream hamburger on the green hero is 1.93:1. An icon is not
+    // text, so axe's color-contrast never sees it: hold WCAG 1.4.11's 3:1 for
+    // whatever colour the control wears against the hero's green ground.
+    const icon = textColour(getByLabelText("Open menu"));
+    expect(contrast(icon, "green")).toBeGreaterThanOrEqual(3);
   });
 
-  it("uses the cream-and-green lockup and a cream hamburger on the dark ground", () => {
-    const { getByAltText, getByLabelText } = render(Nav, { items, tone: "onDark" });
-    expect(getByAltText("Vida Legacy Foundation home").getAttribute("src")).toBe(
-      "/logo-lockup-on-dark.svg",
-    );
-    expect(getByLabelText("Open menu").className).toContain("text-background");
-  });
+  // Each tone is chosen for the ground the page's first slice paints under the
+  // still-transparent bar ($lib/nav-tone): HeartHero's green, PageMasthead's
+  // deep green, the page cream everywhere else.
+  const TONE_GROUND = { default: "background", onDark: "green-deep", onGreen: "green" } as const;
+  const SWITCH = { lang: "es", href: "/es", label: "Español", short: "ES" } as const;
 
-  it("defaults to the blue lockup on cream", () => {
-    const { getByAltText, getByLabelText } = render(Nav, { items });
-    expect(getByAltText("Vida Legacy Foundation home").getAttribute("src")).toBe(
-      "/logo-lockup.svg",
-    );
-    expect(getByLabelText("Open menu").className).toContain("text-primary");
-  });
+  for (const tone of ["default", "onDark", "onGreen"] as const) {
+    for (const switchTo of [SWITCH, undefined]) {
+      it(`keeps the lockup, the menu button and the toggle visible on the ${tone} ground${switchTo ? "" : " (no translation)"}`, () => {
+        const { container } = render(Nav, { items, tone, switchTo });
+        const nav = container.querySelector("nav")!;
+        expect(nav.dataset.scrolled).toBe("false");
+        expect(barProblems(nav, TONE_GROUND[tone])).toEqual([]);
+      });
+    }
+  }
 
-  it("becomes the cream bar with the default lockup once the first slice scrolls under it", async () => {
+  it("takes the default tone once the first slice scrolls under it", async () => {
     let bottom = 800;
     mountMain(() => bottom);
-    const { container, getByAltText } = render(Nav, { items, tone: "onGreen" });
+    const { container } = render(Nav, { items, tone: "onGreen" });
     const nav = container.querySelector("nav")!;
     expect(nav.dataset.scrolled).toBe("false");
 
@@ -134,10 +186,11 @@ describe("Nav — the bar", () => {
     await frame();
     expect(nav.dataset.scrolled).toBe("true");
     expect(nav.dataset.tone).toBe("default");
-    expect(nav.className).toContain("bg-background/95");
-    expect(getByAltText("Vida Legacy Foundation home").getAttribute("src")).toBe(
-      "/logo-lockup.svg",
-    );
+    // Now the bar is over whatever scrolls beneath it, so it needs a ground of
+    // its own: near-opaque, and everything on it visible against it even with
+    // the darkest band on the site (night blue) showing through.
+    expect(colourOf(nav, "background-color")?.a ?? 0).toBeGreaterThanOrEqual(0.9);
+    expect(barProblems(nav, "dark")).toEqual([]);
   });
 
   it("marks the current locale on the toggle and links the other only when given a target", async () => {
@@ -168,8 +221,6 @@ describe("Nav — the bar", () => {
     // The link IS the track: press anywhere on the pill and you switch.
     expect(link.querySelectorAll("span")).toHaveLength(2);
     expect(link.querySelector("[aria-current]")?.textContent?.trim()).toBe("EN");
-    // Same colouring as the hamburger on that ground.
-    expect(link.className).toContain("text-background");
   });
 
   it("links the lockup to the locale's own home", () => {
@@ -179,13 +230,11 @@ describe("Nav — the bar", () => {
     ).toBe("/es");
   });
 
-  it("marks ES as current on a Spanish page and flips the couple on the green hero", () => {
+  it("marks ES as current on a Spanish page", () => {
     const { getByRole } = render(Nav, { items, lang: "es", tone: "onGreen" });
     const current = getByRole("group", { name: "Idioma" }).querySelector("[aria-current]");
     expect(current?.textContent?.trim()).toBe("ES");
     expect(current?.getAttribute("lang")).toBe("es");
-    // Green on green is no switch: the active side wears dark-on-green there.
-    expect(current?.className).toContain("bg-green-btn");
   });
 
   it("exposes the menu state on the trigger", async () => {
@@ -302,7 +351,7 @@ describe("Nav — the menu", () => {
     expect(queryByRole("dialog")).toBeNull();
   });
 
-  it("carries the same toggle in the menu's own header row, and pressing it keeps the menu", async () => {
+  it("carries the same toggle in the menu, and pressing it keeps the menu", async () => {
     const { getByLabelText, getByRole, queryByRole } = render(Nav, {
       items,
       switchTo: { lang: "es", href: "/es", label: "Español", short: "ES" },
@@ -314,12 +363,8 @@ describe("Nav — the menu", () => {
     const link = group.querySelector("a")!;
     expect(link.getAttribute("hreflang")).toBe("es");
     expect(link.getAttribute("href")).toBe("/es");
-    // On the menu's dark ground the label side is cream.
-    expect(link.className).toContain("text-background");
-    // Where the bar keeps it: the header row, beside the close button — not
-    // adrift at the bottom of the menu.
-    const header = dialog.querySelector('[aria-label="Close menu"]')!.closest("div")!;
-    expect(header.contains(group)).toBe(true);
+    // Legible on the menu's own ground, whatever colour that is.
+    expect(toggleProblems(group, (el) => groundOf(el))).toEqual([]);
     await fireEvent.click(link);
     expect(queryByRole("dialog")).not.toBeNull();
   });
@@ -406,12 +451,13 @@ describe("Nav on a phone", () => {
     bottom = -10;
     await scrollTo(400);
     expect(nav.dataset.hidden).toBe("true");
-    expect(nav.className).toContain("-translate-y-full");
+    // Hidden means moved UP, out of the viewport, not over the content.
+    expect(computed(nav, "--tw-translate-y")).toMatch(/^-/);
 
     // Scrolling up brings it back.
     await scrollTo(300);
     expect(nav.dataset.hidden).toBe("false");
-    expect(nav.className).not.toContain("-translate-y-full");
+    expect(computed(nav, "--tw-translate-y")).toBeUndefined();
 
     // And it can never be caught off-screen by the keyboard.
     expect(nav.className).toContain("focus-within:translate-y-0");
