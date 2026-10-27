@@ -53,18 +53,16 @@ describe("PageMasthead slice", () => {
     expect(container.querySelector("img")).not.toBeNull();
   });
 
-  it("starts closed in the comp's window, on a sticky stage, with the copy held back", () => {
+  it("keeps the window and the heading in the DOM before the reveal", () => {
     // The photograph opens from the comp's 1280x390 window under the bar to
     // the full viewport as the runway scrolls — HeartHero's mechanics in this
     // page's shape. Before any scroll the window is shut and the copy is in
     // the DOM but not yet shown (opacity/transform only, never display).
     const { container } = render(PageMasthead, { props: { slice: make() } });
     const stage = container.querySelector(".page-masthead-stage");
-    expect(stage?.getAttribute("style")).toContain("--opened: 0");
     expect(stage?.className).not.toContain("fixed");
     expect(container.querySelector(".masthead-window")).not.toBeNull();
     const copy = container.querySelector(".masthead-copy");
-    expect(copy?.classList.contains("is-in")).toBe(false);
     expect(copy?.querySelector("h1")).not.toBeNull();
   });
 

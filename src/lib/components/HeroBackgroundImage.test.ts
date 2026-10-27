@@ -101,13 +101,18 @@ describe("HeroBackgroundImage — the phone's crop", () => {
   });
 
   it("preloads exactly the file the picture will pick, per viewport", () => {
-    render(HeroBackgroundImage, { image: prismicImage(), portrait: 16 / 9 });
+    const { container } = render(HeroBackgroundImage, { image: prismicImage(), portrait: 16 / 9 });
+    // The breakpoint is whatever the rendered <source> uses; the preloads must
+    // agree with it, not with a number pinned here.
+    const media = container.querySelector("picture source")!.getAttribute("media")!;
+    expect(media, "the portrait <source> has no media query").toBeTruthy();
     const links = [...document.head.querySelectorAll<HTMLLinkElement>("link[rel='preload']")];
     expect(links).toHaveLength(2);
-    const phone = links.find((l) => l.media === "(max-width: 767px)")!;
+    const phone = links.find((l) => l.media === media)!;
+    expect(phone, "no preload matches the <source>'s media").toBeDefined();
     expect(phone.getAttribute("imagesrcset")).toContain("fit=crop");
-    const desktop = links.find((l) => l.media !== "(max-width: 767px)")!;
-    expect(desktop.media).toBe("not all and (max-width: 767px)");
+    const desktop = links.find((l) => l !== phone)!;
+    expect(desktop.media).toBe(`not all and ${media}`);
     expect(desktop.getAttribute("imagesrcset")).not.toContain("fit=crop");
   });
 

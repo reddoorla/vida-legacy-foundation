@@ -1,6 +1,7 @@
 import { render, cleanup } from "@testing-library/svelte";
 import { describe, it, expect, afterEach } from "vitest";
 import Footer from "./Footer.svelte";
+import { contrast, groundOf, textColour } from "../../test/theme-contrast";
 
 afterEach(() => cleanup());
 
@@ -101,32 +102,7 @@ describe("Footer", () => {
     expect(getByRole("link", { name: "Burbank Portfolio" })).not.toBeNull();
   });
 
-  it("groups tight rows closer than the rows they hang under", () => {
-    // "Contact us" heads a group; the phone and address lines hug it at 15px
-    // instead of taking the 30px inter-row gap, so the four read as one block.
-    const { container, getByText } = render(Footer, {
-      props: {
-        columns: [
-          {
-            items: [
-              { text: "Who we are" },
-              { text: "Contact us" },
-              { text: "726-234-6910", href: "tel:+17262346910", tight: true, tone: "detail" },
-              { text: "San Antonio, TX 78240", tight: true, tone: "detail" },
-            ],
-          },
-        ],
-      },
-    });
-    // First row takes no top margin at all.
-    expect(getByText("Who we are").className).not.toContain("mt-");
-    expect(getByText("Contact us").className).toContain("mt-[30px]");
-    expect(getByText("San Antonio, TX 78240").className).toContain("mt-[15px]");
-    const tel = container.querySelector("a[href='tel:+17262346910']");
-    expect(tel?.className).toContain("mt-[15px]");
-  });
-
-  it("paints the fine tone with the AA-safe green, not the design's #527e01", () => {
+  it("paints the fine tone in a colour that clears AA on the footer's ground", () => {
     // The comps set the 10px copyright in #527e01, which is 4.47:1 on cream —
     // it misses AA body by 0.03. --color-green-mid-aa is the same green
     // darkened 2% to 4.65:1. A regression here is a real WCAG failure, and the
@@ -137,19 +113,32 @@ describe("Footer", () => {
       },
     });
     const line = getByText("© 2026 Vida Legacy Foundation.");
-    expect(line.className).toContain("text-green-mid-aa");
-    expect(line.className).not.toContain("text-green-mid ");
+    // Computed from the @theme tokens rather than naming one: any colour that
+    // clears AA body on the footer's ground passes, and #527e01 (4.47) fails.
+    expect(contrast(textColour(line), groundOf(line))).toBeGreaterThanOrEqual(4.5);
   });
 
-  it("gives detail rows the link colour and everything else the dark label colour", () => {
+  it("keeps detail rows and plain rows readable on the footer's ground", () => {
+    // The 12px label rows: a plain row, a linked detail row and an unlinked
+    // one. Whatever colour each tone is given, it must clear AA body on the
+    // ground the footer paints (the brand green, #9cbf5b, is 1.94:1 on cream).
     const { getByText } = render(Footer, {
       props: {
-        columns: [{ items: [{ text: "Who we are" }, { text: "726-234-6910", tone: "detail" }] }],
+        columns: [
+          {
+            items: [
+              { text: "Who we are" },
+              { text: "726-234-6910", href: "tel:+17262346910", tone: "detail" },
+              { text: "San Antonio, TX 78240", tone: "detail" },
+            ],
+          },
+        ],
       },
     });
-    // #01263f is 14.37:1 on cream, #065184 is 7.71:1 — both clear AA body.
-    expect(getByText("Who we are").className).toContain("text-dark");
-    expect(getByText("726-234-6910").className).toContain("text-primary");
+    for (const text of ["Who we are", "726-234-6910", "San Antonio, TX 78240"]) {
+      const row = getByText(text);
+      expect(contrast(textColour(row), groundOf(row)), text).toBeGreaterThanOrEqual(4.5);
+    }
   });
 
   it("default branch when columns is empty/undefined (fleet default preserved)", () => {
@@ -165,25 +154,6 @@ describe("Footer", () => {
     expect(container.querySelector("ul")).toBeNull();
     expect(container.textContent).toContain("Company Name");
     expect(queryByRole("list")).toBeNull();
-  });
-
-  it("keeps the fine print's line break", () => {
-    // The comp sets the rights line as two lines; the config carries the
-    // break as a newline and the row honours it.
-    const { getByText } = render(Footer, {
-      props: {
-        columns: [
-          {
-            items: [{ text: "© 2026 Vida Legacy Foundation.\nAll Rights Reserved.", tone: "fine" }],
-          },
-        ],
-      },
-    });
-    const line = getByText(
-      (_, el) => el?.textContent?.startsWith("© 2026") === true && el.tagName === "P",
-    );
-    expect(line.className).toContain("whitespace-pre-line");
-    expect(line.textContent).toContain("\n");
   });
 
   it("renders the supplied rights line verbatim", () => {

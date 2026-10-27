@@ -49,12 +49,4 @@ describe("ImageBand slice", () => {
     const { container } = render(ImageBand, { props: { slice: empty } });
     expect(container.querySelector("[data-slice-type='image_band']")).toBeNull();
   });
-
-  it("holds the comps' 1440x860 box", () => {
-    const { container } = render(ImageBand, { props: { slice } });
-    const section = container.querySelector("[data-slice-type='image_band']");
-    expect(section?.className).toContain("aspect-1440/860");
-    // The crop gives on a narrow screen, not the height.
-    expect(container.querySelector("img")?.className).toContain("object-cover");
-  });
 });

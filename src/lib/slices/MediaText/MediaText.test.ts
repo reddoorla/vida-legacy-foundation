@@ -29,13 +29,7 @@ describe("MediaText slice", () => {
     expect(getByRole("img").getAttribute("alt")).toBe("Pool");
   });
 
-  it("reverses the image/copy order for imageLeft", () => {
-    const { container } = render(MediaText, {
-      props: { slice: makeSlice("imageLeft") },
-    });
-    // the editorial split reverses via grid order: the media column moves ahead
-    // of the copy column on large screens
-    const media = container.querySelector(".mt-media");
-    expect(media?.className).toContain("lg:order-1");
-  });
+  // Which side the photo sits on for "Image left" and "Image right" is a
+  // layout fact jsdom cannot compute: it is held in a real browser by
+  // tests/smoke/slice-simulator.spec.ts.
 });
