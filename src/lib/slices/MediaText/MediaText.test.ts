@@ -2,6 +2,7 @@ import { render } from "@testing-library/svelte";
 import { describe, it, expect } from "vitest";
 import type { Content } from "@prismicio/client";
 import MediaText from "./index.svelte";
+import { declaredAnywhere } from "../../../test/theme-contrast";
 
 function makeSlice(variation: "imageRight" | "imageLeft") {
   return {
@@ -27,5 +28,31 @@ describe("MediaText slice", () => {
     });
     expect(getByRole("heading", { level: 2 }).textContent).toContain("Amenities");
     expect(getByRole("img").getAttribute("alt")).toBe("Pool");
+  });
+
+  // The editor's "Image left" is the whole of that variation: at desktop width
+  // the image sits before the copy, and "Image right" keeps it after. jsdom
+  // lays nothing out, so this reads the `order` each column declares at the
+  // breakpoint (from the compiled stylesheet, 0 when none) and compares the
+  // two, then falls back to source order on a tie. No class or order value is
+  // named: any way of putting the image first passes.
+  const lgOrder = (el: Element) => {
+    const values = declaredAnywhere(el, "order").map(Number);
+    return values.length ? values[values.length - 1] : 0;
+  };
+  const imageFirst = (container: HTMLElement) => {
+    const media = container.querySelector("img")!.closest(".mt-media")!;
+    const copy = container.querySelector("h2")!.closest(".mt-copy")!;
+    const [m, c] = [lgOrder(media), lgOrder(copy)];
+    if (m !== c) return m < c;
+    return !!(media.compareDocumentPosition(copy) & Node.DOCUMENT_POSITION_FOLLOWING);
+  };
+
+  it("puts the image before the copy for imageLeft and after it for imageRight", () => {
+    const left = render(MediaText, { props: { slice: makeSlice("imageLeft") } });
+    expect(imageFirst(left.container), "imageLeft").toBe(true);
+    left.unmount();
+    const right = render(MediaText, { props: { slice: makeSlice("imageRight") } });
+    expect(imageFirst(right.container), "imageRight").toBe(false);
   });
 });
