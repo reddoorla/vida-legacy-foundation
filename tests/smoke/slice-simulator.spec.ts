@@ -110,12 +110,11 @@ test("/slice-simulator renders a slice the Type Builder sends it", async ({ page
 // resized from 1920px down, and at each width the photo must be on the chosen
 // side or the layout stacked; only at 1920, wider than any breakpoint the
 // band's 72rem content could split at, must there be columns, which also proves
-// the stylesheet is loaded before the narrower reads run. Loaded is not
-// re-evaluated: the frame can answer a read at the new width with the old
-// width's computed styles, so a side is accepted only when two consecutive
-// reads agree (see the poll below). A
-// wrong side at any width is red, so `xl:order-2` (wrong between 1024 and
-// 1279px) fails at 1024 while moving the whole split to `xl` passes.
+// the stylesheet is loaded. Loaded is not re-evaluated: a frame resized in place
+// can answer a read with the old width's computed styles, so each width gets a
+// fresh page whose frame is created at that width (see the loop below). A wrong
+// side at any width is red, so `xl:order-2` (wrong between 1024 and 1279px)
+// fails at 1024 while moving the whole split to `xl` passes.
 // "Stacked" means the two columns do not overlap vertically, so a stacked
 // layout that narrows or centres one column is still stacked (review 5);
 // left edges are compared only when the columns share a row.
@@ -152,54 +151,50 @@ const WIDTHS = [1920, 1440, 1280, 1024];
 
 for (const variation of ["imageLeft", "imageRight"] as const) {
   test(`MediaText ${variation} never puts the photo on the other side`, async ({
-    page,
+    context,
     baseURL,
   }) => {
-    await page.route("https://images.prismic.io/**", (route) => route.abort());
-    await page.setViewportSize({ width: 2000, height: 900 });
-    await simulate(page, baseURL, [MEDIA_TEXT(variation)]);
-    const frame = page.frameLocator("iframe");
-    const section = frame.locator('.slice-simulator--root [data-slice-type="media_text"]');
-    await expect(section).toHaveCount(1);
     const chosen = variation === "imageLeft" ? "photo left" : "photo right";
     for (const width of WIDTHS) {
-      await page.locator("iframe").evaluate((el, w) => {
-        (el as HTMLIFrameElement).width = String(w);
-      }, width);
-      // The previous read at this width. A read is returned only when it
-      // matches the one before it; otherwise the poll says "settling" and
-      // reads again, so one read that has not yet picked up the new width's
-      // styles cannot decide the side.
-      let previous: string | undefined;
-      await expect
-        .poll(
-          async () => {
-            const read = await section.evaluate((el, w) => {
-              if (el.ownerDocument.defaultView!.innerWidth !== w) return "frame not resized";
-              const img = el.querySelector("img");
-              const heading = el.querySelector("h2");
-              if (!img || !heading) return "photo or heading missing";
-              // The column each sits in: the ancestor whose parent also
-              // holds the other.
-              const column = (node: Element, other: Element) => {
-                let n = node;
-                while (n.parentElement && !n.parentElement.contains(other)) n = n.parentElement;
-                return n.getBoundingClientRect();
-              };
-              const photo = column(img, heading);
-              const copy = column(heading, img);
-              if (photo.bottom <= copy.top || copy.bottom <= photo.top) return "stacked";
-              if (photo.left < copy.left) return "photo left";
-              if (photo.left > copy.left) return "photo right";
-              return "stacked";
-            }, width);
-            const agreed = read === previous;
-            previous = read;
-            return agreed ? read : "settling";
-          },
-          { message: `${variation} at a ${width}px frame` },
-        )
-        .toMatch(width === WIDTHS[0] ? chosen : new RegExp(`^(${chosen}|stacked)$`));
+      // A fresh page per width: its frame is created at this width, so no
+      // earlier width's styles exist to answer the read.
+      const page = await context.newPage();
+      try {
+        await page.route("https://images.prismic.io/**", (route) => route.abort());
+        await page.setViewportSize({ width: 2000, height: 900 });
+        await simulate(page, baseURL, [MEDIA_TEXT(variation)], width);
+        const section = page
+          .frameLocator("iframe")
+          .locator('.slice-simulator--root [data-slice-type="media_text"]');
+        await expect(section).toHaveCount(1);
+        await expect
+          .poll(
+            () =>
+              section.evaluate((el, w) => {
+                if (el.ownerDocument.defaultView!.innerWidth !== w) return "frame not resized";
+                const img = el.querySelector("img");
+                const heading = el.querySelector("h2");
+                if (!img || !heading) return "photo or heading missing";
+                // The column each sits in: the ancestor whose parent also
+                // holds the other.
+                const column = (node: Element, other: Element) => {
+                  let n = node;
+                  while (n.parentElement && !n.parentElement.contains(other)) n = n.parentElement;
+                  return n.getBoundingClientRect();
+                };
+                const photo = column(img, heading);
+                const copy = column(heading, img);
+                if (photo.bottom <= copy.top || copy.bottom <= photo.top) return "stacked";
+                if (photo.left < copy.left) return "photo left";
+                if (photo.left > copy.left) return "photo right";
+                return "stacked";
+              }, width),
+            { message: `${variation} at a ${width}px frame` },
+          )
+          .toMatch(width === WIDTHS[0] ? chosen : new RegExp(`^(${chosen}|stacked)$`));
+      } finally {
+        await page.close();
+      }
     }
   });
 }
