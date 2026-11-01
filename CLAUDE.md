@@ -10,13 +10,60 @@ pnpm verify
 ```
 
 That is exactly what CI runs, in CI's order (prettier → eslint → svelte-check →
-build → axe audit → unit + smoke). Run it instead of guessing which subset
+build → axe audit → unit + the `@smoke` Playwright tier). Run it instead of guessing which subset
 matters — a red CI on a site repo costs a round trip through review.
 
 Formatting is enforced on `.svelte` files too: the plugin loads from
 `.prettierrc`, not from a CLI flag. Don't reintroduce `--plugin` to the `lint`
 script — with no config file, `prettier --check .` silently skips every
 `.svelte` file, and that is exactly the hole the config closes.
+
+## Tests build; they don't freeze
+
+Tests are how an agent builds against a comp without a human watching: a
+geometry spec that measures a band against the Figma frame is exactly the
+instrument that gets the band right. Once the slice ships, the same spec
+becomes a fence around a design decision a human is entitled to change, and it
+turns a one-line tweak into a CI round trip. On roalson-interests a taller
+masthead, a back button and an arrow on a button cost the developer five gutted
+tests (roalson-interests#251), and not one of the five reds was a bug.
+reddoor-starter ships the tiers that site adopted (roalson-interests#256); this
+repo took them in the fleet test audit's batch A. The suite is tiered by what a
+red _means_:
+
+| Tier                | Command                                     | Runs                                    | Holds                                                                                                                                       |
+| ------------------- | ------------------------------------------- | --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Gate** (contract) | `pnpm test` (vitest + Playwright `@smoke`)  | every PR, inside the required `ci / ci` | what a client would call a bug: links and their targets, the form, keyboard and focus, no-JS, accessible names, AA contrast, data, SEO, CSP |
+| **Scaffold**        | `pnpm test:scaffold` (`pnpm test:e2e`: all) | on demand, while building               | comp geometry, pixel and computed-style pins, the numbers a slice was built to                                                              |
+
+There is no nightly tier here yet: no Playwright spec is real behaviour that
+races a clock. When one is, add `test:nightly` (a list of spec paths) and a
+`nightly.yml` adapted from reddoor-starter's, rather than widening a window.
+
+- **A human's design change wins.** When a size, spacing, colour that still
+  passes AA, duration, border, or an added button or link turns a test red,
+  the test is what is wrong: update it or delete it in the same PR. Never revert
+  the change to satisfy the test, and never argue for the pinned value.
+- **Design values never enter the gate.** A gate test asserts what a user or a
+  caller observes, never a Tailwind class list, a px, a ms, an opacity, or a
+  recorded contrast ratio to four places (assert `>= 4.5`). Exact-list equality
+  over things a designer may add to (every link on the page, every button,
+  "exactly nine") is a pin: assert the item that matters is _in_ the list.
+- **Never assert on source as text.** A test that reads a `.svelte` or `.css`
+  file and regexes a class out of it restates the implementation, so every
+  edit is two edits. Parsing `@theme` tokens to compute contrast is fine: that
+  computes a property, it does not restate a string.
+- **Build against the comp freely.** New geometry and timing specs are welcome
+  while a slice is being built; leave them untagged and they land in the
+  scaffold tier, where they are allowed to go stale once a human takes over the
+  design.
+- **`@smoke` is earned.** A Playwright test tagged `{ tag: "@smoke" }` has no
+  fixed sleeps, no frame counting, no animation windows, no
+  `boundingBox`/`near()` (nor `getBoundingClientRect`), no computed-style colour
+  or size, and no element count a new button would change. An untagged
+  Playwright spec still runs in `pnpm test:scaffold`, not in CI.
+- **A flaky timing test leaves the gate; its window does not widen.** Move it to
+  a nightly list, or delete it if it guards nothing a client would notice.
 
 ## Concurrent sessions
 

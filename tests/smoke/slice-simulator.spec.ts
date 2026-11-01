@@ -3,7 +3,7 @@ import { test, expect, type Page } from "@playwright/test";
 const PRISMIC_FRAMER = "https://*.prismic.io";
 
 for (const path of ["/slice-simulator", "/slice%2Dsimulator", "/slice%2dsimulator"]) {
-  test(`${path} lets Prismic frame it`, async ({ request }) => {
+  test(`${path} lets Prismic frame it`, { tag: "@smoke" }, async ({ request }) => {
     const response = await request.get(path, { maxRedirects: 0 });
     expect(response.status()).toBe(200);
     expect(response.headers()["x-frame-options"]).toBeUndefined();
@@ -84,17 +84,21 @@ async function simulate(page: Page, baseURL: string | undefined, slices: unknown
     .toBe(200);
 }
 
-test("/slice-simulator renders a slice the Type Builder sends it", async ({ page, baseURL }) => {
-  const errors: Error[] = [];
-  page.on("pageerror", (error) => errors.push(error));
-  await simulate(page, baseURL, [SLICE]);
-  const slice = page
-    .frameLocator("iframe")
-    .locator('.slice-simulator--root [data-slice-type="stats_band"]');
-  await expect(slice).toContainText(EYEBROW);
-  await expect(slice.locator('a[href="https://example.org/"]')).toContainText(CTA);
-  expect(errors).toEqual([]);
-});
+test(
+  "/slice-simulator renders a slice the Type Builder sends it",
+  { tag: "@smoke" },
+  async ({ page, baseURL }) => {
+    const errors: Error[] = [];
+    page.on("pageerror", (error) => errors.push(error));
+    await simulate(page, baseURL, [SLICE]);
+    const slice = page
+      .frameLocator("iframe")
+      .locator('.slice-simulator--root [data-slice-type="stats_band"]');
+    await expect(slice).toContainText(EYEBROW);
+    await expect(slice.locator('a[href="https://example.org/"]')).toContainText(CTA);
+    expect(errors).toEqual([]);
+  },
+);
 
 // MediaText's variation is the editor's choice of side: wherever the layout
 // has two columns, "Image left" puts the photo left of the copy and "Image
@@ -122,8 +126,11 @@ test("/slice-simulator renders a slice the Type Builder sends it", async ({ page
 // The read uses getBoundingClientRect, which "`@smoke` is earned" bans in the
 // gate as `boundingBox`. The rule exists to keep px out of the gate, and this
 // compares only which column's left edge comes first; no position or size is
-// asserted, and a gap change passes. This file has no `@smoke` tag: every spec
-// under tests/smoke runs in `pnpm test`, and nothing here selects on the tag.
+// asserted, and a gap change passes. It is still left untagged: the rule is
+// written as a ban on the read, not on what is compared, and the check has a
+// history of answering from a stale layout (reviews 5 to 7 of #127), which is
+// what a gate test may not do. It runs in `pnpm test:scaffold` and
+// `pnpm test:e2e`.
 const MEDIA_TEXT = (variation: "imageLeft" | "imageRight") => ({
   id: `media_text$${variation}`,
   slice_type: "media_text",
@@ -199,10 +206,14 @@ for (const variation of ["imageLeft", "imageRight"] as const) {
   });
 }
 
-test("an ordinary page stays SAMEORIGIN and does not let Prismic frame it", async ({ request }) => {
-  const response = await request.get("/contact");
-  expect(response.status()).toBe(200);
-  expect(response.headers()["x-frame-options"]).toBe("SAMEORIGIN");
-  const policy = response.headers()["content-security-policy"] ?? "";
-  expect(policy.match(/frame-ancestors[^;]*/)?.[0] ?? "").not.toContain(PRISMIC_FRAMER);
-});
+test(
+  "an ordinary page stays SAMEORIGIN and does not let Prismic frame it",
+  { tag: "@smoke" },
+  async ({ request }) => {
+    const response = await request.get("/contact");
+    expect(response.status()).toBe(200);
+    expect(response.headers()["x-frame-options"]).toBe("SAMEORIGIN");
+    const policy = response.headers()["content-security-policy"] ?? "";
+    expect(policy.match(/frame-ancestors[^;]*/)?.[0] ?? "").not.toContain(PRISMIC_FRAMER);
+  },
+);

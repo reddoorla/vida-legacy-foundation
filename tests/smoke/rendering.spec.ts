@@ -46,7 +46,7 @@ for (const { path, name } of [
   { path: "/es", name: "HeartHero (es)" },
   { path: "/about", name: "PageMasthead" },
 ]) {
-  test(`${path} paints its only heading (${name})`, async ({ page }) => {
+  test(`${path} paints its only heading (${name})`, { tag: "@smoke" }, async ({ page }) => {
     await page.goto(path, { waitUntil: "domcontentloaded" });
     const h1 = page.locator("#main-content h1").first();
     await expect(h1, `no <h1> rendered on ${path}`).toBeAttached();
@@ -136,33 +136,37 @@ test("/ opens the heart far enough to cover the band", async ({ page }) => {
     .toMatchObject({ stageCollapsed: false, coversWidth: true, coversHeight: true });
 });
 
-test("/ shows the real stat figures, not the count's starting zeros", async ({ page }) => {
-  // CountUp's visible layer is a tween that starts at `startValue` and is run
-  // by onMount, so with no script the band read "0+", "0 people", "0%",
-  // "0 lives" — not unanimated but WRONG, while the sr-only sibling carried
-  // the truth all along, which is why nothing in the suite could see it.
-  await page.goto("/", { waitUntil: "load" });
-  const figures = () =>
-    page.locator('[data-slice-type="stats_band"] [aria-hidden="true"]').evaluateAll((els) =>
-      els
-        .filter((el) => getComputedStyle(el).display !== "none")
-        .map((el) => (el.textContent ?? "").trim())
-        .filter(Boolean),
-    );
+test(
+  "/ shows the real stat figures, not the count's starting zeros",
+  { tag: "@smoke" },
+  async ({ page }) => {
+    // CountUp's visible layer is a tween that starts at `startValue` and is run
+    // by onMount, so with no script the band read "0+", "0 people", "0%",
+    // "0 lives" — not unanimated but WRONG, while the sr-only sibling carried
+    // the truth all along, which is why nothing in the suite could see it.
+    await page.goto("/", { waitUntil: "load" });
+    const figures = () =>
+      page.locator('[data-slice-type="stats_band"] [aria-hidden="true"]').evaluateAll((els) =>
+        els
+          .filter((el) => getComputedStyle(el).display !== "none")
+          .map((el) => (el.textContent ?? "").trim())
+          .filter(Boolean),
+      );
 
-  await expect
-    .poll(figures, { message: "no stat figures found — check the selector" })
-    .not.toHaveLength(0);
-  // Polled because with scripts the tween genuinely passes through zero on its
-  // way to the real number; the assertion is about where it comes to rest.
-  await expect
-    .poll(async () => (await figures()).filter((f) => /^0\b/.test(f)), {
-      message: "stats still reading zero",
-    })
-    .toEqual([]);
-});
+    await expect
+      .poll(figures, { message: "no stat figures found — check the selector" })
+      .not.toHaveLength(0);
+    // Polled because with scripts the tween genuinely passes through zero on its
+    // way to the real number; the assertion is about where it comes to rest.
+    await expect
+      .poll(async () => (await figures()).filter((f) => /^0\b/.test(f)), {
+        message: "stats still reading zero",
+      })
+      .toEqual([]);
+  },
+);
 
-test("/ paints one figure per stat, not both candidates", async ({ page }) => {
+test("/ paints one figure per stat, not both candidates", { tag: "@smoke" }, async ({ page }) => {
   // The other half of the coupling. CountUp renders `.countup-live` and
   // `.countup-nojs`, both aria-hidden, and app.css plus the <noscript><style>
   // in app.html decide which one paints. A class name that drifts out of step
@@ -196,67 +200,75 @@ test("/ paints one figure per stat, not both candidates", async ({ page }) => {
     .toEqual(await roots.evaluateAll((els) => els.map(() => 1)));
 });
 
-test("a card shows exactly one bio, whichever half of the coupling is live", async ({ page }) => {
-  // /about carries no bios today, and a card only opens when it has one, so
-  // the fixtures page is the only rendered bio on the site.
-  //
-  // The two halves are opposites — with scripts the bio belongs to the pop-up
-  // alone and `.person-bio-nojs` is display:none, which also keeps it out of
-  // the accessibility tree; without scripts the pop-up cannot open and the
-  // inline bio is the only copy there is. So the invariant is not "shown" or
-  // "hidden", it is that exactly one of the two is reachable, and it is stated
-  // that way here so it can run in every cell rather than twice with opposite
-  // expectations.
-  const { scripts } = state();
-  await page.goto("/dev/a11y-fixtures", { waitUntil: "load" });
-  const bios = page.locator(".person-bio-nojs");
-  expect(await bios.count(), "the fixtures page no longer renders a bio").toBeGreaterThan(0);
+test(
+  "a card shows exactly one bio, whichever half of the coupling is live",
+  { tag: "@smoke" },
+  async ({ page }) => {
+    // /about carries no bios today, and a card only opens when it has one, so
+    // the fixtures page is the only rendered bio on the site.
+    //
+    // The two halves are opposites — with scripts the bio belongs to the pop-up
+    // alone and `.person-bio-nojs` is display:none, which also keeps it out of
+    // the accessibility tree; without scripts the pop-up cannot open and the
+    // inline bio is the only copy there is. So the invariant is not "shown" or
+    // "hidden", it is that exactly one of the two is reachable, and it is stated
+    // that way here so it can run in every cell rather than twice with opposite
+    // expectations.
+    const { scripts } = state();
+    await page.goto("/dev/a11y-fixtures", { waitUntil: "load" });
+    const bios = page.locator(".person-bio-nojs");
+    expect(await bios.count(), "the fixtures page no longer renders a bio").toBeGreaterThan(0);
 
-  await expect
-    .poll(
-      () =>
-        bios.evaluateAll(
-          (els) => els.filter((el) => getComputedStyle(el).display !== "none").length,
-        ),
-      {
-        message: scripts
-          ? "a card bio is visible even though the pop-up can open it"
-          : "no bio revealed on a card that has no other way to show one",
-      },
-    )
-    .toBe(scripts ? 0 : await bios.count());
-});
-
-test("/ pins the lead paragraph only on a screen that can hold it", async ({ page }) => {
-  // A pinned band gets covered by the next one, which is the comp's effect —
-  // but it only works where the band's own copy fits above the band covering
-  // it. The mission paragraph is taller than a 390x664 phone, so the columns
-  // band slid up over a paragraph still mid-sentence and cut it at "and
-  // embraced while connecting" (Nicole, on Discord 2026-09-09).
-  //
-  // The class assertion for this lives in the slice's unit test; what can only
-  // be checked here is that the CSS behind the class actually wins — it sits
-  // at the same specificity as the rule it overrides, so it is source order
-  // that decides, and nothing but a real cascade proves that.
-  const { width } = state();
-  await page.goto("/", { waitUntil: "domcontentloaded" });
-  const band = page
-    .locator('main > section[data-slice-type="lead_text"][data-slice-variation="onDark"]')
-    .first();
-  await expect(band, "the home page no longer opens with the lead paragraph").toHaveCount(1);
-
-  // Only the phone half is a contract: whether a wide screen pins the band is
-  // the comp's effect, a design value a human may change. The poll waits for
-  // the in-flow value the stylesheet gives, not merely "not sticky", which
-  // `static` (before the CSS applies) would also satisfy. "relative" is what
-  // `main > section` gives every in-flow band for paint order; a change that
-  // makes in-flow sections `static` keeps the phone contract but turns this
-  // red, and that trade is chosen, not missed.
-  if (width < 768) {
     await expect
-      .poll(() => band.evaluate((el) => getComputedStyle(el).position), {
-        message: "the lead paragraph is still pinned on a screen too short to hold it",
-      })
-      .toBe("relative");
-  }
-});
+      .poll(
+        () =>
+          bios.evaluateAll(
+            (els) => els.filter((el) => getComputedStyle(el).display !== "none").length,
+          ),
+        {
+          message: scripts
+            ? "a card bio is visible even though the pop-up can open it"
+            : "no bio revealed on a card that has no other way to show one",
+        },
+      )
+      .toBe(scripts ? 0 : await bios.count());
+  },
+);
+
+test(
+  "/ pins the lead paragraph only on a screen that can hold it",
+  { tag: "@smoke" },
+  async ({ page }) => {
+    // A pinned band gets covered by the next one, which is the comp's effect —
+    // but it only works where the band's own copy fits above the band covering
+    // it. The mission paragraph is taller than a 390x664 phone, so the columns
+    // band slid up over a paragraph still mid-sentence and cut it at "and
+    // embraced while connecting" (Nicole, on Discord 2026-09-09).
+    //
+    // The class assertion for this lives in the slice's unit test; what can only
+    // be checked here is that the CSS behind the class actually wins — it sits
+    // at the same specificity as the rule it overrides, so it is source order
+    // that decides, and nothing but a real cascade proves that.
+    const { width } = state();
+    await page.goto("/", { waitUntil: "domcontentloaded" });
+    const band = page
+      .locator('main > section[data-slice-type="lead_text"][data-slice-variation="onDark"]')
+      .first();
+    await expect(band, "the home page no longer opens with the lead paragraph").toHaveCount(1);
+
+    // Only the phone half is a contract: whether a wide screen pins the band is
+    // the comp's effect, a design value a human may change. The poll waits for
+    // the in-flow value the stylesheet gives, not merely "not sticky", which
+    // `static` (before the CSS applies) would also satisfy. "relative" is what
+    // `main > section` gives every in-flow band for paint order; a change that
+    // makes in-flow sections `static` keeps the phone contract but turns this
+    // red, and that trade is chosen, not missed.
+    if (width < 768) {
+      await expect
+        .poll(() => band.evaluate((el) => getComputedStyle(el).position), {
+          message: "the lead paragraph is still pinned on a screen too short to hold it",
+        })
+        .toBe("relative");
+    }
+  },
+);
