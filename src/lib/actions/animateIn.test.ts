@@ -150,6 +150,8 @@ describe("animateIn — viewport mode", () => {
     expect(parseFloat(far.style.transitionDelay)).toBeGreaterThan(
       parseFloat(near.style.transitionDelay),
     );
+    // parseFloat drops the unit; a ms-to-s slip would make every reveal 1000x late.
+    expect(far.style.transitionDelay).toMatch(/ms$/);
   });
 
   it("staggers by index x step when `stagger` is set", () => {
