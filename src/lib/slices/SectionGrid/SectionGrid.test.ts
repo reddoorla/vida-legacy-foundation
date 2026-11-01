@@ -81,14 +81,12 @@ describe("SectionGrid onDark variation", () => {
     expect(link?.getAttribute("href")).toBe("https://example.com/about");
   });
 
-  it("sits in the columns band's right-hand column unless asked to fill", () => {
+  it("floats right in the columns band unless asked to fill", () => {
+    // The layout the editor chose, as companionRun reads it off the section.
     const { container, rerender } = render(SectionGrid, { props: { slice: onDark as never } });
-    const grid = container.querySelector(".grid-card")?.parentElement;
-    expect(grid?.className).toContain("md:w-[73.63%]");
+    expect(container.querySelector("section")?.dataset.layout).toBe("float-right");
     rerender({ slice: { ...onDark, primary: { ...onDark.primary, layout: "fill" } } as never });
-    expect(container.querySelector(".grid-card")?.parentElement?.className).not.toContain(
-      "md:w-[73.63%]",
-    );
+    expect(container.querySelector("section")?.dataset.layout).toBe("fill");
   });
 
   it("does NOT fall through to the media-inferred modes", () => {

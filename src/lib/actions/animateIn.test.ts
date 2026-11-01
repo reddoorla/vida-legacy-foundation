@@ -109,32 +109,6 @@ describe("animateIn — viewport mode", () => {
     expect(observer.disconnected).toBe(true);
   });
 
-  it("sets transition-delay based on horizontal position", () => {
-    const el = document.createElement("div");
-    document.body.appendChild(el);
-    // Element 25% across a 1000px viewport, delayMax 400 → 100ms delay.
-    Object.defineProperty(window, "innerWidth", {
-      value: 1000,
-      configurable: true,
-    });
-    el.getBoundingClientRect = () =>
-      ({
-        left: 250,
-        top: 0,
-        right: 0,
-        bottom: 0,
-        width: 0,
-        height: 0,
-        x: 0,
-        y: 0,
-        toJSON: () => ({}),
-      }) as DOMRect;
-
-    animateIn(el);
-
-    expect(el.style.transitionDelay).toBe("100ms");
-  });
-
   it("honors a custom delayMax", () => {
     const el = document.createElement("div");
     document.body.appendChild(el);

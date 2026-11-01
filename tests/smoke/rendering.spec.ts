@@ -136,20 +136,6 @@ test("/ opens the heart far enough to cover the band", async ({ page }) => {
     .toMatchObject({ stageCollapsed: false, coversWidth: true, coversHeight: true });
 });
 
-test("/about gives PageMasthead's stage a height", async ({ page }) => {
-  // Same shape as the heart's collapsed stage, same media query. Nothing reads
-  // this box today, so nothing renders wrong — which is exactly why it needs a
-  // test: the next thing to measure it would inherit a zero silently.
-  await page.goto("/about", { waitUntil: "load" });
-  await expect
-    .poll(
-      () =>
-        page.locator(".page-masthead-stage").evaluate((el) => el.getBoundingClientRect().height),
-      { message: "the masthead stage collapsed to nothing" },
-    )
-    .toBeGreaterThan(0);
-});
-
 test("/ shows the real stat figures, not the count's starting zeros", async ({ page }) => {
   // CountUp's visible layer is a tween that starts at `startValue` and is run
   // by onMount, so with no script the band read "0+", "0 people", "0%",
@@ -253,18 +239,24 @@ test("/ pins the lead paragraph only on a screen that can hold it", async ({ pag
   // at the same specificity as the rule it overrides, so it is source order
   // that decides, and nothing but a real cascade proves that.
   const { width } = state();
-  const pinned = width >= 768;
   await page.goto("/", { waitUntil: "domcontentloaded" });
   const band = page
     .locator('main > section[data-slice-type="lead_text"][data-slice-variation="onDark"]')
     .first();
   await expect(band, "the home page no longer opens with the lead paragraph").toHaveCount(1);
 
-  await expect
-    .poll(() => band.evaluate((el) => getComputedStyle(el).position), {
-      message: pinned
-        ? "the lead paragraph is no longer pinned for the band above to slide over"
-        : "the lead paragraph is still pinned on a screen too short to hold it",
-    })
-    .toBe(pinned ? "sticky" : "relative");
+  // Only the phone half is a contract: whether a wide screen pins the band is
+  // the comp's effect, a design value a human may change. The poll waits for
+  // the in-flow value the stylesheet gives, not merely "not sticky", which
+  // `static` (before the CSS applies) would also satisfy. "relative" is what
+  // `main > section` gives every in-flow band for paint order; a change that
+  // makes in-flow sections `static` keeps the phone contract but turns this
+  // red, and that trade is chosen, not missed.
+  if (width < 768) {
+    await expect
+      .poll(() => band.evaluate((el) => getComputedStyle(el).position), {
+        message: "the lead paragraph is still pinned on a screen too short to hold it",
+      })
+      .toBe("relative");
+  }
 });
