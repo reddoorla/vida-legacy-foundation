@@ -110,7 +110,10 @@ test("/slice-simulator renders a slice the Type Builder sends it", async ({ page
 // resized from 1920px down, and at each width the photo must be on the chosen
 // side or the layout stacked; only at 1920, wider than any breakpoint the
 // band's 72rem content could split at, must there be columns, which also proves
-// the stylesheet has applied before the narrower reads accept "stacked". A
+// the stylesheet is loaded before the narrower reads run. Loaded is not
+// re-evaluated: the frame can answer a read at the new width with the old
+// width's computed styles, so a side is accepted only when two consecutive
+// reads agree (see the poll below). A
 // wrong side at any width is red, so `xl:order-2` (wrong between 1024 and
 // 1279px) fails at 1024 while moving the whole split to `xl` passes.
 // "Stacked" means the two columns do not overlap vertically, so a stacked
@@ -163,10 +166,15 @@ for (const variation of ["imageLeft", "imageRight"] as const) {
       await page.locator("iframe").evaluate((el, w) => {
         (el as HTMLIFrameElement).width = String(w);
       }, width);
+      // The previous read at this width. A read is returned only when it
+      // matches the one before it; otherwise the poll says "settling" and
+      // reads again, so one read that has not yet picked up the new width's
+      // styles cannot decide the side.
+      let previous: string | undefined;
       await expect
         .poll(
-          () =>
-            section.evaluate((el, w) => {
+          async () => {
+            const read = await section.evaluate((el, w) => {
               if (el.ownerDocument.defaultView!.innerWidth !== w) return "frame not resized";
               const img = el.querySelector("img");
               const heading = el.querySelector("h2");
@@ -184,7 +192,11 @@ for (const variation of ["imageLeft", "imageRight"] as const) {
               if (photo.left < copy.left) return "photo left";
               if (photo.left > copy.left) return "photo right";
               return "stacked";
-            }, width),
+            }, width);
+            const agreed = read === previous;
+            previous = read;
+            return agreed ? read : "settling";
+          },
           { message: `${variation} at a ${width}px frame` },
         )
         .toMatch(width === WIDTHS[0] ? chosen : new RegExp(`^(${chosen}|stacked)$`));
