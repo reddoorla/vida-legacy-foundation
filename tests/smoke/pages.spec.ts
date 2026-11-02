@@ -184,10 +184,16 @@ test.describe("without JavaScript", () => {
             const cs = getComputedStyle(el);
             const visuallyHidden =
               cs.clipPath === "inset(50%)" || cs.clip === "rect(0px, 0px, 0px, 0px)";
+            const clipsY = cs.overflowY === "hidden" || cs.overflowY === "clip";
+            // Horizontally only text cut to an ellipsis counts (`truncate`): an
+            // image cropped by `object-cover` inside a clipping frame is not.
+            const clipsX =
+              (cs.overflowX === "hidden" || cs.overflowX === "clip") &&
+              cs.textOverflow === "ellipsis";
             return (
-              (cs.overflowY === "hidden" || cs.overflowY === "clip") &&
               !visuallyHidden &&
-              el.scrollHeight > el.clientHeight
+              ((clipsY && el.scrollHeight > el.clientHeight) ||
+                (clipsX && el.scrollWidth > el.clientWidth))
             );
           });
         });
@@ -274,15 +280,23 @@ for (const path of ["/about", "/es/about"]) {
             // line without the card's scrollHeight seeing it.
             for (const el of [li, ...li.querySelectorAll("*")]) {
               const cs = getComputedStyle(el);
-              if (cs.overflowY !== "hidden" && cs.overflowY !== "clip") continue;
+              const clipsY = cs.overflowY === "hidden" || cs.overflowY === "clip";
+              // Horizontally only text cut to an ellipsis counts (`truncate`): an
+              // image cropped by `object-cover` inside a clipping frame is not.
+              const clipsX =
+                (cs.overflowX === "hidden" || cs.overflowX === "clip") &&
+                cs.textOverflow === "ellipsis";
+              if (!clipsY && !clipsX) continue;
               // A scroll container reaches every word, and `sr-only` is a
               // visually-hidden 1px box by design: neither is a cut-off.
               if (cs.clipPath === "inset(50%)" || cs.clip === "rect(0px, 0px, 0px, 0px)") continue;
-              if (el.scrollHeight > el.clientHeight) {
+              // Vertical cut-off (max-height, line-clamp) or horizontal
+              // (`truncate`, which hides the tail of a line behind an ellipsis).
+              const cutY = clipsY ? el.scrollHeight - el.clientHeight : 0;
+              const cutX = clipsX ? el.scrollWidth - el.clientWidth : 0;
+              if (cutY > 0 || cutX > 0) {
                 const name = li.querySelector("h2, h3, h4, h5")?.textContent?.trim() ?? "?";
-                out.push(
-                  `${w}px: ${JSON.stringify(name)} clipped by ${el.scrollHeight - el.clientHeight}px`,
-                );
+                out.push(`${w}px: ${JSON.stringify(name)} clipped by ${Math.max(cutY, cutX)}px`);
                 break;
               }
             }

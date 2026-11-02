@@ -72,7 +72,7 @@ for (const { path, name } of [
       // the scroll runway, and the state under test must be shorter than it.
       // Two of the page's own boxes and no number, so a pacing change to the
       // runway (260vh to 190vh) or a taller comp band neither disarms nor trips
-      // it. Left at frame 0, the runway is screens of one unchanging frame with
+      // it, and a design that drops the opening passes. Left at frame 0, the runway is screens of one unchanging frame with
       // the page's copy at opacity 0 above it.
       const { viewport, baseURL } = test.info().project.use;
       const live = await browser.newContext({
@@ -82,6 +82,7 @@ for (const { path, name } of [
         reducedMotion: "no-preference",
       });
       let runway: number;
+      let liveScreens: number;
       try {
         const lp = await live.newPage();
         await lp.goto(path, { waitUntil: "domcontentloaded" });
@@ -89,11 +90,24 @@ for (const { path, name } of [
           .locator("#main-content > section")
           .first()
           .evaluate((el) => el.getBoundingClientRect().height);
+        liveScreens = await lp.evaluate(() => window.innerHeight);
       } finally {
         await live.close();
       }
       expect(runway, `${path} has no live runway to compare with`).toBeGreaterThan(0);
       await page.goto(path, { waitUntil: "domcontentloaded" });
+      // A design that drops the scroll opening leaves a live section no taller
+      // than one screen: there is no runway, so nothing for the static frame
+      // to be shorter than (the static band can be taller than a screen
+      // without a runway existing, so a `<=` against the live section would
+      // trip on the very design this lets through). Say so and stop.
+      if (runway <= liveScreens) {
+        test.info().annotations.push({
+          type: "no runway",
+          description: `${path} has no scroll runway in the live page, so there is none to leave`,
+        });
+        return;
+      }
       await expect
         .poll(
           () =>
@@ -131,7 +145,7 @@ test("/ static frame's stage has a height", { tag: "@smoke" }, async ({ page }) 
     .toBe(true);
 });
 
-test("/ opens the heart far enough to cover the band", async ({ page }) => {
+test("/ opens the heart far enough to cover the band", { tag: "@smoke" }, async ({ page }) => {
   await page.goto("/", { waitUntil: "load" });
 
   // Measured from the resolved `mask-size`, which the two halves of the site
