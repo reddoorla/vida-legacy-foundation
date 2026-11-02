@@ -177,10 +177,19 @@ test.describe("without JavaScript", () => {
           // The card and every descendant that clips its own overflow: an
           // inner wrapper with a max-height cuts content off without the
           // card's own scrollHeight ever seeing it.
-          return [card, ...card.querySelectorAll("*")].some(
-            (el) =>
-              getComputedStyle(el).overflowY !== "visible" && el.scrollHeight > el.clientHeight,
-          );
+          // Only boxes that really clip (`hidden` or `clip`) count: a scroll
+          // container reaches every word, and the visually-hidden pattern
+          // (`sr-only`) is a 1px clipped box by design.
+          return [card, ...card.querySelectorAll("*")].some((el) => {
+            const cs = getComputedStyle(el);
+            const visuallyHidden =
+              cs.clipPath === "inset(50%)" || cs.clip === "rect(0px, 0px, 0px, 0px)";
+            return (
+              (cs.overflowY === "hidden" || cs.overflowY === "clip") &&
+              !visuallyHidden &&
+              el.scrollHeight > el.clientHeight
+            );
+          });
         });
       });
       expect(clipped.length, "no bios rendered — check the fixture").toBeGreaterThan(0);
@@ -261,10 +270,14 @@ for (const path of ["/about", "/es/about"]) {
             // card height that holds its content passes, and `max-h-*`,
             // `h-*` or `aspect-*` that hides a line does not.
             // Checked on the card and on every descendant that clips its own
-            // overflow, because an inner wrapper with a max-height hides a
+            // overflow (hidden or clip), because an inner wrapper with a max-height hides a
             // line without the card's scrollHeight seeing it.
             for (const el of [li, ...li.querySelectorAll("*")]) {
-              if (getComputedStyle(el).overflowY === "visible") continue;
+              const cs = getComputedStyle(el);
+              if (cs.overflowY !== "hidden" && cs.overflowY !== "clip") continue;
+              // A scroll container reaches every word, and `sr-only` is a
+              // visually-hidden 1px box by design: neither is a cut-off.
+              if (cs.clipPath === "inset(50%)" || cs.clip === "rect(0px, 0px, 0px, 0px)") continue;
               if (el.scrollHeight > el.clientHeight) {
                 const name = li.querySelector("h2, h3, h4, h5")?.textContent?.trim() ?? "?";
                 out.push(

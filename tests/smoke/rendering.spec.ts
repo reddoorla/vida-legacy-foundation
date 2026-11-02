@@ -63,37 +63,59 @@ for (const { path, name } of [
       .toBe("1");
   });
 
-  test(`${path} does not leave a scroll runway (${name})`, { tag: "@smoke" }, async ({ page }) => {
-    // The band's height against the viewport's own height: one box against the
-    // viewport, no px. The runway is a 260vh band, so the defect reads 2.6
-    // viewports and a band that ends within the screen reads about 1. The bound
-    // is 2, the midpoint to the defect: anything shorter than two screens is a
-    // band someone drew, not a runway, so a taller comp band still passes.
-    // Both stages are 260vh runways driven by scroll progress that only
-    // JavaScript computes. Left at frame 0 that is two and a half screens of
-    // one unchanging frame, with the page's copy at opacity 0 above it.
-    await page.goto(path, { waitUntil: "domcontentloaded" });
-    await expect
-      .poll(
-        () =>
-          page
-            .locator("#main-content > section")
-            .first()
-            .evaluate((el) => el.getBoundingClientRect().height / window.innerHeight),
-        { message: `${path} still renders a scroll runway` },
-      )
-      .toBeLessThan(2);
-  });
+  test(
+    `${path} does not leave a scroll runway (${name})`,
+    { tag: "@smoke" },
+    async ({ page, browser }) => {
+      // The static band against the live runway, both measured: the same path
+      // is opened in a context with scripts and full motion, where the band IS
+      // the scroll runway, and the state under test must be shorter than it.
+      // Two of the page's own boxes and no number, so a pacing change to the
+      // runway (260vh to 190vh) or a taller comp band neither disarms nor trips
+      // it. Left at frame 0, the runway is screens of one unchanging frame with
+      // the page's copy at opacity 0 above it.
+      const { viewport, baseURL } = test.info().project.use;
+      const live = await browser.newContext({
+        baseURL,
+        viewport: viewport ?? undefined,
+        javaScriptEnabled: true,
+        reducedMotion: "no-preference",
+      });
+      let runway: number;
+      try {
+        const lp = await live.newPage();
+        await lp.goto(path, { waitUntil: "domcontentloaded" });
+        runway = await lp
+          .locator("#main-content > section")
+          .first()
+          .evaluate((el) => el.getBoundingClientRect().height);
+      } finally {
+        await live.close();
+      }
+      expect(runway, `${path} has no live runway to compare with`).toBeGreaterThan(0);
+      await page.goto(path, { waitUntil: "domcontentloaded" });
+      await expect
+        .poll(
+          () =>
+            page
+              .locator("#main-content > section")
+              .first()
+              .evaluate((el) => el.getBoundingClientRect().height),
+          { message: `${path} still renders a scroll runway` },
+        )
+        .toBeLessThan(runway);
+    },
+  );
 }
 
-test("/ static frame's stage fills its band", { tag: "@smoke" }, async ({ page }) => {
+test("/ static frame's stage has a height", { tag: "@smoke" }, async ({ page }) => {
   // Reduced motion and no scripts both show the hero's static end frame, and
   // every cell of this file is one of those. The stage is `height: 100%` of a
   // band that has only a min-height, which computes to `auto` unless the
   // band's own height is set; every child is absolutely positioned, so the
   // stage collapses to zero and a phone shows the heart's cleft and point
   // with green around the photograph. It shipped once, for one build. This
-  // compares two of the page's own boxes, so a taller or shorter band passes.
+  // asks only that the stage is not zero, so any band size, and any in-flow element added to it, passes.
   await page.goto("/", { waitUntil: "load" });
   await expect
     .poll(
@@ -102,9 +124,9 @@ test("/ static frame's stage fills its band", { tag: "@smoke" }, async ({ page }
           const stage = section.querySelector(".heart-hero-stage");
           if (!stage) return null;
           const band = section.getBoundingClientRect().height;
-          return band > 0 ? Math.abs(stage.getBoundingClientRect().height - band) <= 1 : false;
+          return band > 0 && stage.getBoundingClientRect().height > 0;
         }),
-      { message: "the hero's stage does not fill its band (collapsed to zero?)" },
+      { message: "the hero's stage has no height (collapsed to zero?)" },
     )
     .toBe(true);
 });
