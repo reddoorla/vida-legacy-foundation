@@ -65,10 +65,10 @@ for (const { path, name } of [
 
   test(`${path} does not leave a scroll runway (${name})`, { tag: "@smoke" }, async ({ page }) => {
     // The band's height against the viewport's own height: one box against the
-    // viewport, no px. 1.2 is a threshold, not the comp's value. The collapsed
-    // band measures about 1.0 viewport and the defect 2.6, so a designer who
-    // makes the band deliberately taller than 1.2 viewports must move this
-    // number; a taller band that still ends within the screen passes.
+    // viewport, no px. The runway is a 260vh band, so the defect reads 2.6
+    // viewports and a band that ends within the screen reads about 1. The bound
+    // is 2, the midpoint to the defect: anything shorter than two screens is a
+    // band someone drew, not a runway, so a taller comp band still passes.
     // Both stages are 260vh runways driven by scroll progress that only
     // JavaScript computes. Left at frame 0 that is two and a half screens of
     // one unchanging frame, with the page's copy at opacity 0 above it.
@@ -82,9 +82,32 @@ for (const { path, name } of [
             .evaluate((el) => el.getBoundingClientRect().height / window.innerHeight),
         { message: `${path} still renders a scroll runway` },
       )
-      .toBeLessThan(1.2);
+      .toBeLessThan(2);
   });
 }
+
+test("/ static frame's stage fills its band", { tag: "@smoke" }, async ({ page }) => {
+  // Reduced motion and no scripts both show the hero's static end frame, and
+  // every cell of this file is one of those. The stage is `height: 100%` of a
+  // band that has only a min-height, which computes to `auto` unless the
+  // band's own height is set; every child is absolutely positioned, so the
+  // stage collapses to zero and a phone shows the heart's cleft and point
+  // with green around the photograph. It shipped once, for one build. This
+  // compares two of the page's own boxes, so a taller or shorter band passes.
+  await page.goto("/", { waitUntil: "load" });
+  await expect
+    .poll(
+      () =>
+        page.locator(".heart-hero").evaluate((section) => {
+          const stage = section.querySelector(".heart-hero-stage");
+          if (!stage) return null;
+          const band = section.getBoundingClientRect().height;
+          return band > 0 ? Math.abs(stage.getBoundingClientRect().height - band) <= 1 : false;
+        }),
+      { message: "the hero's stage does not fill its band (collapsed to zero?)" },
+    )
+    .toBe(true);
+});
 
 test("/ opens the heart far enough to cover the band", async ({ page }) => {
   await page.goto("/", { waitUntil: "load" });

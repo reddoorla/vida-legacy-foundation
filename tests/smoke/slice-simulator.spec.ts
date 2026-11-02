@@ -158,9 +158,11 @@ for (const variation of ["imageLeft", "imageRight"] as const) {
     `MediaText ${variation} never puts the photo on the other side`,
     { tag: "@smoke" },
     async ({ context, baseURL }) => {
-      // Four fresh pages in one test, each a full simulator load: 15 to 30s of
-      // the default 30s under load (one in twenty repeats timed out in setup).
-      // This is the test's own budget, not an assertion window.
+      // Four fresh pages in one test, each a full simulator load: 9.6 to
+      // 17.4s alone (40 runs) and 11 to 12s under the whole gate, against the
+      // default 30s; one timeout in 170 runs, on a loaded machine. This is the
+      // test's own budget, not an assertion window: the 25s handshake poll
+      // still fails a real hang inside it.
       test.slow();
       const chosen = variation === "imageLeft" ? "photo left" : "photo right";
       for (const width of WIDTHS) {

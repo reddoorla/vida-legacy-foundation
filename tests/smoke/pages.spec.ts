@@ -173,7 +173,14 @@ test.describe("without JavaScript", () => {
         document.querySelectorAll(".person-bio-nojs p").forEach((el) => (el.textContent = long));
         return [...document.querySelectorAll(".person-bio-nojs")].map((bio) => {
           const card = bio.closest("li");
-          return !card || card.scrollHeight > card.clientHeight;
+          if (!card) return true;
+          // The card and every descendant that clips its own overflow: an
+          // inner wrapper with a max-height cuts content off without the
+          // card's own scrollHeight ever seeing it.
+          return [card, ...card.querySelectorAll("*")].some(
+            (el) =>
+              getComputedStyle(el).overflowY !== "visible" && el.scrollHeight > el.clientHeight,
+          );
         });
       });
       expect(clipped.length, "no bios rendered — check the fixture").toBeGreaterThan(0);
@@ -253,11 +260,18 @@ for (const path of ["/about", "/es/about"]) {
             // this reads the cut-off itself and names no rect and no px: any
             // card height that holds its content passes, and `max-h-*`,
             // `h-*` or `aspect-*` that hides a line does not.
-            if (li.scrollHeight > li.clientHeight) {
-              const name = li.querySelector("h2, h3, h4, h5")?.textContent?.trim() ?? "?";
-              out.push(
-                `${w}px: ${JSON.stringify(name)} clipped by ${li.scrollHeight - li.clientHeight}px`,
-              );
+            // Checked on the card and on every descendant that clips its own
+            // overflow, because an inner wrapper with a max-height hides a
+            // line without the card's scrollHeight seeing it.
+            for (const el of [li, ...li.querySelectorAll("*")]) {
+              if (getComputedStyle(el).overflowY === "visible") continue;
+              if (el.scrollHeight > el.clientHeight) {
+                const name = li.querySelector("h2, h3, h4, h5")?.textContent?.trim() ?? "?";
+                out.push(
+                  `${w}px: ${JSON.stringify(name)} clipped by ${el.scrollHeight - el.clientHeight}px`,
+                );
+                break;
+              }
             }
           }
           return out;

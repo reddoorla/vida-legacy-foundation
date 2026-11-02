@@ -63,8 +63,8 @@ races a clock. When one is, add `test:nightly` (a list of spec paths) and a
   computed-style colour or size, and no element count a new button would
   change. Comparing two of the page's own boxes (which column comes first, a
   box against the viewport) reads a relation, not a design value, so it is a
-  contract and may be tagged; `scrollHeight` over `clientHeight` is the
-  clipping check. An untagged Playwright spec still runs in
+  contract and may be tagged; `scrollHeight` over `clientHeight`, on the card and
+  every descendant that clips, is the clipping check. An untagged Playwright spec still runs in
   `pnpm test:scaffold`, not in CI.
 - **A flaky timing test leaves the gate; its window does not widen.** Move it to
   a nightly list, or delete it if it guards nothing a client would notice.
