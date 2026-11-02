@@ -123,14 +123,11 @@ test(
 // layout that narrows or centres one column is still stacked (review 5);
 // left edges are compared only when the columns share a row.
 //
-// The read uses getBoundingClientRect, which "`@smoke` is earned" bans in the
-// gate as `boundingBox`. The rule exists to keep px out of the gate, and this
-// compares only which column's left edge comes first; no position or size is
-// asserted, and a gap change passes. It is still left untagged: the rule is
-// written as a ban on the read, not on what is compared, and the check has a
-// history of answering from a stale layout (reviews 5 to 7 of #127), which is
-// what a gate test may not do. It runs in `pnpm test:scaffold` and
-// `pnpm test:e2e`.
+// The read uses getBoundingClientRect, but only to compare two of the page's
+// own boxes: which column's left edge comes first. No position or size is
+// asserted, and a gap or breakpoint change passes, so this is a contract and
+// the check is tagged `@smoke`. Each width gets a fresh page (see the loop
+// below) so it never answers from a stale layout (reviews 5 to 7 of #127).
 const MEDIA_TEXT = (variation: "imageLeft" | "imageRight") => ({
   id: `media_text$${variation}`,
   slice_type: "media_text",
@@ -157,53 +154,58 @@ const MEDIA_TEXT = (variation: "imageLeft" | "imageRight") => ({
 const WIDTHS = [1920, 1440, 1280, 1024];
 
 for (const variation of ["imageLeft", "imageRight"] as const) {
-  test(`MediaText ${variation} never puts the photo on the other side`, async ({
-    context,
-    baseURL,
-  }) => {
-    const chosen = variation === "imageLeft" ? "photo left" : "photo right";
-    for (const width of WIDTHS) {
-      // A fresh page per width: its frame is created at this width, so no
-      // earlier width's styles exist to answer the read.
-      const page = await context.newPage();
-      try {
-        await page.route("https://images.prismic.io/**", (route) => route.abort());
-        await page.setViewportSize({ width: 2000, height: 900 });
-        await simulate(page, baseURL, [MEDIA_TEXT(variation)], width);
-        const section = page
-          .frameLocator("iframe")
-          .locator('.slice-simulator--root [data-slice-type="media_text"]');
-        await expect(section).toHaveCount(1);
-        await expect
-          .poll(
-            () =>
-              section.evaluate((el, w) => {
-                if (el.ownerDocument.defaultView!.innerWidth !== w) return "frame not resized";
-                const img = el.querySelector("img");
-                const heading = el.querySelector("h2");
-                if (!img || !heading) return "photo or heading missing";
-                // The column each sits in: the ancestor whose parent also
-                // holds the other.
-                const column = (node: Element, other: Element) => {
-                  let n = node;
-                  while (n.parentElement && !n.parentElement.contains(other)) n = n.parentElement;
-                  return n.getBoundingClientRect();
-                };
-                const photo = column(img, heading);
-                const copy = column(heading, img);
-                if (photo.bottom <= copy.top || copy.bottom <= photo.top) return "stacked";
-                if (photo.left < copy.left) return "photo left";
-                if (photo.left > copy.left) return "photo right";
-                return "stacked";
-              }, width),
-            { message: `${variation} at a ${width}px frame` },
-          )
-          .toMatch(width === WIDTHS[0] ? chosen : new RegExp(`^(${chosen}|stacked)$`));
-      } finally {
-        await page.close();
+  test(
+    `MediaText ${variation} never puts the photo on the other side`,
+    { tag: "@smoke" },
+    async ({ context, baseURL }) => {
+      // Four fresh pages in one test, each a full simulator load: 15 to 30s of
+      // the default 30s under load (one in twenty repeats timed out in setup).
+      // This is the test's own budget, not an assertion window.
+      test.slow();
+      const chosen = variation === "imageLeft" ? "photo left" : "photo right";
+      for (const width of WIDTHS) {
+        // A fresh page per width: its frame is created at this width, so no
+        // earlier width's styles exist to answer the read.
+        const page = await context.newPage();
+        try {
+          await page.route("https://images.prismic.io/**", (route) => route.abort());
+          await page.setViewportSize({ width: 2000, height: 900 });
+          await simulate(page, baseURL, [MEDIA_TEXT(variation)], width);
+          const section = page
+            .frameLocator("iframe")
+            .locator('.slice-simulator--root [data-slice-type="media_text"]');
+          await expect(section).toHaveCount(1);
+          await expect
+            .poll(
+              () =>
+                section.evaluate((el, w) => {
+                  if (el.ownerDocument.defaultView!.innerWidth !== w) return "frame not resized";
+                  const img = el.querySelector("img");
+                  const heading = el.querySelector("h2");
+                  if (!img || !heading) return "photo or heading missing";
+                  // The column each sits in: the ancestor whose parent also
+                  // holds the other.
+                  const column = (node: Element, other: Element) => {
+                    let n = node;
+                    while (n.parentElement && !n.parentElement.contains(other)) n = n.parentElement;
+                    return n.getBoundingClientRect();
+                  };
+                  const photo = column(img, heading);
+                  const copy = column(heading, img);
+                  if (photo.bottom <= copy.top || copy.bottom <= photo.top) return "stacked";
+                  if (photo.left < copy.left) return "photo left";
+                  if (photo.left > copy.left) return "photo right";
+                  return "stacked";
+                }, width),
+              { message: `${variation} at a ${width}px frame` },
+            )
+            .toMatch(width === WIDTHS[0] ? chosen : new RegExp(`^(${chosen}|stacked)$`));
+        } finally {
+          await page.close();
+        }
       }
-    }
-  });
+    },
+  );
 }
 
 test(

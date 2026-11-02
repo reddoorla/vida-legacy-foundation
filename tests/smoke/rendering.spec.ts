@@ -63,7 +63,12 @@ for (const { path, name } of [
       .toBe("1");
   });
 
-  test(`${path} does not leave a scroll runway (${name})`, async ({ page }) => {
+  test(`${path} does not leave a scroll runway (${name})`, { tag: "@smoke" }, async ({ page }) => {
+    // The band's height against the viewport's own height: one box against the
+    // viewport, no px. 1.2 is a threshold, not the comp's value. The collapsed
+    // band measures about 1.0 viewport and the defect 2.6, so a designer who
+    // makes the band deliberately taller than 1.2 viewports must move this
+    // number; a taller band that still ends within the screen passes.
     // Both stages are 260vh runways driven by scroll progress that only
     // JavaScript computes. Left at frame 0 that is two and a half screens of
     // one unchanging frame, with the page's copy at opacity 0 above it.

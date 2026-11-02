@@ -59,9 +59,13 @@ races a clock. When one is, add `test:nightly` (a list of spec paths) and a
   design.
 - **`@smoke` is earned.** A Playwright test tagged `{ tag: "@smoke" }` has no
   fixed sleeps, no frame counting, no animation windows, no
-  `boundingBox`/`near()` (nor `getBoundingClientRect`), no computed-style colour
-  or size, and no element count a new button would change. An untagged
-  Playwright spec still runs in `pnpm test:scaffold`, not in CI.
+  `boundingBox`/`near()`, no rect read that asserts a position or size, no
+  computed-style colour or size, and no element count a new button would
+  change. Comparing two of the page's own boxes (which column comes first, a
+  box against the viewport) reads a relation, not a design value, so it is a
+  contract and may be tagged; `scrollHeight` over `clientHeight` is the
+  clipping check. An untagged Playwright spec still runs in
+  `pnpm test:scaffold`, not in CI.
 - **A flaky timing test leaves the gate; its window does not widen.** Move it to
   a nightly list, or delete it if it guards nothing a client would notice.
 
@@ -271,16 +275,19 @@ If a session produced nothing worth an entry, that is itself worth one line.
   tripled to beat component-scoped rules. The dev server cannot show it and
   the fleet config's reduced-motion emulation hides it. `tests/smoke/rendering.spec.ts`
   runs every rendering invariant in four cells — add new ones there, with no
-  `test.use`. → [rendering.md](docs/rendering.md)
+  `test.use`, and tag it `{ tag: "@smoke" }` if it is a contract (an untagged one
+  silently lands in scaffold, outside CI). → [rendering.md](docs/rendering.md)
 - **A new form uses `.vlf-label` / `.vlf-field` / `.vlf-pill`, not
   `Field.svelte`.** Any link to `/contact` opens the modal; the route stays as
   the no-JS fallback. → [forms.md](docs/forms.md)
-- **Two session gates beyond `pnpm verify`, both deliberately outside CI:**
-  `pnpm test:mutate` (does the suite mean anything — [mutation-audit.md](docs/mutation-audit.md))
-  and the aria snapshots in `tests/__aria__/` (regenerate with
-  `npx playwright test tests/smoke/chrome.spec.ts --update-snapshots` and READ
+- **One session gate outside CI, and one inside it.** `pnpm test:mutate` (does
+  the suite mean anything — [mutation-audit.md](docs/mutation-audit.md)) is a
+  session tool. The aria snapshots in `tests/__aria__/` are `@smoke`, so they
+  gate every PR; regenerating them is the deliberate step
+  (`npx playwright test tests/smoke/chrome.spec.ts --update-snapshots`, and READ
   the diff; a name that changed language looks exactly like a snapshot needing
-  an update).
+  an update). A copy rename that changes an accessible name regenerates its
+  snapshot in the same PR.
 
 # Vida Legacy Foundation — site-specific
 

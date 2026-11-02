@@ -152,31 +152,36 @@ test.describe("without JavaScript", () => {
     contextOptions: { reducedMotion: "no-preference" },
   });
 
-  test("lets the card grow to hold a bio, instead of clipping it", async ({ page }) => {
-    await page.goto("/dev/a11y-fixtures", { waitUntil: "domcontentloaded" });
-    // The leadership card is `aspect-square` over `overflow: hidden`, so its
-    // height comes from its column width and content cannot grow it — a real
-    // multi-sentence bio was cut off with no sign it was there. Measured: 166px
-    // of it hidden. The fixture's own bio is one line and fits by luck, so the
-    // test writes a realistic one before measuring.
-    const hidden = await page.evaluate(() => {
-      const long =
-        "Fifteen years coordinating transplant services across South Texas, " +
-        "and the founder of the family-support programme VLF still runs today. " +
-        "She speaks regularly on donor family advocacy throughout the region.";
-      document.querySelectorAll(".person-bio-nojs p").forEach((el) => (el.textContent = long));
-      return [...document.querySelectorAll(".person-bio-nojs")].map((bio) => {
-        const card = bio.closest("li");
-        if (!card) return -1;
-        return Math.max(
-          0,
-          Math.round(bio.getBoundingClientRect().bottom - card.getBoundingClientRect().bottom),
-        );
+  test(
+    "lets the card grow to hold a bio, instead of clipping it",
+    { tag: "@smoke" },
+    async ({ page }) => {
+      await page.goto("/dev/a11y-fixtures", { waitUntil: "domcontentloaded" });
+      // The leadership card is `aspect-square` over `overflow: hidden`, so its
+      // height comes from its column width and content cannot grow it — a real
+      // multi-sentence bio was cut off with no sign it was there. Measured: 166px
+      // of it hidden. The fixture's own bio is one line and fits by luck, so the
+      // test writes a realistic one before reading. What is read is whether the
+      // card's content is taller than the card (`scrollHeight` over
+      // `clientHeight`): no rect, no px, so a designer's new card size still
+      // passes and only content that is cut off fails.
+      const clipped = await page.evaluate(() => {
+        const long =
+          "Fifteen years coordinating transplant services across South Texas, " +
+          "and the founder of the family-support programme VLF still runs today. " +
+          "She speaks regularly on donor family advocacy throughout the region.";
+        document.querySelectorAll(".person-bio-nojs p").forEach((el) => (el.textContent = long));
+        return [...document.querySelectorAll(".person-bio-nojs")].map((bio) => {
+          const card = bio.closest("li");
+          return !card || card.scrollHeight > card.clientHeight;
+        });
       });
-    });
-    expect(hidden.length, "no bios rendered — check the fixture").toBeGreaterThan(0);
-    expect(hidden, "a bio is clipped off the bottom of its card").toEqual(hidden.map(() => 0));
-  });
+      expect(clipped.length, "no bios rendered — check the fixture").toBeGreaterThan(0);
+      expect(clipped, "a bio is clipped off the bottom of its card").toEqual(
+        clipped.map(() => false),
+      );
+    },
+  );
 
   test("hides the controls that cannot open a bio", { tag: "@smoke" }, async ({ page }) => {
     // The fixtures page rather than /about, which this used to load: a card
@@ -227,7 +232,7 @@ test.describe("without JavaScript", () => {
 const THREE_UP_BAND = [1280, 1100, 1024, 980, 900, 860, 820, 768, 700];
 
 for (const path of ["/about", "/es/about"]) {
-  test(`person cards never clip their content — ${path}`, async ({ page }) => {
+  test(`person cards never clip their content — ${path}`, { tag: "@smoke" }, async ({ page }) => {
     await page.goto(path);
     await expect(page.locator("li.person-card").first()).toBeVisible();
 
@@ -243,19 +248,16 @@ for (const path of ["/about", "/es/about"]) {
         ...(await page.evaluate((w) => {
           const out: string[] = [];
           for (const li of document.querySelectorAll("li.person-card")) {
-            const card = li.getBoundingClientRect();
-            // The lowest thing the card draws, whatever it is: the email when
-            // there is one, otherwise the role. Asserting on `scrollHeight`
-            // instead would read 0 here — the overflow is hidden, so the box
-            // never grows and only the child's own rect tells the truth.
-            let lowest = card.top;
-            for (const el of li.querySelectorAll("p, a, h2, h3, h4, h5")) {
-              lowest = Math.max(lowest, el.getBoundingClientRect().bottom);
-            }
-            const over = Math.round(lowest - card.bottom);
-            if (over > 0) {
+            // Is the card's content taller than the card? `overflow: hidden`
+            // still reports the content's full height in `scrollHeight`, so
+            // this reads the cut-off itself and names no rect and no px: any
+            // card height that holds its content passes, and `max-h-*`,
+            // `h-*` or `aspect-*` that hides a line does not.
+            if (li.scrollHeight > li.clientHeight) {
               const name = li.querySelector("h2, h3, h4, h5")?.textContent?.trim() ?? "?";
-              out.push(`${w}px: ${JSON.stringify(name)} clipped by ${over}px`);
+              out.push(
+                `${w}px: ${JSON.stringify(name)} clipped by ${li.scrollHeight - li.clientHeight}px`,
+              );
             }
           }
           return out;
