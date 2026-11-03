@@ -66,13 +66,13 @@ Treat accessibility regressions as P1 bugs. They block merges to `main`.
 
 ## The gate on this site
 
-Two gates beyond `pnpm verify`, neither in CI, both session tools. **`pnpm
-test:mutate`** (Stryker) answers "does this suite mean anything" by breaking the
+Two gates beyond `pnpm verify`. **`pnpm
+test:mutate`** (Stryker, a session tool outside CI) answers "does this suite mean anything" by breaking the
 source and seeing whether anything goes red — nine minutes, and its first run
 found the module at the centre of the Turnstile lesson had no unit test at all.
 [docs/mutation-audit.md](docs/mutation-audit.md). And **`tests/__aria__/`**
 holds accessibility-tree snapshots of the chrome, nav per route and footer per
-locale; regenerate with `npx playwright test tests/smoke/chrome.spec.ts
+locale. They are `@smoke`, so they run in CI on every PR; regenerate with `npx playwright test tests/smoke/chrome.spec.ts
 --update-snapshots` and READ the diff, because a name that changed language
 looks exactly like a snapshot needing an update. That is the layer where English
 reached Spanish readers three times.

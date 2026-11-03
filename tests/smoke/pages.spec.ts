@@ -49,68 +49,74 @@ function attachConsoleWatcher(page: Page, extraAllowed: RegExp[] = []) {
 }
 
 for (const route of smokeRoutes) {
-  test(`${route.path} (${route.name}) loads with no console errors`, async ({ page }) => {
-    const expectedStatus = route.expectStatus ?? 200;
-    // A route whose expected status IS an error (e.g. "/" on the placeholder
-    // starter, see tests/smoke/routes.ts) makes the browser log "Failed to
-    // load resource: ... <status>" for the document itself — expected, not a
-    // bug. Same allowance as the dedicated 404-page test below.
-    const errors = attachConsoleWatcher(
-      page,
-      expectedStatus >= 400 ? [new RegExp(`Failed to load resource.*${expectedStatus}`, "i")] : [],
-    );
-    const response = await page.goto(route.path, {
-      waitUntil: "domcontentloaded",
-    });
-    expect(response?.status(), `HTTP status for ${route.path}`).toBe(expectedStatus);
-    if (route.hydrationMarker) {
-      await expect(
-        page.locator(route.hydrationMarker),
-        `hydration marker "${route.hydrationMarker}" on ${route.path}`,
-      ).toBeVisible();
-    }
-    expect(errors, `console errors on ${route.path}`).toEqual([]);
+  test(
+    `${route.path} (${route.name}) loads with no console errors`,
+    { tag: "@smoke" },
+    async ({ page }) => {
+      const expectedStatus = route.expectStatus ?? 200;
+      // A route whose expected status IS an error (e.g. "/" on the placeholder
+      // starter, see tests/smoke/routes.ts) makes the browser log "Failed to
+      // load resource: ... <status>" for the document itself — expected, not a
+      // bug. Same allowance as the dedicated 404-page test below.
+      const errors = attachConsoleWatcher(
+        page,
+        expectedStatus >= 400
+          ? [new RegExp(`Failed to load resource.*${expectedStatus}`, "i")]
+          : [],
+      );
+      const response = await page.goto(route.path, {
+        waitUntil: "domcontentloaded",
+      });
+      expect(response?.status(), `HTTP status for ${route.path}`).toBe(expectedStatus);
+      if (route.hydrationMarker) {
+        await expect(
+          page.locator(route.hydrationMarker),
+          `hydration marker "${route.hydrationMarker}" on ${route.path}`,
+        ).toBeVisible();
+      }
+      expect(errors, `console errors on ${route.path}`).toEqual([]);
 
-    // The template's own placeholders must be gone by the time a browser sees
-    // the page, and the head must be emitted once. Both failed for an
-    // afternoon because a comment in app.html mentioned `%sveltekit.head%` in
-    // prose: SvelteKit substitutes the FIRST occurrence and only the first, so
-    // the comment took the whole head — and the injected markup carries
-    // Svelte's `<!--]-->` hydration marker, whose terminator closed that
-    // comment early. The sentence after it became visible text at the top of
-    // every page, the real placeholder rendered literally, and the head went
-    // out in the wrong place. None of it is a console error, an axe violation
-    // or a type error, so nothing in the suite noticed.
-    const body = await page.evaluate(() => document.body.innerText);
-    expect(body, `unsubstituted template placeholder on ${route.path}`).not.toMatch(
-      /%sveltekit\.|%lang%/,
-    );
-    // Head tags loose in the body mean the head was emitted somewhere it
-    // should not have been — which is what a comment in app.html swallowing
-    // the placeholder looks like from out here. This is the assertion that
-    // catches it whatever the prose says; the placeholder check above only
-    // catches the variant where the literal survives.
-    await expect(
-      page.locator("body meta, body link[rel=canonical], body link[rel=alternate], body title"),
-      `head tags loose in the body on ${route.path}`,
-    ).toHaveCount(0);
-    if (expectedStatus < 400) {
-      // Exactly one of each. Two is the head being emitted twice; zero is a
-      // page that forgot its description, which /contact did until it was
-      // given one of its own (DEFAULT_DESCRIPTION is deliberately empty).
+      // The template's own placeholders must be gone by the time a browser sees
+      // the page, and the head must be emitted once. Both failed for an
+      // afternoon because a comment in app.html mentioned `%sveltekit.head%` in
+      // prose: SvelteKit substitutes the FIRST occurrence and only the first, so
+      // the comment took the whole head — and the injected markup carries
+      // Svelte's `<!--]-->` hydration marker, whose terminator closed that
+      // comment early. The sentence after it became visible text at the top of
+      // every page, the real placeholder rendered literally, and the head went
+      // out in the wrong place. None of it is a console error, an axe violation
+      // or a type error, so nothing in the suite noticed.
+      const body = await page.evaluate(() => document.body.innerText);
+      expect(body, `unsubstituted template placeholder on ${route.path}`).not.toMatch(
+        /%sveltekit\.|%lang%/,
+      );
+      // Head tags loose in the body mean the head was emitted somewhere it
+      // should not have been — which is what a comment in app.html swallowing
+      // the placeholder looks like from out here. This is the assertion that
+      // catches it whatever the prose says; the placeholder check above only
+      // catches the variant where the literal survives.
       await expect(
-        page.locator('head link[rel="canonical"]'),
-        `canonical links on ${route.path}`,
-      ).toHaveCount(1);
-      await expect(
-        page.locator('head meta[name="description"]'),
-        `description meta tags on ${route.path}`,
-      ).toHaveCount(1);
-    }
-  });
+        page.locator("body meta, body link[rel=canonical], body link[rel=alternate], body title"),
+        `head tags loose in the body on ${route.path}`,
+      ).toHaveCount(0);
+      if (expectedStatus < 400) {
+        // Exactly one of each. Two is the head being emitted twice; zero is a
+        // page that forgot its description, which /contact did until it was
+        // given one of its own (DEFAULT_DESCRIPTION is deliberately empty).
+        await expect(
+          page.locator('head link[rel="canonical"]'),
+          `canonical links on ${route.path}`,
+        ).toHaveCount(1);
+        await expect(
+          page.locator('head meta[name="description"]'),
+          `description meta tags on ${route.path}`,
+        ).toHaveCount(1);
+      }
+    },
+  );
 }
 
-test("404 page renders the custom error component", async ({ page }) => {
+test("404 page renders the custom error component", { tag: "@smoke" }, async ({ page }) => {
   // The browser logs a top-level "Failed to load resource: 404" for the page
   // itself — expected on a 404 route, not a bug. Allow it here.
   const errors = attachConsoleWatcher(page, [/Failed to load resource.*404/i]);
@@ -146,33 +152,61 @@ test.describe("without JavaScript", () => {
     contextOptions: { reducedMotion: "no-preference" },
   });
 
-  test("lets the card grow to hold a bio, instead of clipping it", async ({ page }) => {
-    await page.goto("/dev/a11y-fixtures", { waitUntil: "domcontentloaded" });
-    // The leadership card is `aspect-square` over `overflow: hidden`, so its
-    // height comes from its column width and content cannot grow it — a real
-    // multi-sentence bio was cut off with no sign it was there. Measured: 166px
-    // of it hidden. The fixture's own bio is one line and fits by luck, so the
-    // test writes a realistic one before measuring.
-    const hidden = await page.evaluate(() => {
-      const long =
-        "Fifteen years coordinating transplant services across South Texas, " +
-        "and the founder of the family-support programme VLF still runs today. " +
-        "She speaks regularly on donor family advocacy throughout the region.";
-      document.querySelectorAll(".person-bio-nojs p").forEach((el) => (el.textContent = long));
-      return [...document.querySelectorAll(".person-bio-nojs")].map((bio) => {
-        const card = bio.closest("li");
-        if (!card) return -1;
-        return Math.max(
-          0,
-          Math.round(bio.getBoundingClientRect().bottom - card.getBoundingClientRect().bottom),
-        );
+  test(
+    "lets the card grow to hold a bio, instead of clipping it",
+    { tag: "@smoke" },
+    async ({ page }) => {
+      await page.goto("/dev/a11y-fixtures", { waitUntil: "domcontentloaded" });
+      // The leadership card is `aspect-square` over `overflow: hidden`, so its
+      // height comes from its column width and content cannot grow it — a real
+      // multi-sentence bio was cut off with no sign it was there. Measured: 166px
+      // of it hidden. The fixture's own bio is one line and fits by luck, so the
+      // test writes a realistic one before reading. What is read is whether the
+      // card's content is taller than the card (`scrollHeight` over
+      // `clientHeight`): no rect, no px, so a designer's new card size still
+      // passes and only content that is cut off fails.
+      const clipped = await page.evaluate(() => {
+        const long =
+          "Fifteen years coordinating transplant services across South Texas, " +
+          "and the founder of the family-support programme VLF still runs today. " +
+          "She speaks regularly on donor family advocacy throughout the region.";
+        document.querySelectorAll(".person-bio-nojs p").forEach((el) => (el.textContent = long));
+        return [...document.querySelectorAll(".person-bio-nojs")].map((bio) => {
+          const card = bio.closest("li");
+          if (!card) return true;
+          // The card and every descendant that clips its own overflow: an
+          // inner wrapper with a max-height cuts content off without the
+          // card's own scrollHeight ever seeing it.
+          // Only boxes that really clip (`hidden` or `clip`) count: a scroll
+          // container reaches every word, and the visually-hidden pattern
+          // (`sr-only`) is a 1px clipped box by design.
+          return [card, ...card.querySelectorAll("*")].some((el) => {
+            const cs = getComputedStyle(el);
+            const visuallyHidden =
+              cs.clipPath === "inset(50%)" || cs.clip === "rect(0px, 0px, 0px, 0px)";
+            const clipsY = cs.overflowY === "hidden" || cs.overflowY === "clip";
+            // Horizontally only a box that holds text of its own counts (`truncate`,
+            // or `nowrap` with overflow hidden, with or without an ellipsis): an
+            // image cropped by `object-cover` inside a clipping frame is not.
+            const clipsX =
+              (cs.overflowX === "hidden" || cs.overflowX === "clip") &&
+              [...el.childNodes].some((n) => n.nodeType === 3 && !!n.textContent?.trim());
+            return (
+              !visuallyHidden &&
+              ((clipsY && el.scrollHeight > el.clientHeight) ||
+                (clipsX && el.scrollWidth > el.clientWidth))
+            );
+          });
+        });
       });
-    });
-    expect(hidden.length, "no bios rendered — check the fixture").toBeGreaterThan(0);
-    expect(hidden, "a bio is clipped off the bottom of its card").toEqual(hidden.map(() => 0));
-  });
+      expect(clipped.length, "no bios rendered — check the fixture").toBeGreaterThan(0);
+      expect(clipped, "a bio is clipped off the bottom of its card").toEqual(
+        clipped.map(() => false),
+      );
+    },
+  );
 
-  test("hides the controls that cannot open a bio", async ({ page }) => {
+  test("hides the controls that cannot open a bio", { tag: "@smoke" }, async ({ page }) => {
     // The fixtures page rather than /about, which this used to load: a card
     // carries these controls only when it HAS a bio, and nobody on /about has
     // one, so /about renders neither of them now. It used to render both on
@@ -221,7 +255,7 @@ test.describe("without JavaScript", () => {
 const THREE_UP_BAND = [1280, 1100, 1024, 980, 900, 860, 820, 768, 700];
 
 for (const path of ["/about", "/es/about"]) {
-  test(`person cards never clip their content — ${path}`, async ({ page }) => {
+  test(`person cards never clip their content — ${path}`, { tag: "@smoke" }, async ({ page }) => {
     await page.goto(path);
     await expect(page.locator("li.person-card").first()).toBeVisible();
 
@@ -237,19 +271,36 @@ for (const path of ["/about", "/es/about"]) {
         ...(await page.evaluate((w) => {
           const out: string[] = [];
           for (const li of document.querySelectorAll("li.person-card")) {
-            const card = li.getBoundingClientRect();
-            // The lowest thing the card draws, whatever it is: the email when
-            // there is one, otherwise the role. Asserting on `scrollHeight`
-            // instead would read 0 here — the overflow is hidden, so the box
-            // never grows and only the child's own rect tells the truth.
-            let lowest = card.top;
-            for (const el of li.querySelectorAll("p, a, h2, h3, h4, h5")) {
-              lowest = Math.max(lowest, el.getBoundingClientRect().bottom);
-            }
-            const over = Math.round(lowest - card.bottom);
-            if (over > 0) {
-              const name = li.querySelector("h2, h3, h4, h5")?.textContent?.trim() ?? "?";
-              out.push(`${w}px: ${JSON.stringify(name)} clipped by ${over}px`);
+            // Is the card's content taller than the card? `overflow: hidden`
+            // still reports the content's full height in `scrollHeight`, so
+            // this reads the cut-off itself and names no rect and no px: any
+            // card height that holds its content passes, and `max-h-*`,
+            // `h-*` or `aspect-*` that hides a line does not.
+            // Checked on the card and on every descendant that clips its own
+            // overflow (hidden or clip), because an inner wrapper with a max-height hides a
+            // line without the card's scrollHeight seeing it.
+            for (const el of [li, ...li.querySelectorAll("*")]) {
+              const cs = getComputedStyle(el);
+              const clipsY = cs.overflowY === "hidden" || cs.overflowY === "clip";
+              // Horizontally only a box that holds text of its own counts (`truncate`,
+              // or `nowrap` with overflow hidden, with or without an ellipsis): an
+              // image cropped by `object-cover` inside a clipping frame is not.
+              const clipsX =
+                (cs.overflowX === "hidden" || cs.overflowX === "clip") &&
+                [...el.childNodes].some((n) => n.nodeType === 3 && !!n.textContent?.trim());
+              if (!clipsY && !clipsX) continue;
+              // A scroll container reaches every word, and `sr-only` is a
+              // visually-hidden 1px box by design: neither is a cut-off.
+              if (cs.clipPath === "inset(50%)" || cs.clip === "rect(0px, 0px, 0px, 0px)") continue;
+              // Vertical cut-off (max-height, line-clamp) or horizontal
+              // (`truncate`, which hides the tail of a line behind an ellipsis).
+              const cutY = clipsY ? el.scrollHeight - el.clientHeight : 0;
+              const cutX = clipsX ? el.scrollWidth - el.clientWidth : 0;
+              if (cutY > 0 || cutX > 0) {
+                const name = li.querySelector("h2, h3, h4, h5")?.textContent?.trim() ?? "?";
+                out.push(`${w}px: ${JSON.stringify(name)} clipped by ${Math.max(cutY, cutX)}px`);
+                break;
+              }
             }
           }
           return out;

@@ -10,13 +10,64 @@ pnpm verify
 ```
 
 That is exactly what CI runs, in CI's order (prettier → eslint → svelte-check →
-build → axe audit → unit + smoke). Run it instead of guessing which subset
+build → axe audit → unit + the `@smoke` Playwright tier). Run it instead of guessing which subset
 matters — a red CI on a site repo costs a round trip through review.
 
 Formatting is enforced on `.svelte` files too: the plugin loads from
 `.prettierrc`, not from a CLI flag. Don't reintroduce `--plugin` to the `lint`
 script — with no config file, `prettier --check .` silently skips every
 `.svelte` file, and that is exactly the hole the config closes.
+
+## Tests build; they don't freeze
+
+Tests are how an agent builds against a comp without a human watching: a
+geometry spec that measures a band against the Figma frame is exactly the
+instrument that gets the band right. Once the slice ships, the same spec
+becomes a fence around a design decision a human is entitled to change, and it
+turns a one-line tweak into a CI round trip. On roalson-interests a taller
+masthead, a back button and an arrow on a button cost the developer five gutted
+tests (roalson-interests#251), and not one of the five reds was a bug.
+reddoor-starter ships the tiers that site adopted (roalson-interests#256); this
+repo took them in the fleet test audit's batch A. The suite is tiered by what a
+red _means_:
+
+| Tier                | Command                                     | Runs                                                                                                      | Holds                                                                                                                                       |
+| ------------------- | ------------------------------------------- | --------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Gate** (contract) | `pnpm test` (vitest + Playwright `@smoke`)  | every PR, inside the required `ci / ci`                                                                   | what a client would call a bug: links and their targets, the form, keyboard and focus, no-JS, accessible names, AA contrast, data, SEO, CSP |
+| **Scaffold**        | `pnpm test:scaffold` (`pnpm test:e2e`: all) | on demand, while building; empty today, and `--pass-with-no-tests` keeps it green until a comp spec lands | comp geometry, pixel and computed-style pins, the numbers a slice was built to                                                              |
+
+There is no nightly tier here yet: no Playwright spec is real behaviour that
+races a clock. When one is, add `test:nightly` (a list of spec paths) and a
+`nightly.yml` adapted from reddoor-starter's, rather than widening a window.
+
+- **A human's design change wins.** When a size, spacing, colour that still
+  passes AA, duration, border, or an added button or link turns a test red,
+  the test is what is wrong: update it or delete it in the same PR. Never revert
+  the change to satisfy the test, and never argue for the pinned value.
+- **Design values never enter the gate.** A gate test asserts what a user or a
+  caller observes, never a Tailwind class list, a px, a ms, an opacity, or a
+  recorded contrast ratio to four places (assert `>= 4.5`). Exact-list equality
+  over things a designer may add to (every link on the page, every button,
+  "exactly nine") is a pin: assert the item that matters is _in_ the list.
+- **Never assert on source as text.** A test that reads a `.svelte` or `.css`
+  file and regexes a class out of it restates the implementation, so every
+  edit is two edits. Parsing `@theme` tokens to compute contrast is fine: that
+  computes a property, it does not restate a string.
+- **Build against the comp freely.** New geometry and timing specs are welcome
+  while a slice is being built; leave them untagged and they land in the
+  scaffold tier, where they are allowed to go stale once a human takes over the
+  design.
+- **`@smoke` is earned.** A Playwright test tagged `{ tag: "@smoke" }` has no
+  fixed sleeps, no frame counting, no animation windows, no
+  `boundingBox`/`near()`, no rect read that asserts a position or size, no
+  computed-style colour or size, and no element count a new button would
+  change. Comparing two of the page's own boxes (which column comes first, a
+  box against the viewport) reads a relation, not a design value, so it is a
+  contract and may be tagged; `scrollHeight` over `clientHeight`, on the card and
+  every descendant that clips (overflow hidden or clip, not a visually-hidden label; a scroll container does not count, and `line-clamp` does, since it hides text from sighted readers), with `scrollWidth` over `clientWidth` for text cut off sideways (`truncate`, or `nowrap` with overflow hidden), is the clipping check. An untagged Playwright spec still runs in
+  `pnpm test:scaffold`, not in CI.
+- **A flaky timing test leaves the gate; its window does not widen.** Move it to
+  a nightly list, or delete it if it guards nothing a client would notice.
 
 ## Concurrent sessions
 
@@ -224,16 +275,19 @@ If a session produced nothing worth an entry, that is itself worth one line.
   tripled to beat component-scoped rules. The dev server cannot show it and
   the fleet config's reduced-motion emulation hides it. `tests/smoke/rendering.spec.ts`
   runs every rendering invariant in four cells — add new ones there, with no
-  `test.use`. → [rendering.md](docs/rendering.md)
+  `test.use`, and tag it `{ tag: "@smoke" }` if it is a contract (an untagged one
+  silently lands in scaffold, outside CI). → [rendering.md](docs/rendering.md)
 - **A new form uses `.vlf-label` / `.vlf-field` / `.vlf-pill`, not
   `Field.svelte`.** Any link to `/contact` opens the modal; the route stays as
   the no-JS fallback. → [forms.md](docs/forms.md)
-- **Two session gates beyond `pnpm verify`, both deliberately outside CI:**
-  `pnpm test:mutate` (does the suite mean anything — [mutation-audit.md](docs/mutation-audit.md))
-  and the aria snapshots in `tests/__aria__/` (regenerate with
-  `npx playwright test tests/smoke/chrome.spec.ts --update-snapshots` and READ
+- **One session gate outside CI, and one inside it.** `pnpm test:mutate` (does
+  the suite mean anything — [mutation-audit.md](docs/mutation-audit.md)) is a
+  session tool. The aria snapshots in `tests/__aria__/` are `@smoke`, so they
+  gate every PR; regenerating them is the deliberate step
+  (`npx playwright test tests/smoke/chrome.spec.ts --update-snapshots`, and READ
   the diff; a name that changed language looks exactly like a snapshot needing
-  an update).
+  an update). A copy rename that changes an accessible name regenerates its
+  snapshot in the same PR.
 
 # Vida Legacy Foundation — site-specific
 

@@ -3,7 +3,7 @@ import { test, expect, type Page } from "@playwright/test";
 const PRISMIC_FRAMER = "https://*.prismic.io";
 
 for (const path of ["/slice-simulator", "/slice%2Dsimulator", "/slice%2dsimulator"]) {
-  test(`${path} lets Prismic frame it`, async ({ request }) => {
+  test(`${path} lets Prismic frame it`, { tag: "@smoke" }, async ({ request }) => {
     const response = await request.get(path, { maxRedirects: 0 });
     expect(response.status()).toBe(200);
     expect(response.headers()["x-frame-options"]).toBeUndefined();
@@ -84,17 +84,21 @@ async function simulate(page: Page, baseURL: string | undefined, slices: unknown
     .toBe(200);
 }
 
-test("/slice-simulator renders a slice the Type Builder sends it", async ({ page, baseURL }) => {
-  const errors: Error[] = [];
-  page.on("pageerror", (error) => errors.push(error));
-  await simulate(page, baseURL, [SLICE]);
-  const slice = page
-    .frameLocator("iframe")
-    .locator('.slice-simulator--root [data-slice-type="stats_band"]');
-  await expect(slice).toContainText(EYEBROW);
-  await expect(slice.locator('a[href="https://example.org/"]')).toContainText(CTA);
-  expect(errors).toEqual([]);
-});
+test(
+  "/slice-simulator renders a slice the Type Builder sends it",
+  { tag: "@smoke" },
+  async ({ page, baseURL }) => {
+    const errors: Error[] = [];
+    page.on("pageerror", (error) => errors.push(error));
+    await simulate(page, baseURL, [SLICE]);
+    const slice = page
+      .frameLocator("iframe")
+      .locator('.slice-simulator--root [data-slice-type="stats_band"]');
+    await expect(slice).toContainText(EYEBROW);
+    await expect(slice.locator('a[href="https://example.org/"]')).toContainText(CTA);
+    expect(errors).toEqual([]);
+  },
+);
 
 // MediaText's variation is the editor's choice of side: wherever the layout
 // has two columns, "Image left" puts the photo left of the copy and "Image
@@ -119,11 +123,11 @@ test("/slice-simulator renders a slice the Type Builder sends it", async ({ page
 // layout that narrows or centres one column is still stacked (review 5);
 // left edges are compared only when the columns share a row.
 //
-// The read uses getBoundingClientRect, which "`@smoke` is earned" bans in the
-// gate as `boundingBox`. The rule exists to keep px out of the gate, and this
-// compares only which column's left edge comes first; no position or size is
-// asserted, and a gap change passes. This file has no `@smoke` tag: every spec
-// under tests/smoke runs in `pnpm test`, and nothing here selects on the tag.
+// The read uses getBoundingClientRect, but only to compare two of the page's
+// own boxes: which column's left edge comes first. No position or size is
+// asserted, and a gap or breakpoint change passes, so this is a contract and
+// the check is tagged `@smoke`. Each width gets a fresh page (see the loop
+// below) so it never answers from a stale layout (reviews 5 to 7 of #127).
 const MEDIA_TEXT = (variation: "imageLeft" | "imageRight") => ({
   id: `media_text$${variation}`,
   slice_type: "media_text",
@@ -150,59 +154,70 @@ const MEDIA_TEXT = (variation: "imageLeft" | "imageRight") => ({
 const WIDTHS = [1920, 1440, 1280, 1024];
 
 for (const variation of ["imageLeft", "imageRight"] as const) {
-  test(`MediaText ${variation} never puts the photo on the other side`, async ({
-    context,
-    baseURL,
-  }) => {
-    const chosen = variation === "imageLeft" ? "photo left" : "photo right";
-    for (const width of WIDTHS) {
-      // A fresh page per width: its frame is created at this width, so no
-      // earlier width's styles exist to answer the read.
-      const page = await context.newPage();
-      try {
-        await page.route("https://images.prismic.io/**", (route) => route.abort());
-        await page.setViewportSize({ width: 2000, height: 900 });
-        await simulate(page, baseURL, [MEDIA_TEXT(variation)], width);
-        const section = page
-          .frameLocator("iframe")
-          .locator('.slice-simulator--root [data-slice-type="media_text"]');
-        await expect(section).toHaveCount(1);
-        await expect
-          .poll(
-            () =>
-              section.evaluate((el, w) => {
-                if (el.ownerDocument.defaultView!.innerWidth !== w) return "frame not resized";
-                const img = el.querySelector("img");
-                const heading = el.querySelector("h2");
-                if (!img || !heading) return "photo or heading missing";
-                // The column each sits in: the ancestor whose parent also
-                // holds the other.
-                const column = (node: Element, other: Element) => {
-                  let n = node;
-                  while (n.parentElement && !n.parentElement.contains(other)) n = n.parentElement;
-                  return n.getBoundingClientRect();
-                };
-                const photo = column(img, heading);
-                const copy = column(heading, img);
-                if (photo.bottom <= copy.top || copy.bottom <= photo.top) return "stacked";
-                if (photo.left < copy.left) return "photo left";
-                if (photo.left > copy.left) return "photo right";
-                return "stacked";
-              }, width),
-            { message: `${variation} at a ${width}px frame` },
-          )
-          .toMatch(width === WIDTHS[0] ? chosen : new RegExp(`^(${chosen}|stacked)$`));
-      } finally {
-        await page.close();
+  test(
+    `MediaText ${variation} never puts the photo on the other side`,
+    { tag: "@smoke" },
+    async ({ context, baseURL }) => {
+      // Four fresh pages in one test, each a full simulator load: 9.6 to
+      // 17.4s alone (40 runs) and 11 to 12s under the whole gate, against the
+      // default 30s; one timeout in 170 runs, on a loaded machine. This is the
+      // test's own budget, not an assertion window: the 25s handshake poll
+      // still fails a real hang inside it.
+      test.slow();
+      const chosen = variation === "imageLeft" ? "photo left" : "photo right";
+      for (const width of WIDTHS) {
+        // A fresh page per width: its frame is created at this width, so no
+        // earlier width's styles exist to answer the read.
+        const page = await context.newPage();
+        try {
+          await page.route("https://images.prismic.io/**", (route) => route.abort());
+          await page.setViewportSize({ width: 2000, height: 900 });
+          await simulate(page, baseURL, [MEDIA_TEXT(variation)], width);
+          const section = page
+            .frameLocator("iframe")
+            .locator('.slice-simulator--root [data-slice-type="media_text"]');
+          await expect(section).toHaveCount(1);
+          await expect
+            .poll(
+              () =>
+                section.evaluate((el, w) => {
+                  if (el.ownerDocument.defaultView!.innerWidth !== w) return "frame not resized";
+                  const img = el.querySelector("img");
+                  const heading = el.querySelector("h2");
+                  if (!img || !heading) return "photo or heading missing";
+                  // The column each sits in: the ancestor whose parent also
+                  // holds the other.
+                  const column = (node: Element, other: Element) => {
+                    let n = node;
+                    while (n.parentElement && !n.parentElement.contains(other)) n = n.parentElement;
+                    return n.getBoundingClientRect();
+                  };
+                  const photo = column(img, heading);
+                  const copy = column(heading, img);
+                  if (photo.bottom <= copy.top || copy.bottom <= photo.top) return "stacked";
+                  if (photo.left < copy.left) return "photo left";
+                  if (photo.left > copy.left) return "photo right";
+                  return "stacked";
+                }, width),
+              { message: `${variation} at a ${width}px frame` },
+            )
+            .toMatch(width === WIDTHS[0] ? chosen : new RegExp(`^(${chosen}|stacked)$`));
+        } finally {
+          await page.close();
+        }
       }
-    }
-  });
+    },
+  );
 }
 
-test("an ordinary page stays SAMEORIGIN and does not let Prismic frame it", async ({ request }) => {
-  const response = await request.get("/contact");
-  expect(response.status()).toBe(200);
-  expect(response.headers()["x-frame-options"]).toBe("SAMEORIGIN");
-  const policy = response.headers()["content-security-policy"] ?? "";
-  expect(policy.match(/frame-ancestors[^;]*/)?.[0] ?? "").not.toContain(PRISMIC_FRAMER);
-});
+test(
+  "an ordinary page stays SAMEORIGIN and does not let Prismic frame it",
+  { tag: "@smoke" },
+  async ({ request }) => {
+    const response = await request.get("/contact");
+    expect(response.status()).toBe(200);
+    expect(response.headers()["x-frame-options"]).toBe("SAMEORIGIN");
+    const policy = response.headers()["content-security-policy"] ?? "";
+    expect(policy.match(/frame-ancestors[^;]*/)?.[0] ?? "").not.toContain(PRISMIC_FRAMER);
+  },
+);
