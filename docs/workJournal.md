@@ -1806,3 +1806,7 @@ vida never took the tiers reddoor-starter#180 shipped, so `test:smoke` was a bar
 **Not checked.** The nightly workflow, since none was added. `pnpm verify` end to end (the chain was not run; only the pieces named above were); lint, prettier and svelte-check were run on the changed files. With all 80 tests in the gate, the tiers save no runtime; the point is what a red means, not speed.
 
 Usage: not readable.
+
+## 2026-11-03 — main brought into staging, lockfile merged by pnpm (this PR)
+
+`main` (`06762ee`) and `staging` (`78dfdfc`) conflicted in `pnpm-lock.yaml` and nowhere else, by `git merge-tree --write-tree --name-only`: Renovate's non-major group lands on `main` while lock-file maintenance and majors land on `staging`, and git merges a lockfile as text. That left the promotion #135 dirty. The branch was made with maintenance's `scripts/staging-bring-main.mjs` (reddoorla/reddoor-maintenance#1912): `main` merged into a branch cut from `staging`, `package.json` as git merged it, and the pinned pnpm 12.5.1 merging its own lockfile conflict. `pnpm install --frozen-lockfile` is clean on the result. It lands as a merge commit, never a squash, so `main` is a parent and the promotion has nothing left to merge; the promotion stays the operator's.
