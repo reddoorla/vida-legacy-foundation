@@ -185,11 +185,12 @@ test.describe("without JavaScript", () => {
             const visuallyHidden =
               cs.clipPath === "inset(50%)" || cs.clip === "rect(0px, 0px, 0px, 0px)";
             const clipsY = cs.overflowY === "hidden" || cs.overflowY === "clip";
-            // Horizontally only text cut to an ellipsis counts (`truncate`): an
+            // Horizontally only a box that holds text of its own counts (`truncate`,
+            // or `nowrap` with overflow hidden, with or without an ellipsis): an
             // image cropped by `object-cover` inside a clipping frame is not.
             const clipsX =
               (cs.overflowX === "hidden" || cs.overflowX === "clip") &&
-              cs.textOverflow === "ellipsis";
+              [...el.childNodes].some((n) => n.nodeType === 3 && !!n.textContent?.trim());
             return (
               !visuallyHidden &&
               ((clipsY && el.scrollHeight > el.clientHeight) ||
@@ -281,11 +282,12 @@ for (const path of ["/about", "/es/about"]) {
             for (const el of [li, ...li.querySelectorAll("*")]) {
               const cs = getComputedStyle(el);
               const clipsY = cs.overflowY === "hidden" || cs.overflowY === "clip";
-              // Horizontally only text cut to an ellipsis counts (`truncate`): an
+              // Horizontally only a box that holds text of its own counts (`truncate`,
+              // or `nowrap` with overflow hidden, with or without an ellipsis): an
               // image cropped by `object-cover` inside a clipping frame is not.
               const clipsX =
                 (cs.overflowX === "hidden" || cs.overflowX === "clip") &&
-                cs.textOverflow === "ellipsis";
+                [...el.childNodes].some((n) => n.nodeType === 3 && !!n.textContent?.trim());
               if (!clipsY && !clipsX) continue;
               // A scroll container reaches every word, and `sr-only` is a
               // visually-hidden 1px box by design: neither is a cut-off.
