@@ -37,7 +37,7 @@ const ROUTES = [
 ];
 
 for (const { path, name } of ROUTES) {
-  test(`${path} renders the same navigation tree`, async ({ page }) => {
+  test(`${path} renders the same navigation tree`, { tag: "@smoke" }, async ({ page }) => {
     await page.goto(path, { waitUntil: "load" });
     // The bar itself, not the menu: the open menu is not in the DOM until it is
     // opened, and the fixtures page is where its colours are put in front of
@@ -55,7 +55,7 @@ for (const { path, name } of [
   { path: "/", name: "en" },
   { path: "/es", name: "es" },
 ]) {
-  test(`the footer reads in the right language (${name})`, async ({ page }) => {
+  test(`the footer reads in the right language (${name})`, { tag: "@smoke" }, async ({ page }) => {
     // Per locale rather than per route: the footer renders from
     // site-config.json through +layout.svelte and is identical across a
     // locale's routes. Two files, not eight.

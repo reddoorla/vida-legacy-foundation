@@ -1,6 +1,7 @@
 import { describe, it, expect, afterEach } from "vitest";
 import { render, cleanup } from "@testing-library/svelte";
 import LangToggle from "./LangToggle.svelte";
+import { colourOf, contrast, groundOf, textColour } from "../../test/theme-contrast";
 
 afterEach(() => cleanup());
 
@@ -40,15 +41,54 @@ describe("LangToggle", () => {
     expect(desc?.textContent).toBe("Español");
     expect(desc?.getAttribute("lang")).toBe("es");
     expect(desc?.className).toContain("sr-only");
-    expect(link.className).toContain("text-background");
   });
 
-  it("flips the couple on the green hero", () => {
+  it("marks ES current on the green hero", () => {
     const { container } = render(LangToggle, { lang: "es", tone: "onGreen" });
     const current = toggle(container).querySelector("[aria-current]");
     expect(current?.textContent?.trim()).toBe("ES");
-    expect(current?.className).toContain("bg-green-btn");
   });
+
+  // The ground each tone is drawn for: the bar over the page cream, over
+  // PageMasthead's deep green and inside the deep-green menu, over HeartHero's
+  // green. Measured from the compiled stylesheet, so any colours a designer
+  // picks pass as long as the switch stays readable: 10px labels at 4.5:1, the
+  // pill's outline at a control's 3:1, and the marked side standing off the
+  // ground (1.5:1) so it is visible which language is on.
+  const GROUND = { default: "background", onDark: "green-deep", onGreen: "green" } as const;
+  for (const tone of ["default", "onDark", "onGreen"] as const) {
+    for (const lang of ["en", "es"] as const) {
+      for (const linked of [true, false]) {
+        it(`stays readable on the ${tone} ground (${lang}${linked ? "" : ", inert"})`, () => {
+          const en = { lang: "en" as const, href: "/about", label: "English", short: "EN" };
+          const { container } = render(LangToggle, {
+            lang,
+            tone,
+            switchTo: linked ? (lang === "es" ? en : es) : undefined,
+          });
+          const group = toggle(container);
+          const at = (el: Element) => groundOf(el, { within: group, under: GROUND[tone] });
+          const track = group.firstElementChild!;
+          const problems: string[] = [];
+          const need = (what: string, ratio: number, min: number) => {
+            if (ratio < min) problems.push(`${what}: ${ratio.toFixed(2)}:1, needs ${min}`);
+          };
+          need("outline", contrast(colourOf(track, "border-color")!, at(track)), 3);
+          for (const seg of track.querySelectorAll("span")) {
+            const name = `"${seg.textContent?.trim()}"`;
+            // The inert side is a disabled control, which WCAG 1.4.3 exempts:
+            // it is faded on purpose and is not measured.
+            if (seg.getAttribute("aria-disabled") === "true") continue;
+            need(name, contrast(textColour(seg), at(seg)), 4.5);
+            if (seg.hasAttribute("aria-current")) {
+              need(`${name} pill`, contrast(at(seg), at(track)), 1.5);
+            }
+          }
+          expect(problems).toEqual([]);
+        });
+      }
+    }
+  }
 
   it("names the marked pill so the view transition morphs it across", () => {
     const { container } = render(LangToggle, {

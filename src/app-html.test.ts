@@ -77,16 +77,19 @@ describe("src/app.html", () => {
       // line and saw 4 of 13, one dropped the first selector because the
       // `<style>` tag was still glued to it, and one dropped the first
       // selector inside each @media block by not accepting `{` as a
-      // predecessor. Hence the exact count rather than a floor — a selector
-      // this misses is a selector nothing checks, and it missed silently
-      // every time.
+      // predecessor. Hence a count derived from the block's own braces rather
+      // than a floor — a selector this misses is a selector nothing checks, and
+      // it missed silently every time.
       const css = noscript.replace(/\/\*[\s\S]*?\*\//g, "");
-      const selectors = [...css.matchAll(/(^|[{};])([^{};@]+)\{/g)]
-        .flatMap(([, , list]) => list.split(","))
+      const lists = [...css.matchAll(/(^|[{};])([^{};@]+)\{/g)].map(([, , list]) => list);
+      const ruleBraces = (css.match(/\{/g) ?? []).length - (css.match(/@[^{};]*\{/g) ?? []).length;
+      expect(ruleBraces, "no rules found in the no-JS block").toBeGreaterThan(0);
+      expect(lists, "selector extraction missed some of the block").toHaveLength(ruleBraces);
+      const selectors = lists
+        .flatMap((list) => list.split(","))
         .map((s) => s.trim())
         .filter(Boolean);
 
-      expect(selectors, "selector extraction missed some of the block").toHaveLength(13);
       // The exact shape, not a dot count. Counting dots across the whole
       // selector passes `.a.a.a .b`, whose `.b` sits at (0,1,0) and loses to
       // the component rule it was meant to beat — and a filter for a leading

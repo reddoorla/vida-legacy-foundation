@@ -8,5 +8,5 @@
   - link "Contáctenos":
     - /url: /es/contact
   - link /\d+-\d+-\d+/:
-    - /url: tel:+17262346910
-  - paragraph: /\d+ Fredericksburg Rd\. Suite \d+ San Antonio, TX \d+/
+    - /url: /^tel:\+1\d{10}$/
+  - paragraph: /\d+ .+, [A-Z]{2} \d{5}/

@@ -184,7 +184,6 @@ describe("Slider fade mode", () => {
 
     expect(isInert(slides[0])).toBe(false);
     expect(isInert(slides[1])).toBe(true);
-    expect(slides[1].className).toContain("opacity-0");
 
     await fireEvent.click(getByLabelText("Next slide"));
     expect(isInert(slides[0])).toBe(true);

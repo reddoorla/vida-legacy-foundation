@@ -2,6 +2,7 @@ import { describe, expect, it, afterEach } from "vitest";
 import { render, cleanup } from "@testing-library/svelte";
 import Testimonial from "./index.svelte";
 import { resolveAvatarAlt } from "./avatarAlt";
+import { contrast, groundOf, textColour } from "../../../test/theme-contrast";
 
 afterEach(() => cleanup());
 
@@ -114,12 +115,18 @@ const makeOnCream = (primary: Record<string, unknown> = {}, items?: unknown[]) =
   }) as never;
 
 describe("Testimonial onCream variation", () => {
-  it("renders the quote and the photo row on the cream ground", () => {
+  it("renders the quote and the photo row", () => {
     const { container } = render(Testimonial, { props: { slice: makeOnCream() } });
     const section = container.querySelector('[data-slice-type="testimonial"]');
     expect(section?.getAttribute("data-slice-variation")).toBe("onCream");
-    // #065184 quote is 7.71:1 on #fdf5e8; #01263f attribution is 14.37:1.
-    expect(section?.className).toContain("bg-background");
+    // Quote and attribution clear AA body on the ground the section paints,
+    // computed from the stylesheet rather than naming the colours.
+    for (const text of [
+      container.querySelector("blockquote")!,
+      container.querySelector("figcaption")!,
+    ]) {
+      expect(contrast(textColour(text), groundOf(text))).toBeGreaterThanOrEqual(4.5);
+    }
     expect(container.querySelector("blockquote")?.textContent).toContain(
       "made a difficult time manageable",
     );
