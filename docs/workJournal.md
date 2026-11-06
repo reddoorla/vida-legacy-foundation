@@ -1830,3 +1830,5 @@ jsdom 31.0.0 replaced its CSS engine, and inline styles now read back the way Ch
 The proof: vitest runs 84 files and 787 tests with the same per-file counts as `staging` (recounted with `--reporter=json` on both), six source mutations each turn a rewritten read red, and `environment: 'node'` turns 463 of 733 tests red.
 
 Review round 1 (one Opus reviewer, three lenses, all six sites at once) found no blocker. Its nits are folded in: the triggered reduced-motion check now reads `style.cssText`, and ContentWidth's token is set in `beforeEach` and cleared in `afterEach`.
+
+Review round 2 (Opus, three lenses, the six PRs at once) found minors and nits only, so the review closes clean; the nits in this PR's own files are folded in.
