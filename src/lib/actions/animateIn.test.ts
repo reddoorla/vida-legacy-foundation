@@ -47,7 +47,23 @@ function mockMatchMedia(reducedMotion: boolean) {
   }));
 }
 
+// jsdom 31 serialises inline styles as a browser does. Once `transitionDelay`
+// is set, the `var()` transition shorthand reads back "" (Chromium 153 too), so
+// these tests read the transition the way a browser applies it: computed, with
+// the easing token defined on :root as app.css defines it. A sentinel curve
+// stands in for the token's value, so a match proves the var() reached it.
+const EASE = "cubic-bezier(0.1, 0.2, 0.3, 0.4)";
+function transitionOf(el: HTMLElement) {
+  const cs = getComputedStyle(el);
+  return {
+    property: cs.transitionProperty,
+    duration: cs.transitionDuration,
+    timing: cs.transitionTimingFunction,
+  };
+}
+
 beforeEach(() => {
+  document.documentElement.style.setProperty("--transition-fast-slow", EASE);
   FakeIntersectionObserver.instances = [];
   // @ts-expect-error — replacing global for test
   window.IntersectionObserver = FakeIntersectionObserver;
@@ -67,8 +83,11 @@ describe("animateIn — viewport mode", () => {
 
     expect(el.style.opacity).toBe("0");
     expect(el.style.transform).toBe("translateY(50%)");
-    expect(el.style.transition).toContain("opacity 2400ms var(--transition-fast-slow)");
-    expect(el.style.transition).toContain("transform 2400ms var(--transition-fast-slow)");
+    expect(transitionOf(el)).toEqual({
+      property: "opacity, transform",
+      duration: "2.4s, 2.4s",
+      timing: `${EASE}, ${EASE}`,
+    });
   });
 
   it("reveals on intersection and disconnects the observer", () => {
@@ -83,7 +102,7 @@ describe("animateIn — viewport mode", () => {
     observer.trigger(true);
 
     expect(el.style.opacity).toBe("1");
-    expect(el.style.transform).toBe("translateY(0)");
+    expect(el.style.transform).toBe("translateY(0px)");
     expect(observer.disconnected).toBe(true);
   });
 
@@ -230,7 +249,7 @@ describe("animateIn — triggered mode", () => {
     animateIn(el, true);
 
     expect(el.style.opacity).toBe("1");
-    expect(el.style.transform).toBe("translateY(0)");
+    expect(el.style.transform).toBe("translateY(0px)");
     expect(FakeIntersectionObserver.instances.length).toBe(0);
   });
 
@@ -262,7 +281,7 @@ describe("animateIn — triggered mode", () => {
 
     ret.update(true);
     expect(el.style.opacity).toBe("1");
-    expect(el.style.transform).toBe("translateY(0)");
+    expect(el.style.transform).toBe("translateY(0px)");
   });
 
   it("flips back to hidden when update passes trigger: false", () => {
@@ -284,7 +303,7 @@ describe("animateIn — triggered mode", () => {
     ret.update({ duration: 500 });
 
     // Still the default duration — viewport mode ignores updates.
-    expect(el.style.transition).toContain("2400ms");
+    expect(transitionOf(el).duration).toBe("2.4s, 2.4s");
   });
 });
 
@@ -295,8 +314,11 @@ describe("animateIn — options overrides", () => {
 
     animateIn(el, { duration: 1200 });
 
-    expect(el.style.transition).toContain("opacity 1200ms var(--transition-fast-slow)");
-    expect(el.style.transition).toContain("transform 1200ms var(--transition-fast-slow)");
+    expect(transitionOf(el)).toEqual({
+      property: "opacity, transform",
+      duration: "1.2s, 1.2s",
+      timing: `${EASE}, ${EASE}`,
+    });
   });
 
   it("applies a custom translateY on the hidden transform", () => {
@@ -328,7 +350,7 @@ describe("animateIn — prefers-reduced-motion", () => {
 
     expect(el.style.opacity).toBe("");
     expect(el.style.transform).toBe("");
-    expect(el.style.transition).toBe("");
+    expect(el.style.cssText).toBe("");
     expect(FakeIntersectionObserver.instances.length).toBe(0);
   });
 
@@ -340,7 +362,7 @@ describe("animateIn — prefers-reduced-motion", () => {
     animateIn(el, false);
 
     expect(el.style.opacity).toBe("");
-    expect(el.style.transition).toBe("");
+    expect(el.style.cssText).toBe("");
   });
 });
 
