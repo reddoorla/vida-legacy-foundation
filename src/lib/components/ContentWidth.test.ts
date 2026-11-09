@@ -39,6 +39,14 @@ const body = () =>
   }));
 
 describe("ContentWidth", () => {
+  // animateIn's transition reads this token; app.css defines it on :root.
+  beforeEach(() => {
+    document.documentElement.style.setProperty("--transition-fast-slow", "ease-in");
+  });
+  afterEach(() => {
+    document.documentElement.style.removeProperty("--transition-fast-slow");
+  });
+
   it("applies animateIn hidden styles when animateInOnScroll is true", () => {
     const { getByText } = render(ContentWidth, {
       animateInOnScroll: true,
@@ -48,7 +56,9 @@ describe("ContentWidth", () => {
     const inner = getByText("Inner content").parentElement as HTMLElement;
     expect(inner.style.opacity).toBe("0");
     expect(inner.style.transform).toBe("translateY(50%)");
-    expect(inner.style.transition).toContain("opacity");
+    // jsdom 31, like a browser, reads the var() transition shorthand back as ""
+    // once a delay is set, so read the transition as a browser applies it.
+    expect(getComputedStyle(inner).transitionProperty).toContain("opacity");
   });
 
   it("does not apply animateIn styles when animateInOnScroll is false", () => {
