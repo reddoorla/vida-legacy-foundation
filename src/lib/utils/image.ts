@@ -1,5 +1,5 @@
 /**
- * Helpers for serving responsively-sized Prismic (imgix) images.
+ * Helpers for serving responsively-sized Prismic and Unsplash (imgix) images.
  *
  * Prismic image URLs are imgix URLs, so appending `w`/`auto`/`q` query params
  * makes the CDN return a correctly-sized, modern-format (WebP/AVIF) image.
@@ -9,6 +9,11 @@
  */
 
 const PRISMIC_IMAGE_HOST = "images.prismic.io";
+
+/** Unsplash serves its photos through imgix too, so the same `w`/`auto`/`q`
+ *  params size them. A photo picked from a Prismic image field's Unsplash tab
+ *  is stored as this host's URL with no width: the full original. */
+const UNSPLASH_IMAGE_HOST = "images.unsplash.com";
 
 /** Width breakpoints used to build srcset candidates (device-pixel aware). */
 export const DEFAULT_IMAGE_WIDTHS = [480, 768, 1024, 1440, 1920, 2560];
@@ -27,16 +32,28 @@ export function isPrismicImageUrl(url: string | null | undefined): url is string
   }
 }
 
+/** True when `url` is on an imgix-backed host whose sizing params we can set:
+ *  Prismic's, or Unsplash's. Hostname match, as in `isPrismicImageUrl`. */
+export function isResizableImageUrl(url: string | null | undefined): url is string {
+  if (typeof url !== "string") return false;
+  try {
+    const host = new URL(url).hostname;
+    return host === PRISMIC_IMAGE_HOST || host === UNSPLASH_IMAGE_HOST;
+  } catch {
+    return false;
+  }
+}
+
 /**
  * Return `url` with imgix params applied. Always sets `auto=format,compress`.
- * Non-Prismic or malformed URLs are returned unchanged.
+ * URLs on any other host, or malformed, are returned unchanged.
  */
 export function imgix(
   url: string | null | undefined,
   params: Record<string, string | number> = {},
 ): string {
   if (!url) return "";
-  if (!isPrismicImageUrl(url)) return url;
+  if (!isResizableImageUrl(url)) return url;
   const u = new URL(url);
   u.searchParams.set("auto", "format,compress");
   // Prismic crop URLs ship `rect` + `w` + `h` together. Overriding only `w`
@@ -63,7 +80,7 @@ export const PORTRAIT_HERO_ASPECT = 16 / 9;
 export const PORTRAIT_IMAGE_WIDTHS = [390, 480, 640, 780, 900, 1170];
 
 /**
- * A face-aware PORTRAIT crop ladder for a Prismic (imgix) image: each
+ * A face-aware PORTRAIT crop ladder for a Prismic or Unsplash (imgix) image: each
  * candidate is cropped to `aspect` (height ÷ width) around any face imgix
  * finds, falling back to the centre.
  *
@@ -74,14 +91,19 @@ export const PORTRAIT_IMAGE_WIDTHS = [390, 480, 640, 780, 900, 1170];
  * 664px-tall box. Cropping at the CDN fixes the framing and delivers real
  * pixels.
  *
- * Returns `undefined` for non-Prismic URLs so the <source> can be omitted.
+ * Unsplash URLs take the same crop: Unsplash is imgix-backed, and
+ * `w=390&h=693&fit=crop&crop=faces,center` returned exactly 390x693 from
+ * images.unsplash.com (2026-11-21). Without it an Unsplash hero would get only
+ * the landscape ladder on a phone, the upscale described above.
+ *
+ * Returns `undefined` for any other URL so the <source> can be omitted.
  */
 export function portraitSrcset(
   url: string | null | undefined,
   aspect: number,
   widths: number[] = PORTRAIT_IMAGE_WIDTHS,
 ): string | undefined {
-  if (!isPrismicImageUrl(url)) return undefined;
+  if (!isResizableImageUrl(url)) return undefined;
   return widths
     .map(
       (w) =>
@@ -91,13 +113,13 @@ export function portraitSrcset(
 }
 
 /**
- * Build a width-descriptor srcset for a Prismic image URL.
- * Returns `undefined` for non-Prismic URLs so the attribute can be omitted.
+ * Build a width-descriptor srcset for a Prismic or Unsplash image URL.
+ * Returns `undefined` for any other URL so the attribute can be omitted.
  */
 export function srcset(
   url: string | null | undefined,
   widths: number[] = DEFAULT_IMAGE_WIDTHS,
 ): string | undefined {
-  if (!isPrismicImageUrl(url)) return undefined;
+  if (!isResizableImageUrl(url)) return undefined;
   return widths.map((w) => `${imgix(url, { w })} ${w}w`).join(", ");
 }
