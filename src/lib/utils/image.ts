@@ -80,7 +80,7 @@ export const PORTRAIT_HERO_ASPECT = 16 / 9;
 export const PORTRAIT_IMAGE_WIDTHS = [390, 480, 640, 780, 900, 1170];
 
 /**
- * A face-aware PORTRAIT crop ladder for a Prismic (imgix) image: each
+ * A face-aware PORTRAIT crop ladder for a Prismic or Unsplash (imgix) image: each
  * candidate is cropped to `aspect` (height ÷ width) around any face imgix
  * finds, falling back to the centre.
  *
