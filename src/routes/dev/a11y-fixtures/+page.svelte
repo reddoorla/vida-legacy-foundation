@@ -65,9 +65,9 @@
   const pixel = "data:image/gif;base64,R0lGODlhAQABAAAAACw=";
 
   // Real placeholder photography, served from static/dev/. Still hermetic (same
-  // origin, no external host) and still allowed by the CSP, whose img-src is
-  // `self data: https://*.prismic.io` — which is why the old unsplash.com mock
-  // URLs rendered as nothing at all.
+  // origin, no external host). When the old unsplash.com mock URLs were
+  // written, img-src was `self data: https://*.prismic.io`, so they rendered
+  // as nothing at all; images.unsplash.com has been allowed since 2026-11-21.
   //
   // These are the comps' own iStock images, watermark included: they are the
   // crops the design actually assumes, and the watermark is a standing reminder

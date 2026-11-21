@@ -91,14 +91,19 @@ export const PORTRAIT_IMAGE_WIDTHS = [390, 480, 640, 780, 900, 1170];
  * 664px-tall box. Cropping at the CDN fixes the framing and delivers real
  * pixels.
  *
- * Returns `undefined` for non-Prismic URLs so the <source> can be omitted.
+ * Unsplash URLs take the same crop: Unsplash is imgix-backed, and
+ * `w=390&h=693&fit=crop&crop=faces,center` returned exactly 390x693 from
+ * images.unsplash.com (2026-11-21). Without it an Unsplash hero would get only
+ * the landscape ladder on a phone, the upscale described above.
+ *
+ * Returns `undefined` for any other URL so the <source> can be omitted.
  */
 export function portraitSrcset(
   url: string | null | undefined,
   aspect: number,
   widths: number[] = PORTRAIT_IMAGE_WIDTHS,
 ): string | undefined {
-  if (!isPrismicImageUrl(url)) return undefined;
+  if (!isResizableImageUrl(url)) return undefined;
   return widths
     .map(
       (w) =>

@@ -177,6 +177,18 @@ describe("Unsplash images take the same sizing as Prismic's", () => {
     expect(set).toContain("1024w");
   });
 
+  it("portraitSrcset() crops an Unsplash URL to a portrait ladder too", () => {
+    // Without it, an Unsplash hero on a phone gets only the landscape ladder
+    // and object-cover upscales it (the case portraitSrcset exists to fix).
+    const set = portraitSrcset(UNSPLASH_URL, 1.5);
+    expect(set).toBeDefined();
+    for (const candidate of set!.split(", ")) {
+      const q = new URL(candidate.split(" ")[0]).searchParams;
+      expect(Number(q.get("h"))).toBe(Math.round(Number(q.get("w")) * 1.5));
+      expect(q.get("fit")).toBe("crop");
+    }
+  });
+
   it("is still not a Prismic asset (the og:image keeps it as-is)", () => {
     expect(isPrismicImageUrl(UNSPLASH_URL)).toBe(false);
   });
