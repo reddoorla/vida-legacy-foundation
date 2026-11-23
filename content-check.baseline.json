@@ -1,0 +1,225 @@
+{
+  "version": 1,
+  "counts": {
+    "src/lib/components/ContactModal.svelte": {
+      "image\t/icons/arrow-right-dark.svg": 1,
+      "image\t/texture-grain.webp": 1
+    },
+    "src/lib/components/Footer.svelte": {
+      "copy\tFacebook": 1,
+      "copy\tInstagram": 1,
+      "copy\tLinkedIn": 2,
+      "copy\tPinterest": 1,
+      "copy\tReddit": 1,
+      "copy\tTwitter": 1,
+      "copy\tYouTube": 1
+    },
+    "src/lib/components/Nav.svelte": {
+      "image\t/logo-lockup-cream.svg": 1,
+      "image\t/logo-lockup-on-dark.svg": 1,
+      "image\t/logo-lockup.svg": 1
+    },
+    "src/lib/components/NavMenu.svelte": {
+      "image\t/logo-lockup-on-dark.svg": 1,
+      "image\t/texture-grain.webp": 1
+    },
+    "src/lib/contact-copy.ts": {
+      "copy\t(obligatorio)": 1,
+      "copy\t(required)": 1,
+      "copy\tAlgo salió mal al enviar su mensaje. Por favor, inténtelo de nuevo.": 1,
+      "copy\tEl formulario no está disponible en este momento. Por favor, inténtelo más tarde.": 1,
+      "copy\tEnviando…": 1,
+      "copy\tEnviar mensaje": 1,
+      "copy\tEnvíenos un mensaje y nos pondremos en contacto con usted.": 1,
+      "copy\tGracias, su mensaje va en camino. Nos comunicaremos pronto.": 1,
+      "copy\tMensaje": 1,
+      "copy\tMessage": 1,
+      "copy\tName": 1,
+      "copy\tNombre": 1,
+      "copy\tSend message": 1,
+      "copy\tSend us a message and we'll get back to you.": 1,
+      "copy\tSending…": 1,
+      "copy\tSomething went wrong sending your message. Please try again.": 1,
+      "copy\tTambién puede llamarnos al": 1,
+      "copy\tThanks — your message is on its way. We'll be in touch soon.": 1,
+      "copy\tThe form is unavailable right now. Please try again later.": 1,
+      "copy\tYou can also call us at": 1,
+      "heading\tContact us": 1,
+      "heading\tContáctenos": 1,
+      "seo\tComuníquese con Vida Legacy Foundation en San Antonio: pregúntenos por la asistencia económica para familias de donantes y receptores, o por cómo ayudar.": 1,
+      "seo\tReach the Vida Legacy Foundation team in San Antonio: ask about financial relief for donor and recipient families, or about how to help.": 1
+    },
+    "src/lib/form-validation.ts": {
+      "copy\tPlease check this field.": 1,
+      "copy\tPlease fill in this field.": 1,
+      "copy\tPor favor, complete este campo.": 1,
+      "copy\tPor favor, revise este campo.": 1,
+      "email\tPlease enter an email address, like name@example.com.": 1,
+      "email\tPor favor, escriba un correo electrónico, por ejemplo nombre@ejemplo.com.": 1
+    },
+    "src/lib/locale.ts": {
+      "copy\tEnglish": 1,
+      "copy\tEspañol": 1
+    },
+    "src/lib/page-load.ts": {
+      "copy\tPage not found": 1
+    },
+    "src/lib/seo.ts": {
+      "copy\tVida Legacy Foundation": 1
+    },
+    "src/lib/site-config.json": {
+      "address\t8632 Fredericksburg Rd. Suite 221 San Antonio, TX 78240": 2,
+      "alt\tVida Legacy Foundation": 2,
+      "copy\tBecome a Donor": 1,
+      "copy\tContact Us": 1,
+      "copy\tContact us": 1,
+      "copy\tContáctenos": 2,
+      "copy\tConviértase en Donante": 1,
+      "copy\tDonar": 2,
+      "copy\tDonate": 2,
+      "copy\tQuiénes Somos": 1,
+      "copy\tQuiénes somos": 1,
+      "copy\tWho We Are": 1,
+      "copy\tWho we are": 1,
+      "copy\t© 2026 Vida Legacy Foundation. All Rights Reserved.": 1,
+      "copy\t© 2026 Vida Legacy Foundation. Todos los derechos reservados.": 1,
+      "link\t/contact": 2,
+      "link\t/es/contact": 2,
+      "link\t/logo-lockup.svg": 2,
+      "link\thttps://registerme.org/": 2,
+      "link\thttps://secure.lglforms.com/form_engine/s/1DAy4mOf7OlVR4Ke-4h2gA": 4,
+      "phone\t726-234-6910": 2,
+      "phone\ttel:+17262346910": 2
+    },
+    "src/lib/slices/DonationForm/index.svelte": {
+      "address\tAddress": 1,
+      "address\tDirección": 1,
+      "copy\t(obligatorio)": 1,
+      "copy\t(required)": 1,
+      "copy\tAddress line 1": 1,
+      "copy\tAddress line 2": 1,
+      "copy\tAmount": 1,
+      "copy\tAnnually": 1,
+      "copy\tAnual": 1,
+      "copy\tApellido": 1,
+      "copy\tCantidad": 1,
+      "copy\tCity": 1,
+      "copy\tCiudad": 1,
+      "copy\tCódigo postal": 1,
+      "copy\tDirección línea 1": 1,
+      "copy\tDirección línea 2": 1,
+      "copy\tDonation schedule": 1,
+      "copy\tEnter amount": 1,
+      "copy\tEstado o provincia": 1,
+      "copy\tFirst name": 1,
+      "copy\tFrecuencia de la donación": 1,
+      "copy\tIngrese cantidad": 1,
+      "copy\tLast name": 1,
+      "copy\tLos pagos en línea aún no están disponibles. Por ahora, utilice PayPal.": 1,
+      "copy\tMensual": 1,
+      "copy\tMonthly": 1,
+      "copy\tName": 1,
+      "copy\tNombre": 2,
+      "copy\tOne time": 1,
+      "copy\tOnline payments are not connected yet. Please use PayPal for now.": 1,
+      "copy\tOther amount": 1,
+      "copy\tOtra cantidad": 1,
+      "copy\tQuarterly": 1,
+      "copy\tState/province": 1,
+      "copy\tTrimestral": 1,
+      "copy\tUna sola vez": 1,
+      "copy\tZip/postal code": 1,
+      "copy\tenter payment information": 1,
+      "copy\tingresar información de pago": 1,
+      "email\tcorreo@ejemplo.com": 1,
+      "email\temail@example.com": 1,
+      "heading\tContact information": 1,
+      "heading\tInformación de contacto": 1,
+      "image\t/icons/arrow-right-dark.svg": 4,
+      "image\t/icons/chevron-down.svg": 1,
+      "image\t/texture-grain.webp": 2,
+      "phone\t000-000-0000": 2
+    },
+    "src/lib/slices/HeartHero/index.svelte": {
+      "image\t/arrow-down.svg": 1,
+      "image\t/texture-grain.webp": 1
+    },
+    "src/lib/slices/IconColumns/index.svelte": {
+      "image\t/texture-grain.webp": 1
+    },
+    "src/lib/slices/PersonGrid/index.svelte": {
+      "image\t/icons/arrow-right.svg": 2,
+      "image\t/icons/plus-circle.svg": 2,
+      "image\t/texture-grain.webp": 2
+    },
+    "src/lib/slices/SectionGrid/index.svelte": {
+      "image\t/icons/arrow-right.svg": 1,
+      "image\t/texture-grain.webp": 1
+    },
+    "src/lib/slices/StatementPanel/index.svelte": {
+      "image\t/texture-grain.webp": 1
+    },
+    "src/lib/slices/StatsBand/index.svelte": {
+      "image\t/icons/arrow-right.svg": 1,
+      "image\t/texture-grain.webp": 1
+    },
+    "src/lib/ui-copy.ts": {
+      "copy\t${…} de ${…}": 1,
+      "copy\t${…} of ${…}": 1,
+      "copy\tAbrir el menú": 1,
+      "copy\tAlgo salió mal.": 1,
+      "copy\tCerrar": 1,
+      "copy\tCerrar el menú": 1,
+      "copy\tClose": 1,
+      "copy\tClose menu": 1,
+      "copy\tDiapositiva ${…} de ${…}": 1,
+      "copy\tDiapositiva anterior": 1,
+      "copy\tDiapositiva siguiente": 1,
+      "copy\tDiapositivas ${…} a ${…} de ${…}": 1,
+      "copy\tGo home": 1,
+      "copy\tGo to slide ${…}": 1,
+      "copy\tIdioma": 1,
+      "copy\tInicio de Vida Legacy Foundation": 1,
+      "copy\tIr a la diapositiva ${…}": 1,
+      "copy\tIr al inicio": 1,
+      "copy\tLanguage": 1,
+      "copy\tMenu": 1,
+      "copy\tMenú": 1,
+      "copy\tNext slide": 1,
+      "copy\tNo pudimos encontrar esa página.": 1,
+      "copy\tOpen menu": 1,
+      "copy\tPausar las diapositivas": 1,
+      "copy\tPause slides": 1,
+      "copy\tPlay slides": 1,
+      "copy\tPlease switch to portrait mode": 1,
+      "copy\tPor favor, gire su dispositivo a la posición vertical": 1,
+      "copy\tPrevious slide": 1,
+      "copy\tReproducir las diapositivas": 1,
+      "copy\tSaltar al contenido principal": 1,
+      "copy\tSkip to main content": 1,
+      "copy\tSlide ${…} of ${…}": 1,
+      "copy\tSlides ${…} through ${…} of ${…}": 1,
+      "copy\tSomething went wrong.": 1,
+      "copy\tVida Legacy Foundation home": 1,
+      "copy\tWe couldn't find that page.": 1,
+      "copy\testa persona": 1,
+      "copy\tthis person": 1,
+      "team\tLeer la biografía de ${…}": 1,
+      "team\tRead the bio for ${…}": 1
+    },
+    "src/routes/+layout.svelte": {
+      "image\t/logo-lockup.svg": 1,
+      "image\t/texture-grain.webp": 1
+    },
+    "src/routes/[[lang=lang]]/[[preview=preview]]/+page.server.ts": {
+      "copy\tPage not found": 1
+    },
+    "src/routes/[[lang=lang]]/[[preview=preview]]/[uid]/+page.server.ts": {
+      "copy\tPage not found": 1
+    },
+    "src/routes/[[lang=lang]]/contact/+page.server.ts": {
+      "heading\tContact": 1,
+      "heading\tContáctenos": 1
+    }
+  }
+}
