@@ -249,8 +249,8 @@
           <div class="flex flex-col gap-[5px]">
             <label class="vlf-label" for={id("name")}>
               {copy.name}<span aria-hidden="true">*</span><span class="sr-only">
-                {copy.required}</span
-              >
+                {copy.required}
+              </span>
             </label>
             <!-- svelte-ignore a11y_autofocus -->
             <!-- The dialog must open ONTO the first thing to fill in. Without
@@ -277,8 +277,8 @@
           <div class="flex flex-col gap-[5px]">
             <label class="vlf-label" for={id("email")}>
               {copy.email}<span aria-hidden="true">*</span><span class="sr-only">
-                {copy.required}</span
-              >
+                {copy.required}
+              </span>
             </label>
             <input
               class="vlf-field"
@@ -312,8 +312,8 @@
           <div class="flex flex-col gap-[5px]">
             <label class="vlf-label" for={id("message")}>
               {copy.message}<span aria-hidden="true">*</span><span class="sr-only">
-                {copy.required}</span
-              >
+                {copy.required}
+              </span>
             </label>
             <textarea
               class="vlf-field vlf-field--area"

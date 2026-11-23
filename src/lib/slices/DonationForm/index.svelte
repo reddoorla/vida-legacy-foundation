@@ -313,8 +313,8 @@
           <fieldset class="flex min-w-0 flex-col gap-[5px]">
             <legend class="vlf-label mb-[5px] p-0">
               {copy.name}<span aria-hidden="true">*</span><span class="sr-only">
-                {copy.required}</span
-              >
+                {copy.required}
+              </span>
             </legend>
             <div class="flex flex-col gap-[5px] md:flex-row md:gap-[30px]">
               <div class="min-w-0 flex-1">
@@ -355,8 +355,8 @@
           <div class="flex flex-col gap-[5px]">
             <label class="vlf-label" for={id("email")}>
               {copy.email}<span aria-hidden="true">*</span><span class="sr-only">
-                {copy.required}</span
-              >
+                {copy.required}
+              </span>
             </label>
             <input
               class="vlf-field"
